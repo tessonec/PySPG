@@ -211,8 +211,3 @@ if __name__=="__main__":
     for i in mu:
       print i
 #    m2 = SPGIterator(name = "a", data=[1,2,4,8])
-
-    
-  
-
-
