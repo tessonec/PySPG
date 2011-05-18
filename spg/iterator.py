@@ -184,7 +184,7 @@ class MultIterator:
       return [i.name for i in self.data]
 
   def varying_items(self, var):
-      return [i.name for i in self.data if i]
+      return [i.name for i in self.data if len(i.data) > 0 ]
 
   def reorder(self,new_order):
     """ the ordered list of spgiterator's names can be reshuffled with this
