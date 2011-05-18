@@ -98,26 +98,21 @@ class Parser(iterator.MultIterator):
       return ret
 
 
-    def parse_reserved_word(self, rest):
-       if rest[0] in self.add_ins.keys():
-           self.add( self.add_ins[ rest[0] ]( rest[1:] ) )
-           
-       
     def fetch(self, stream):
         for l in stream:
             linea = l.strip()
-            
+
             symbol_end = self.regexp.search(linea).start()
             symbol = linea[:symbol_end].strip()
             rest = linea[symbol_end:].strip().split()
-                        
+
             if symbol is '#': continue #line is a comment
 
             if (symbol in ('!')): # reserved for the future
               continue
 
             if (symbol in ['+', '-', '*', '/', '**']):
-              
+
               self.add( \
                 iterator.IterOperator( rest[0], symbol, \
                        (eval(rest[1] ), eval( rest[2]), eval(rest[3]) ) ) )
@@ -136,85 +131,45 @@ class ExtensibleParser(Parser):
     """
 
     def __init__(self, stream = None):
-        iterator.MultIterator.__init__(self)
+        Parser.__init__(self, stream)
         self.add_ins = {}
-        self.regexp = re.compile('\\w')
         
         if stream is not None:
           self.fetch(stream)
 
-
-    def directory_path(self, var_list):
-      """
-      returns the directory path conducting to the current values of the parameter set.
-      by default (limit=-1) the directory tree is extended to all the variables list
-      except for the last variable.
-      By setting limit to something else, you change the amount of variables kept left from
-      the directory generation. (i.e. limit=-2, will leave out of the directory path the last two variables)
-      """
-      the_path = (os.path.curdir + os.path.sep)
-      for i_key in var_list:
-            the_path += (('%s_%s' % (i_key,
-              self.current_values[i_key])) + os.path.sep)
-
-      return the_path
-
-    def output_file(self, var_list):
-      """
-      returns the directory path conducting to the current values of the parameter set.
-      by default (limit=-1) the directory tree is extended to all the variables list
-      except for the last variable.
-      By setting limit to something else, you change the amount of variables kept left from
-      the directory generation. (i.e. limit=-2, will leave out of the directory path the last two variables)
-      """
-      of = "_".join([ "%s_%s"%(k,self.current_values[k]) for k in var_list ] ) 
-
-      return of+".dat"
-
-    def output_conf(self):
-      for i in self.data:
-        if i.__class__ == iterator.Iterator:
-          if len(i.data) == 0:
-            print ":%s  %s"%(i.name, " ".join(i.data))
-          else:
-            print ".%s  %s"%(i.name, " ".join(i.data))
-        if i.__class__ == iterator.IterOperator:
-          print "%s%s  %s  %s  %s"%(i.type, i.name, i.xmin, i.xmax, i.xstep)
-#      return ret
-
     def add_plugin(self, rw, manip):
       self.add_ins[rw] = manip
-      
+
     def parse_reserved_word(self, rest):
        if rest[0] in self.add_ins.keys():
            self.add( self.add_ins[ rest[0] ]( rest[1:] ) )
-           
-       
+
+
     def fetch(self, stream):
         for l in stream:
             linea = l.strip()
-            
+
             symbol_end = self.regexp.search(linea).start()
             symbol = linea[:symbol_end].strip()
             rest = linea[symbol_end:].strip().split()
-                        
+
             if symbol is '#': continue #line is a comment
 
             if (symbol in ('!')): # reserved for the future
               continue
 
             if (symbol is '@' and rest[0]=="execute"):
-              
               self.add( Execute( rest[1:]) )
-              
+
             if (symbol in ['+', '-', '*', '/', '**']):
-              
               self.add( \
                 iterator.IterOperator( rest[0], symbol, \
                        (eval(rest[1] ), eval( rest[2]), eval(rest[3]) ) ) )
+
             if (symbol == '.'):
               self.add( \
                  iterator.Iterator(rest[0], rest[1:]) )
+
             if (symbol == ':'):
               self.add( iterator.Iterator( name = "".join(rest) ) )
 
