@@ -71,9 +71,12 @@ class IterConstant(Iterator):
     """ name: the label to be assigned to this iterator
       data: the set of values can be assigned to this iterator
     """
-    Iterator.__init__(self,name,data)
+    if type(data) == type([]):
+        Iterator.__init__(self,name,data)
+    else:
+        Iterator.__init__(self,name,[data])
     self.name  = name
-    self.data  = []
+
     self.reset()
     
   def __iter__(self):
@@ -164,17 +167,17 @@ class MultIterator:
   def __init__(self):
     self.data = []
     self.__dict = {}
-    self.order = []
+    self.items = [] #ordered items
     self.__is_reset = True
     
   def add(self, spg_it):
     """ raises an AssertionError if the key is duplicated      
     """
-    assert spg_it.name not in self.order , "duplicate key '%s'"%spg_it.name 
+    assert spg_it.name not in self.items , "duplicate key '%s'"%spg_it.name 
     
     assert self.__is_reset, "multiterator already initiated"
     
-    self.order.append( spg_it.name )
+    self.items.append( spg_it.name )
     self.data.append(spg_it)
     self.__dict[ spg_it.name ] = spg_it.value
 
@@ -206,32 +209,33 @@ class MultIterator:
         
     raise StopIteration
 
-  def __getitem__(self, name, value):
+  def __getitem__(self, name):
       """ the values of the multiterator are supposed to be accessed 
-      only by the operator[] (of by the returned value of next()
+      only by the operator[] (or by the returned value of next()
       """
-      assert name in self.order, "the requested variable was not found in the multiterator"
+      assert name in self.items, "the requested variable was not found in the multiterator"
 
       return self.__dict[name]
 
-  def items(self):
-      return [i.name for i in self.data]
 
-  def varying_items(self, var):
-      return [i.name for i in self.data if len(i.data) > 0 ]
+  def varying_items(self):
+      return [i.name for i in self.data if i.__class__ != IterConstant  ]
+
+  def constant_items(self):
+      return [i.name for i in self.data if i.__class__ == IterConstant ]
 
   def reorder(self,new_order):
     """ the ordered list of spgiterator's names can be reshuffled with this
     """
-    assert set(self.order) == set(new_order), "the origin and destination set of variables differ"
+    assert set(self.items) == set(new_order), "the origin and destination set of variables differ"
     
-    self.order = new_order
+    self.items = new_order
     
   def position_of(self,var):
     """returns the position in the ordered list of a given variable"""
     assert var in self.order, "the requested variable was not found in the multiterator"
     
-    return self.order.index(var)
+    return self.items.index(var)
     
 
 if __name__=="__main__":
@@ -239,7 +243,8 @@ if __name__=="__main__":
     mu = MultIterator()
     mu.add(IterOperator(name = "a",type = "*", limits = (1,8,2) ) )
     mu.add(IterOperator(name = "b", type = "+", limits = (0,2,0.5) ) )
-    mu.add(IterConstant(name = "const", value =))
+    mu.add(IterConstant(name = "const", data = "3"))
+    mu.add(IterConstant(name = "konst", data = [3]))
     mu.add(Iterator(name = "c", data=[0,-1]))
 #    mu.add(SPGIterator(name = "b", data=[2,4,8]))
     for i in mu:

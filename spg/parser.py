@@ -63,12 +63,11 @@ class Parser(iterator.MultIterator):
       ret = ""
       for i in self.data:
         if i.__class__ == iterator.Iterator:
-          if len(i.data) == 0:
-            ret += ":%s  %s\n"%(i.name, " ".join(i.data))
-          else:
             ret += ".%s  %s\n"%(i.name, " ".join(i.data))
+        if i.__class__ == iterator.IterConstant:
+            ret += ":%s  %s\n"%(i.name, " ".join(i.data))
         if i.__class__ == iterator.IterOperator:
-          ret += "%s%s  %s  %s  %s\n"%(i.type, i.name, i.xmin, i.xmax, i.xstep)
+            ret += "%s%s  %s  %s  %s\n"%(i.type, i.name, i.xmin, i.xmax, i.xstep)
       return ret
 
 
@@ -86,7 +85,6 @@ class Parser(iterator.MultIterator):
               continue
 
             if (symbol in ['+', '-', '*', '/', '**']):
-
               self.add( \
                 iterator.IterOperator( rest[0], symbol, \
                        (eval(rest[1] ), eval( rest[2]), eval(rest[3]) ) ) )
@@ -94,7 +92,7 @@ class Parser(iterator.MultIterator):
               self.add( \
                  iterator.Iterator(rest[0], rest[1:]) )
             if (symbol == ':'):
-              self.add( iterator.Iterator( name = "".join(rest) ) )
+              self.add( iterator.IterConstant( name = rest[0], data = rest[1:] )  )
 
 
 
@@ -153,10 +151,10 @@ class ExtensibleParser(Parser):
 
 if __name__ == '__main__':
     pp = Parser()
-#    pp.fetch(['+D 0. 10 1',' *r 2 16 2','**e 2 32 2', ': HELLO', '.bar 6 4 3','# this is a comment'])
-    pp.fetch(['+D 0. 10 1',' *r 2 16 8'])
-    pp.output_conf()
-    for i in pp:
-        print i
+    pp.fetch(['+D 0. 10 1',' *r 2 16 2','**e 2 32 2', ':HELLO', '.bar 6 4 3','# this is a comment'])
+#    pp.fetch(['+D 0. 10 1',' *r 2 16 8'])
+    print pp.output_conf()
+#    for i in pp:
+#        print i
 
 
