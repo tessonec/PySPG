@@ -4,6 +4,7 @@
 ###########################################################################
 # :::~ Copyright (C) 2003-2010 by Claudio J. Tessone <tessonec@ethz.ch> 
 # 
+# Modified on: v2.9.2 14 May 2011
 # Modified on: v2.9.1 30 May 2010
 # Modified on: v2.9   15 Sep 2008
 # Created  on: v0.1   09 Jan 2005
@@ -57,6 +58,39 @@ class Iterator:
       self.value = ""
       self.__index = None
     
+
+
+
+class IterConstant(Iterator):
+  """ class that implements a generic iterator for the spg framework
+    **the implementation is minimal**. it is limited to known lists 
+    of values does not support changes on the fly of the list (!)
+  """
+
+  def __init__(self, name = None, data = None):
+    """ name: the label to be assigned to this iterator
+      data: the set of values can be assigned to this iterator
+    """
+    Iterator.__init__(self,name,data)
+    self.name  = name
+    self.data  = []
+    self.reset()
+    
+  def __iter__(self):
+    return self
+
+  def next(self):
+      raise StopIteration
+    
+  def reset(self):
+    try:
+      self.value = self.data[0]
+      self.__index = None
+    except:
+      self.value = ""
+      self.__index = None
+    
+
 
 
 class IterOperator(Iterator):
@@ -176,7 +210,7 @@ class MultIterator:
       """ the values of the multiterator are supposed to be accessed 
       only by the operator[] (of by the returned value of next()
       """
-      assert var in self.order, "the requested variable was not found in the multiterator"
+      assert name in self.order, "the requested variable was not found in the multiterator"
 
       return self.__dict[name]
 
@@ -205,7 +239,7 @@ if __name__=="__main__":
     mu = MultIterator()
     mu.add(IterOperator(name = "a",type = "*", limits = (1,8,2) ) )
     mu.add(IterOperator(name = "b", type = "+", limits = (0,2,0.5) ) )
-    
+    mu.add(IterConstant(name = "const", value =))
     mu.add(Iterator(name = "c", data=[0,-1]))
 #    mu.add(SPGIterator(name = "b", data=[2,4,8]))
     for i in mu:
