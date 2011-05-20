@@ -27,14 +27,12 @@ import re
 
 
 
-class Execute(iterator.Iterator):
+class Execute(iterator.IterConstant):
   def __init__(self, cl):
     """ name: the label to be assigned to this iterator
       data: the set of values can be assigned to this iterator
     """
-    self.name  = ""
-    self.data  = []
-    self.reset()
+    iterator.IterConstant__init__("",)
 
     self.command = cl
     
@@ -78,6 +76,9 @@ class Parser(iterator.MultIterator):
             symbol_end = self.regexp.search(linea).start()
             symbol = linea[:symbol_end].strip()
             rest = linea[symbol_end:].strip().split()
+
+            if (symbol is '@' and rest[0]=="execute"):
+              self.command = rest[1]
 
             if symbol is '#': continue #line is a comment
 
@@ -131,7 +132,7 @@ class ExtensibleParser(Parser):
               continue
 
             if (symbol is '@' and rest[0]=="execute"):
-              self.add( Execute( rest[1:]) )
+              self.command = rest[1]
 
             if (symbol in ['+', '-', '*', '/', '**']):
               self.add( \

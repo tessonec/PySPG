@@ -1,9 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import sys
-import re
+import sys, re, os.path
 from math import *
+
+CONFIG_DIR = os.path.expanduser("~/opt/etc/")
+
 
 def parameter_guess(string):
     #fp = string # os.path.abspath(string)
@@ -69,3 +71,119 @@ def generate_string(values, var_list, separator = "-", joining_string = "_"):
 #print st
 #print parameterGuess(st)
 
+
+
+
+
+
+
+def backendize(infile):
+  output = []
+  ls_output = []
+  for line in open(infile):
+    if line.strip()[0] == "@":
+        vec = line.strip()[1:].split()
+        try:
+            backend = vec[0]
+            try:
+                var_name = vec[1]
+            except:
+                var_name = ""
+        except:
+            newline_msg("ERR", "while unfolding line: '%s'"%(line) )
+            sys.exit()
+#      try:
+        new_stuff = [
+                i.replace("%ARG%",var_name).replace("%ARG1%",var_name)
+                for i in open( "%s/ctt/%s.be"%(CONFIG_DIR ,backend), "r" )
+              ]
+#      except:
+#        sys.stderr.write("[ctt - ERROR] when loading backend '%s' and variable '%s'\n"%(backend,var_name) )
+#        sys.exit()
+#      print new_stuff
+        output.extend (new_stuff)
+        ls_output.append( (backend, var_name)  )
+    else:
+        output.append(line)
+ # print ls_output,output
+  return ls_output,output
+
+
+
+
+#:::~################################################################
+#:::~ (BEGIN) checks consistency of param.dat
+def check_consistency(exec_file, lines):
+  consistentParam=True
+
+  if exec_file[:4] == "ctx-": exec_file[4:]
+
+  exec_file=exec_file[:exec_file.rfind(.)]
+
+  lk=[]
+  dk={}
+  backends,lineas= backendize("%s/etc/ct-simul/%s.ct"%(CONFIG_DIR,exec_file))
+  comandos = [ linea.strip()
+                 for linea in
+                 lineas
+                 if len(linea.strip()) > 0
+               ]
+
+  for linea in comandos:
+    content = [i.strip() for i in linea.split(":")]
+    tipo = content[0]
+    if tipo=="flag":
+      dk[ content[1] ]=  (tipo, None,None)
+      lk.append( content[1] )
+    else:
+      lk.append( content[2] )
+
+      dk[ content[2] ]=  (tipo, content[1], content[3] )
+  consistentFile = True
+  for linea in lines:
+    pp=ParamParser([linea])
+    varName = pp.entities[0]
+    iterator = pp.iterator_list[0]
+    print "found variable: '%s' - "%varName,
+
+    if isinstance(iterator,ParamIterators.ItConstant):
+      print "values: ",iterator.data[0]
+    if isinstance(iterator,ParamIterators.ItPunctual):
+      print "values: ",iterator.data
+    if isinstance(iterator, (ParamIterators.ItOperatorProduct,ParamIterators.ItOperatorPlus,
+		    ParamIterators.ItOperatorMinus,ParamIterators.ItOperatorDivision,ParamIterators.ItOperatorPower)):
+      print "values: #%d, [%s,%s] "%(len(iterator.data), iterator.data[0],iterator.data[-1])
+
+    if varName in lk:
+      print "  Ok! variable name"
+      cttVar, typeVar,valueVar= dk[varName]
+      if cttVar == "flag":
+	if iterator.data > [""]:
+          print "  Error! flag variable expected (cannot receive value)"
+          consistentFile = False
+      if cttVar == "choice":
+	valV = [ i.strip(""" '" """) for i in valueVar.strip().split(",")]
+	ok=True
+	for iii in iterator.data:
+	  if iii not in valV:
+	    ok=False
+	    consistentFile=False
+	if not ok:
+	  print "  Error! value assigned to choice is not valid. Expected among: ",valV
+    else:
+      consistentFile = False
+      if not dummyRun:
+	print "--> not known! exiting!!!"
+	sys.exit(1)
+      else:
+	print " <---ERROR IN THIS LINE"
+
+  if not consistentFile :
+    print "Consistency check failed."
+    sys.exit(2)
+  else:
+    print "Consistency check success.\n\n\n\n"
+  if dummyRun:
+    sys.exit(2)
+#:::~ (END)   checks consistency of param.dat
+#:::~################################################################
