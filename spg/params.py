@@ -4,7 +4,10 @@
 import sys, re, os.path
 from math import *
 
-CONFIG_DIR = os.path.expanduser("~/opt/etc/")
+
+import utils
+
+CONFIG_DIR = os.path.expanduser("~/opt/etc")
 
 
 def parameter_guess(string):
@@ -79,7 +82,7 @@ def generate_string(values, var_list, separator = "-", joining_string = "_"):
 
 def backendize(infile):
   output = []
-  ls_output = []
+#  ls_output = []
   for line in open(infile):
     if line.strip()[0] == "@":
         vec = line.strip()[1:].split()
@@ -102,32 +105,44 @@ def backendize(infile):
 #        sys.exit()
 #      print new_stuff
         output.extend (new_stuff)
-        ls_output.append( (backend, var_name)  )
+#        ls_output.append( (backend, var_name)  )
     else:
         output.append(line)
- # print ls_output,output
-  return ls_output,output
+#  utils.newline_msg( "INF", "%s --> %s"%(ls_output,output) )
+  ret = {}
+  for l in output:
+      l = [ i.strip() for i in l.split(":")]
+      family = l[0]
+      if family == "flag":
+          var_type = None
+          var_name = l[1]
+          default = False
+      else:
+          var_type = l[1]
+          var_name = l[2]
+          default = l[3]
+          if family == "choice":
+              default = [ i.strip('"') for i in  default.split(",") ]
+      ret[ var_name ] = ( family, var_type, default )
+
+  return ret
 
 
 
+def check_consistency(exec_file, miparser):
+  consistent_param=True
+  
+  if exec_file[:4] == "ctx-":  exec_file = exec_file[4:]
 
-#:::~################################################################
-#:::~ (BEGIN) checks consistency of param.dat
-def check_consistency(exec_file, lines):
-  consistentParam=True
-
-  if exec_file[:4] == "ctx-": exec_file[4:]
-
-  exec_file=exec_file[:exec_file.rfind(.)]
+  exec_file=exec_file[:exec_file.rfind(".") ]
 
   lk=[]
   dk={}
-  backends,lineas= backendize("%s/etc/ct-simul/%s.ct"%(CONFIG_DIR,exec_file))
-  comandos = [ linea.strip()
-                 for linea in
-                 lineas
-                 if len(linea.strip()) > 0
-               ]
+
+  possible_lines = backendize("%s/ct-simul/%s.ct"%(CONFIG_DIR,exec_file))
+
+  assert set(miparser.items() ) in set( possible_lines.keys() ) : "not all the variables are recognised"
+  
 
   for linea in comandos:
     content = [i.strip() for i in linea.split(":")]
@@ -140,7 +155,7 @@ def check_consistency(exec_file, lines):
 
       dk[ content[2] ]=  (tipo, content[1], content[3] )
   consistentFile = True
-  for linea in lines:
+  for elem in lines:
     pp=ParamParser([linea])
     varName = pp.entities[0]
     iterator = pp.iterator_list[0]

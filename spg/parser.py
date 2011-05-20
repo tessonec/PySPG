@@ -15,8 +15,6 @@
 ###########################################################################
 
 
-version_number = '2.9.2'
-release_date = 'May 18 2011'
 
 import iterator 
 
@@ -44,7 +42,7 @@ class Execute(iterator.IterConstant):
 
 
 
-class Parser(iterator.MultIterator):
+class MultIteratorParser(iterator.MultIterator):
     """
       a param iterator with functionality added
     """
@@ -98,13 +96,13 @@ class Parser(iterator.MultIterator):
 
 
 
-class ExtensibleParser(Parser):
+class MultIteratorParserExt(MultIteratorParser):
     """
       a param iterator with functionality added
     """
 
     def __init__(self, stream = None):
-        Parser.__init__(self, stream)
+        MultIteratorParser.__init__(self, stream)
         self.add_ins = {}
         
         if stream is not None:
@@ -151,9 +149,10 @@ class ExtensibleParser(Parser):
 
 
 if __name__ == '__main__':
-    pp = Parser()
+    pp = MultIteratorParser()
     pp.fetch(['+D 0. 10 1',' *r 2 16 2','**e 2 32 2', ':HELLO', '.bar 6 4 3','# this is a comment'])
 #    pp.fetch(['+D 0. 10 1',' *r 2 16 8'])
+    print pp.items()
     print pp.output_conf()
 #    for i in pp:
 #        print i

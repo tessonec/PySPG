@@ -167,18 +167,18 @@ class MultIterator:
   def __init__(self):
     self.data = []
     self.__dict = {}
-    self.items = [] #ordered items
+    self.names = [] #ordered items
     self.__is_reset = True
     
   def add(self, spg_it):
     """ raises an AssertionError if the key is duplicated      
     """
-    assert spg_it.name not in self.items , "duplicate key '%s'"%spg_it.name 
+    assert spg_it.name not in self.names , "duplicate key '%s'"%spg_it.name 
     
     assert self.__is_reset, "multiterator already initiated"
     
-    self.items.append( spg_it.name )
-    self.data.append(spg_it)
+    self.names.append( spg_it.name )
+    self.data.append( spg_it )
     self.__dict[ spg_it.name ] = spg_it.value
 
   def __iter__(self):
@@ -213,10 +213,13 @@ class MultIterator:
       """ the values of the multiterator are supposed to be accessed 
       only by the operator[] (or by the returned value of next()
       """
-      assert name in self.items, "the requested variable was not found in the multiterator"
+      assert name in self.names, "the requested variable was not found in the multiterator"
 
       return self.__dict[name]
 
+
+  def items(self):
+      return self.names
 
   def varying_items(self):
       return [i.name for i in self.data if i.__class__ != IterConstant  ]
@@ -227,15 +230,15 @@ class MultIterator:
   def reorder(self,new_order):
     """ the ordered list of spgiterator's names can be reshuffled with this
     """
-    assert set(self.items) == set(new_order), "the origin and destination set of variables differ"
+    assert set(self.names) == set(new_order), "the origin and destination set of variables differ"
     
-    self.items = new_order
+    self.names = new_order
     
   def position_of(self,var):
     """returns the position in the ordered list of a given variable"""
     assert var in self.order, "the requested variable was not found in the multiterator"
     
-    return self.items.index(var)
+    return self.names.index(var)
     
 
 if __name__=="__main__":
