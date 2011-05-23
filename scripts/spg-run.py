@@ -2,12 +2,11 @@
 
 
 import spg
-
 import spg.params as params
 import spg.utils as utils
 
 import sqlite3 as sql
-import sys
+import sys, optparse
 
 
 class DBBuilder(spg.MultIteratorParser):
@@ -42,8 +41,11 @@ class DBBuilder(spg.MultIteratorParser):
         self.cursor.execute(elements)
         
         elements = "INSERT INTO varying ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i in vi ] ), ", ".join( "?" for i in vi) )
+        query_elements = "SELECT COUNT(*) FROM varying WHERE "%(   "AND ".join([ "%s "%i for i in vi ] ) , ", ".join( "?" for i in vi) )
+        print query_elements
         self.possible_varying_ids = []
         for i in self:
+            
             self.cursor.execute( elements, [ self[i] for i in vi] )
             self.possible_varying_ids.append(self.cursor.lastrowid)
           
@@ -78,6 +80,15 @@ class DBBuilder(spg.MultIteratorParser):
                 self.cursor.execute( "INSERT INTO run_status ( varying_id ) VALUES (%s)"%(i_id) )
 
        self.connection.commit()
+
+
+    def clean_status(self):
+
+
+           for i_id in self.possible_varying_ids:
+                self.cursor.execute( "INSERT INTO run_status ( varying_id ) VALUES (%s)"%(i_id) )
+
+           self.connection.commit()       
 #===============================================================================
 #     cursor.execute("CREATE TABLE IF NOT EXISTS revision_history "
 #                "( id INTEGER PRIMARY KEY, revision INTEGER, author CHAR(64), date CHAR(64), "
@@ -103,10 +114,31 @@ class DBBuilder(spg.MultIteratorParser):
 
 
 
+if __name__ == "__main__":
+  
 
 
-parser = DBBuilder( stream = open("param.dat") )
-
-parser.init_db()
-parser.fill_status(repeat = 10)
+    
+    parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 project_id2 project_id3... ")
+    
+    parser.add_option("--exe", type="string", action='store', dest="executable",
+                            default = None, help = "The program to be run" )
+    
+    parser.add_option("-r","--repeat", type="int", action='store', dest="repeat",
+                            default = 1 , help = "how many times the simulation is to be run" )
+    
+    parser.add_option("--clean-status", action='store_true', dest = "clean_status",
+                          help = 'clean the status of the running_status table in the database')
+    
+    options, args = parser.parse_args()
+    
+    if len(args) == 0:
+        args = "parameters.dat"
+    
+    for i_arg in args:
+      parser = DBBuilder( stream = open(i_arg) )
+      if options.executable is not None:
+          parser.command = options.executable
+      parser.init_db()
+      parser.fill_status(repeat = options.repeat )
 
