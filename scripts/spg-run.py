@@ -4,6 +4,7 @@
 import spg
 
 import spg.params as params
+import spg.utils as utils
 
 import sqlite3 as sql
 import sys
@@ -12,12 +13,14 @@ import sys
 class DBBuilder(spg.MultIteratorParser):
     def __init__(self, stream=None, db_name = "results.sqlite"):
         spg.parser.MultIteratorParser.__init__(self, stream)
+        if not params.check_consistency(self.command, self):
+            utils.newline_msg("ERR","data not consistent.")
+            sys.exit(1)
+        self.stdout_contents = params.contents_in_output(self.command)
+                
         self.connection =  sql.connect(db_name)
-#        connection.text_factory = lambda x: unicode(x, "utf-8", "ignore")
         self.cursor = self.connection.cursor()
-#        self.__init_db()
-#        self.__init_db()
-        
+
     def init_db(self):
         self.cursor.execute("CREATE TABLE IF NOT EXISTS constants "
                             "(id INTEGER PRIMARY KEY, name CHAR(64), value CHAR(64))"
@@ -37,18 +40,44 @@ class DBBuilder(spg.MultIteratorParser):
         elements = "CREATE TABLE IF NOT EXISTS varying (id INTEGER PRIMARY KEY,  %s )"%( ", ".join([ "%s CHAR(64)"%i for i in vi ] ) )
 #        print elements
         self.cursor.execute(elements)
-         
-        elements = "INSERT INTO varying ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i in vi ] ), ", ".join( "?" for i in vi) )
         
+        elements = "INSERT INTO varying ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i in vi ] ), ", ".join( "?" for i in vi) )
+        self.possible_varying_ids = []
         for i in self:
             self.cursor.execute( elements, [ self[i] for i in vi] )
+            self.possible_varying_ids.append(self.cursor.lastrowid)
+          
+#        print self.possible_varying_ids
         self.connection.commit()
-         
-        params.check_consistency(self.command, self)        
-        #cursor.execute("ALTER TABLE projects ADD COLUMN downloaded INTEGER")
-        #cursor.execute("ALTER TABLE projects ADD COLUMN error INTEGER") 
-        #connection.commit()
+        self.number_of_columns = 0
+        for ic, iv in self.stdout_contents:
+            if iv["type"] == "xy":
+                self.number_of_columns += 1
+            if iv["type"] == "xydy":
+                self.number_of_columns += 2
 
+
+        results = "CREATE TABLE IF NOT EXISTS results (id INTEGER PRIMARY KEY, varying_id INTEGER,  %s , FOREIGN KEY(varying_id) REFERENCES varying(id))"%( ", ".join([ "%s CHAR(64)"%ic for ic, iv in self.stdout_contents ] ) )
+#        print results
+        self.cursor.execute(results)
+        self.connection.commit()
+        
+        
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS run_status (id INTEGER PRIMARY KEY, varying_id INTEGER, status CHAR(1), "
+                            "FOREIGN KEY (varying_id ) REFERENCES varying(id) )")
+                            
+        self.connection.commit()
+
+
+    def fill_status(self, repeat = 1):
+
+
+       for i_repeat in range(repeat):
+
+           for i_id in self.possible_varying_ids:
+                self.cursor.execute( "INSERT INTO run_status ( varying_id ) VALUES (%s)"%(i_id) )
+
+       self.connection.commit()
 #===============================================================================
 #     cursor.execute("CREATE TABLE IF NOT EXISTS revision_history "
 #                "( id INTEGER PRIMARY KEY, revision INTEGER, author CHAR(64), date CHAR(64), "
@@ -79,4 +108,5 @@ class DBBuilder(spg.MultIteratorParser):
 parser = DBBuilder( stream = open("param.dat") )
 
 parser.init_db()
+parser.fill_status(repeat = 10)
 
