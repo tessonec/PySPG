@@ -1,7 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import sys, re, os.path
+import sys, re
+import os.path
+import copy
 from math import *
 
 
@@ -136,69 +138,90 @@ def check_consistency(exec_file, miparser):
 
   exec_file=exec_file[:exec_file.rfind(".") ]
 
-  lk=[]
-  dk={}
-
   possible_lines = backendize("%s/ct-simul/%s.ct"%(CONFIG_DIR,exec_file))
 
-  assert set(miparser.items() ) in set( possible_lines.keys() ) : "not all the variables are recognised"
+#  print miparser.items(), possible_lines.keys()
+  assert len(set(miparser.items() ) - set( possible_lines.keys() ) ) == 0 , "not all the variables are recognised: offending vars: %s"%(set( miparser.items() ) -set( possible_lines.keys() )  )
+
+
+  for el in miparser.data:
+      
+      it = copy.copy( el )
+#      print it.name, " ", 
+      family, var_type, default = possible_lines[it.name]
+      values = [ i for i in it ]
+      if len(values) == 0:
+          values = it.data
+#      print it.name, values
+      for val in values:
+#          print it.name, val, family, var_type, default
+          # print val, default
+          if family == "flag" : 
+              utils.newline_msg("VAL", "flag can not contain a value")
+          elif family == "choice" and str(val) not in default: 
+              utils.newline_msg("VAL", "choice value '%s' not recognised: possible values: %s"%(val, default))
+              consistent_param = False
+          elif var_type in set(["float","double"]): 
+              try: 
+                  float(val) 
+              except:
+                  utils.newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
+                  consistent_param = False
+          elif var_type in set(["int","unsigned", "long int", "long"]): 
+              try: 
+                  int(val) 
+              except:
+                  utils.newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
+                  consistent_param = False
+          elif var_type == "string":
+              try: 
+                  str(val) 
+              except:
+                  utils.newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
+                  consistent_param = False
+
+ 
+
+  return consistent_param
+
+
+
+
+
+
   
+def contents_in_output(exec_file):
+   """
+     keysColumns = ["type","label","help","scale","repeat"]
+     the structure of the columns in the files are as follows:
+     name of the variable, and a colon separated list of -optional- options
+     type:  of the plot if xy, one column is used, xydy two columns are used
+     label: to be used in the plotting script
+     scale: comma separated list of minimum and maximum values 
+     repeat: how many columns are to be taken by the parser
+     help: a string containing an explanation of the variable
+   """
+   possible_keys = set(["type","label","help","scale","repeat"])
+   if exec_file[:4] == "ctx-":  exec_file = exec_file[4:]
+   ret = []
+   exec_file=exec_file[:exec_file.rfind(".") ]
 
-  for linea in comandos:
-    content = [i.strip() for i in linea.split(":")]
-    tipo = content[0]
-    if tipo=="flag":
-      dk[ content[1] ]=  (tipo, None,None)
-      lk.append( content[1] )
-    else:
-      lk.append( content[2] )
-
-      dk[ content[2] ]=  (tipo, content[1], content[3] )
-  consistentFile = True
-  for elem in lines:
-    pp=ParamParser([linea])
-    varName = pp.entities[0]
-    iterator = pp.iterator_list[0]
-    print "found variable: '%s' - "%varName,
-
-    if isinstance(iterator,ParamIterators.ItConstant):
-      print "values: ",iterator.data[0]
-    if isinstance(iterator,ParamIterators.ItPunctual):
-      print "values: ",iterator.data
-    if isinstance(iterator, (ParamIterators.ItOperatorProduct,ParamIterators.ItOperatorPlus,
-		    ParamIterators.ItOperatorMinus,ParamIterators.ItOperatorDivision,ParamIterators.ItOperatorPower)):
-      print "values: #%d, [%s,%s] "%(len(iterator.data), iterator.data[0],iterator.data[-1])
-
-    if varName in lk:
-      print "  Ok! variable name"
-      cttVar, typeVar,valueVar= dk[varName]
-      if cttVar == "flag":
-	if iterator.data > [""]:
-          print "  Error! flag variable expected (cannot receive value)"
-          consistentFile = False
-      if cttVar == "choice":
-	valV = [ i.strip(""" '" """) for i in valueVar.strip().split(",")]
-	ok=True
-	for iii in iterator.data:
-	  if iii not in valV:
-	    ok=False
-	    consistentFile=False
-	if not ok:
-	  print "  Error! value assigned to choice is not valid. Expected among: ",valV
-    else:
-      consistentFile = False
-      if not dummyRun:
-	print "--> not known! exiting!!!"
-	sys.exit(1)
-      else:
-	print " <---ERROR IN THIS LINE"
-
-  if not consistentFile :
-    print "Consistency check failed."
-    sys.exit(2)
-  else:
-    print "Consistency check success.\n\n\n\n"
-  if dummyRun:
-    sys.exit(2)
-#:::~ (END)   checks consistency of param.dat
-#:::~################################################################
+   cfgFile = "%s/ct-simul/%s.stdout"%(CONFIG_DIR,exec_file)
+   for line in open(cfgFile):
+       if len(line.strip()) == 0: continue
+       l = [ i.strip() for i in line.split(":")]
+       
+       name = l[0]
+       values = {"type":"xy"}
+       for o in l[1:]:
+           k,v = o.split("=")
+           k=k.strip()
+           v=v.strip()
+           
+           if k not in possible_keys:
+               utils.newline_msg("SYN","in column '%s', unrecognised key '%s'"%(name,k))
+               sys.exit(1)
+           values[k]=v
+       ret.append((name,values))    
+       
+   return ret 

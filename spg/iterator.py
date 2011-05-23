@@ -57,8 +57,8 @@ class Iterator:
     except:
       self.value = ""
       self.__index = None
-    
 
+  
 
 
 class IterConstant(Iterator):
@@ -140,6 +140,7 @@ class IterOperator(Iterator):
        
         return lsTmp
 
+  
 
 #:::~ ###################################################################
 #:::~ ###################################################################
