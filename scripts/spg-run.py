@@ -83,12 +83,13 @@ class DBBuilder(spg.MultIteratorParser):
 
 
     def clean_status(self):
+       self.cursor.execute('UPDATE run_status SET status = "" WHERE status ="R"')
+       self.connection.commit()
 
+    def clean_all_status(self):
+       self.cursor.execute('UPDATE run_status SET status = ""')
+       self.connection.commit()
 
-           for i_id in self.possible_varying_ids:
-                self.cursor.execute( "INSERT INTO run_status ( varying_id ) VALUES (%s)"%(i_id) )
-
-           self.connection.commit()       
 #===============================================================================
 #     cursor.execute("CREATE TABLE IF NOT EXISTS revision_history "
 #                "( id INTEGER PRIMARY KEY, revision INTEGER, author CHAR(64), date CHAR(64), "
@@ -127,18 +128,28 @@ if __name__ == "__main__":
     parser.add_option("-r","--repeat", type="int", action='store', dest="repeat",
                             default = 1 , help = "how many times the simulation is to be run" )
     
-    parser.add_option("--clean-status", action='store_true', dest = "clean_status",
-                          help = 'clean the status of the running_status table in the database')
+    parser.add_option("--clean", action='store_true', dest = "clean",
+                          help = 'cleans the running status in the database of the running processes')
+    
+    parser.add_option("--clean-all", action='store_true', dest = "clean_all",
+                          help = 'clean the all the running status information')
     
     options, args = parser.parse_args()
     
     if len(args) == 0:
-        args = "parameters.dat"
+        args = ["parameters.dat"]
     
     for i_arg in args:
       parser = DBBuilder( stream = open(i_arg) )
+      db_name = i_arg.replace("parameters","").replace(".dat","")
+      db_name = "results%s.sqlite"%db_name
       if options.executable is not None:
           parser.command = options.executable
-      parser.init_db()
-      parser.fill_status(repeat = options.repeat )
+      if options.clean_all:
+          parser.clean_all()
+      elif parser.clean():
+          parser.clean()
+      else:
+          parser.init_db()
+          parser.fill_status(repeat = options.repeat )
 
