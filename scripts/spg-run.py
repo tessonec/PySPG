@@ -9,18 +9,33 @@ import sqlite3 as sql
 import sys, optparse
 
 
-class DBBuilder(spg.MultIteratorParser):
+class DBExecutor(spg.MultIteratorParser):
     def __init__(self, stream=None, db_name = "results.sqlite"):
-        spg.parser.MultIteratorParser.__init__(self, stream)
-        if not params.check_consistency(self.command, self):
+        self.multi_iter = spg.parser.MultIteratorParser(stream)
+        if not params.check_consistency(self.multi_iter.command, self.multi_iter):
             utils.newline_msg("ERR","data not consistent.")
             sys.exit(1)
-        self.stdout_contents = params.contents_in_output(self.command)
-                
+        self.stdout_contents = params.contents_in_output(self.multi_iter.command)
+
         self.connection =  sql.connect(db_name)
         self.cursor = self.connection.cursor()
 
-    def init_db(self):
+  def __iter__(self):
+    return self
+
+  def next(self):
+    if self.__index == None:
+       self.__index = 0
+    else:
+      self.__index += 1
+       
+    try:
+      self.value = self.data[ self.__index ]
+    except:
+      raise StopIteration
+    
+    return self.value
+
         self.cursor.execute("CREATE TABLE IF NOT EXISTS constants "
                             "(id INTEGER PRIMARY KEY, name CHAR(64), value CHAR(64))"
                             )
