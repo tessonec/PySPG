@@ -7,20 +7,20 @@ import spg.utils as utils
 
 import sqlite3 as sql
 import sys, optparse
-
+import time
 
 class DBBuilder(spg.MultIteratorParser):
-    def __init__(self, stream=None, db_name = "results.sqlite"):
+    def __init__(self, stream=None, db_name = "results.sqlite", timeout = 5):
         spg.parser.MultIteratorParser.__init__(self, stream)
         if not params.check_consistency(self.command, self):
             utils.newline_msg("ERR","data not consistent.")
             sys.exit(1)
         self.stdout_contents = params.contents_in_output(self.command)
                 
-        self.connection =  sql.connect(db_name)
+        self.connection =  sql.connect(db_name, timeout = timeout)
         self.cursor = self.connection.cursor()
 
-    def init_db(self):
+    def init_db(self, retry=1):
         self.cursor.execute("CREATE TABLE IF NOT EXISTS constants "
                             "(id INTEGER PRIMARY KEY, name CHAR(64), value CHAR(64))"
                             )
@@ -41,16 +41,28 @@ class DBBuilder(spg.MultIteratorParser):
         self.cursor.execute(elements)
         
         elements = "INSERT INTO varying ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i in vi ] ), ", ".join( "?" for i in vi) )
-        query_elements = "SELECT COUNT(*) FROM varying WHERE "%(   "AND ".join([ "%s "%i for i in vi ] ) , ", ".join( "?" for i in vi) )
-        print query_elements
+        #query_elements = "SELECT COUNT(*) FROM varying WHERE "%(   "AND ".join([ "%s "%i for i in vi ] ) , ", ".join( "?" for i in vi) )
+        #print query_elements
         self.possible_varying_ids = []
-        for i in self:
+        i_try = 0
+        commited = False
+        while i_try < retry and not commited:
+          try:   
+            i_try += 1
+            for i in self:
             
-            self.cursor.execute( elements, [ self[i] for i in vi] )
-            self.possible_varying_ids.append(self.cursor.lastrowid)
+                self.cursor.execute( elements, [ self[i] for i in vi] )
+                self.possible_varying_ids.append(self.cursor.lastrowid)
           
 #        print self.possible_varying_ids
-        self.connection.commit()
+            self.connection.commit()
+            commited = True
+          except sql.OperationalError:  
+              utils.newline_msg("DB", "database is locked (%d/%d)"%(i_try, retry))
+              
+        if not commited:
+              utils.newline_msg("ERR", "database didn't unlock, exiting")
+          
         self.number_of_columns = 0
         for ic, iv in self.stdout_contents:
             if iv["type"] == "xy":
@@ -128,6 +140,12 @@ if __name__ == "__main__":
     parser.add_option("-r","--repeat", type="int", action='store', dest="repeat",
                             default = 1 , help = "how many times the simulation is to be run" )
     
+    parser.add_option("--sql-retries", type="int", action='store', dest="sql_retries",
+                            default = 1 , help = "how many retries should attempt while writting to the database" )
+    
+    parser.add_option("--timeout", type="int", action='store', dest="timeout",
+                            default = 5 , help = "timeout for database connection" )
+    
     parser.add_option("--clean", action='store_true', dest = "clean",
                           help = 'cleans the running status in the database of the running processes')
     
@@ -140,16 +158,16 @@ if __name__ == "__main__":
         args = ["parameters.dat"]
     
     for i_arg in args:
-      parser = DBBuilder( stream = open(i_arg) )
+      parser = DBBuilder( stream = open(i_arg), timeout = options.timeout )
       db_name = i_arg.replace("parameters","").replace(".dat","")
       db_name = "results%s.sqlite"%db_name
       if options.executable is not None:
           parser.command = options.executable
       if options.clean_all:
           parser.clean_all()
-      elif parser.clean():
+      elif options.clean:
           parser.clean()
       else:
-          parser.init_db()
+          parser.init_db(retry = options.sql_retries)
           parser.fill_status(repeat = options.repeat )
 
