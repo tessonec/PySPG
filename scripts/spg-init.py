@@ -21,6 +21,22 @@ class DBBuilder(spg.MultIteratorParser):
         self.cursor = self.connection.cursor()
 
     def init_db(self, retry=1):
+        #:::~ Table with the name of the executable
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS executable "
+                            "(id INTEGER PRIMARY KEY, name CHAR(64))"
+                            )
+        self.cursor.execute( "SELECT name FROM executable " )
+        prev_val = self.cursor.fetchone()
+        
+        
+        if prev_val :
+            if prev_val[0] != self.command:
+                utils.newline_msg("ERR","conflict in executable name (in db '%s', in param '%s')"%(prev_val, self.command))
+        else:
+            self.cursor.execute("INSERT INTO executable (name) VALUES ('%s')"%self.command)
+            self.connection.commit()
+
+        #:::~ Table with the constant values
         self.cursor.execute("CREATE TABLE IF NOT EXISTS constants "
                             "(id INTEGER PRIMARY KEY, name CHAR(64), value CHAR(64))"
                             )
@@ -36,12 +52,12 @@ class DBBuilder(spg.MultIteratorParser):
             
         self.connection.commit()
         vi = self.varying_items()
-        elements = "CREATE TABLE IF NOT EXISTS varying (id INTEGER PRIMARY KEY,  %s )"%( ", ".join([ "%s CHAR(64)"%i for i in vi ] ) )
+        elements = "CREATE TABLE IF NOT EXISTS variables (id INTEGER PRIMARY KEY,  %s )"%( ", ".join([ "%s CHAR(64)"%i for i in vi ] ) )
 #        print elements
         self.cursor.execute(elements)
         
-        elements = "INSERT INTO varying ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i in vi ] ), ", ".join( "?" for i in vi) )
-        #query_elements = "SELECT COUNT(*) FROM varying WHERE "%(   "AND ".join([ "%s "%i for i in vi ] ) , ", ".join( "?" for i in vi) )
+        elements = "INSERT INTO variables ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i in vi ] ), ", ".join( "?" for i in vi) )
+        #query_elements = "SELECT COUNT(*) FROM variables WHERE "%(   "AND ".join([ "%s "%i for i in vi ] ) , ", ".join( "?" for i in vi) )
         #print query_elements
         self.possible_varying_ids = []
         i_try = 0
@@ -71,14 +87,14 @@ class DBBuilder(spg.MultIteratorParser):
                 self.number_of_columns += 2
 
 
-        results = "CREATE TABLE IF NOT EXISTS results (id INTEGER PRIMARY KEY, varying_id INTEGER,  %s , FOREIGN KEY(varying_id) REFERENCES varying(id))"%( ", ".join([ "%s CHAR(64)"%ic for ic, iv in self.stdout_contents ] ) )
+        results = "CREATE TABLE IF NOT EXISTS results (id INTEGER PRIMARY KEY, variables_id INTEGER,  %s , FOREIGN KEY(variables_id) REFERENCES variables(id))"%( ", ".join([ "%s CHAR(64)"%ic for ic, iv in self.stdout_contents ] ) )
 #        print results
         self.cursor.execute(results)
         self.connection.commit()
         
         
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS run_status (id INTEGER PRIMARY KEY, varying_id INTEGER, status CHAR(1), "
-                            "FOREIGN KEY (varying_id ) REFERENCES varying(id) )")
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS run_status (id INTEGER PRIMARY KEY, variables_id INTEGER, status CHAR(1), "
+                            "FOREIGN KEY (variables_id ) REFERENCES variables(id) )")
                             
         self.connection.commit()
 
@@ -89,7 +105,7 @@ class DBBuilder(spg.MultIteratorParser):
        for i_repeat in range(repeat):
 
            for i_id in self.possible_varying_ids:
-                self.cursor.execute( "INSERT INTO run_status ( varying_id ) VALUES (%s)"%(i_id) )
+                self.cursor.execute( "INSERT INTO run_status ( variables_id ) VALUES (%s)"%(i_id) )
 
        self.connection.commit()
 

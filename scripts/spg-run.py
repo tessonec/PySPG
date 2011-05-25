@@ -10,25 +10,38 @@ import sys, optparse
 
 
 class DBExecutor():
-    def __init__(self, stream=None):
-        self.multi_iter = spg.parser.MultIteratorParser(stream)
-        if not params.check_consistency(self.multi_iter.command, self.multi_iter):
-            utils.newline_msg("ERR","data not consistent.")
-            sys.exit(1)
-        self.stdout_contents = params.contents_in_output(self.multi_iter.command)
-
-        self.connection =  sql.connect(db_name)
+    def __init__(self, db_name, timeout = 60):
+        self.connection =  sql.connect(db_name, timeout = timeout)
         self.cursor = self.connection.cursor()
 
+        self.constants = {}
+        self.__init_db()
+
+        self.stdout_contents = params.contents_in_output(self.command)
+
+
+    def __init_db(self):
+
+        #:::~ Table with the name of the executable
+        self.cursor.execute( "SELECT name FROM executable " )
+        self.command = self.cursor.fetchone()[0]
+
+        #:::~ Table with the constant values
+        self.cursor.execute( "SELECT name,value FROM constants " )
+        for k, v in self.cursor:
+            self.constants[k] = v
+
+        #:::~ get the names of the columns
+        self.cursor.execute("PRAGMA table_info(variables)")
+        self.variables = [ i[1] for i in self.cursor.fetchall() ]
+        print self.variables
+        
     def __iter__(self):
         return self
 
     def next(self):
-        if self.__index == None:
-           self.__index = 0
-        else:
-          self.__index += 1
-       
+        
+        self.cursor("SELECT * FROM ")
         try:
           self.value = self.data[ self.__index ]
         except:
@@ -136,35 +149,22 @@ if __name__ == "__main__":
 
     
     parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 project_id2 project_id3... ")
-    
-    parser.add_option("--exe", type="string", action='store', dest="executable",
-                            default = None, help = "The program to be run" )
-    
-    parser.add_option("-r","--repeat", type="int", action='store', dest="repeat",
-                            default = 1 , help = "how many times the simulation is to be run" )
-    
-    parser.add_option("--clean", action='store_true', dest = "clean",
-                          help = 'cleans the running status in the database of the running processes')
-    
-    parser.add_option("--clean-all", action='store_true', dest = "clean_all",
-                          help = 'clean the all the running status information')
+    parser.add_option("--timeout", type="int", action='store', dest="timeout",
+                            default = 60 , help = "timeout for database connection" )
     
     options, args = parser.parse_args()
     
     if len(args) == 0:
-        args = ["parameters.dat"]
+        args = ["results.sqlite"]
     
     for i_arg in args:
-      parser = DBBuilder( stream = open(i_arg) )
-      db_name = i_arg.replace("parameters","").replace(".dat","")
-      db_name = "results%s.sqlite"%db_name
-      if options.executable is not None:
-          parser.command = options.executable
-      if options.clean_all:
-          parser.clean_all()
-      elif parser.clean():
-          parser.clean()
+      if ".sqlite" not in i_arg:
+          db_name = i_arg.replace("parameters","").replace(".dat","")
+          db_name = "results%s.sqlite"%db_name
       else:
-          parser.init_db()
-          parser.fill_status(repeat = options.repeat )
+          db_name = i_arg
+
+      parser = DBExecutor( db_name , timeout = options.timeout)
+#      parser.init_db()
+#          parser.fill_status(repeat = options.repeat )
 
