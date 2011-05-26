@@ -1,8 +1,40 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import sys, os, re
+import sys, os, re, os, os.path
 from math import *
+
+
+def replace_list(list_of_vars, dict_of_values, separator = "_"):
+     """
+       defines how the actual value of the parameter set is printed out.
+       A good candidate to be overwritten in inheriting classes.
+     """
+
+     thisstr = separator.join( [
+                         "%s%s%s"%(k,"-",dict_of_values[k] )
+                         for k in list_of_vars if k
+                     ] )
+
+     return self.replacer(thisstr)
+
+
+
+def replace_string(sss,dict_of_values):
+     thisstr=sss
+     for varname in dict_of_values.keys():
+        
+        thisstr=thisstr.replace(
+                   "{{%s}}"%varname,
+                   "%s"%( dict_of_values[varname] )
+                )
+        thisstr=thisstr.replace(
+                   "{%s}"%varname,
+                   "%s-%s"%( varname, dict_of_values[varname] )
+                )
+     return thisstr
+
+
 
 def parameter_guess(string):
       #fp = string # os.path.abspath(string)

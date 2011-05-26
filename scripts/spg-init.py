@@ -105,17 +105,22 @@ class DBBuilder(spg.MultIteratorParser):
        for i_repeat in range(repeat):
 
            for i_id in self.possible_varying_ids:
-                self.cursor.execute( "INSERT INTO run_status ( variables_id ) VALUES (%s)"%(i_id) )
+                #:::~ status can be either 
+                #:::~    'N': not run
+                #:::~    'R': running
+                #:::~    'D': successfully run (done)
+                #:::~    'E': run but with non-zero error code
+                self.cursor.execute( "INSERT INTO run_status ( variables_id, status ) VALUES (%s,'N')"%(i_id) )
 
        self.connection.commit()
 
 
     def clean_status(self):
-       self.cursor.execute('UPDATE run_status SET status = "" WHERE status ="R"')
+       self.cursor.execute('UPDATE run_status SET status = "N" WHERE status ="R"')
        self.connection.commit()
 
     def clean_all_status(self):
-       self.cursor.execute('UPDATE run_status SET status = ""')
+       self.cursor.execute('UPDATE run_status SET status = "N"')
        self.connection.commit()
 
 #===============================================================================
@@ -174,15 +179,16 @@ if __name__ == "__main__":
         args = ["parameters.dat"]
     
     for i_arg in args:
-      parser = DBBuilder( stream = open(i_arg), timeout = options.timeout )
       db_name = i_arg.replace("parameters","").replace(".dat","")
       db_name = "results%s.sqlite"%db_name
+#      print db_name
+      parser = DBBuilder( stream = open(i_arg), db_name=db_name , timeout = options.timeout )
       if options.executable is not None:
           parser.command = options.executable
       if options.clean_all:
-          parser.clean_all()
+          parser.clean_all_status()
       elif options.clean:
-          parser.clean()
+          parser.clean_status()
       else:
           parser.init_db(retry = options.sql_retries)
           parser.fill_status(repeat = options.repeat )

@@ -6,7 +6,7 @@ import spg.params as params
 import spg.utils as utils
 
 import sqlite3 as sql
-import sys, optparse
+import sys, optparse, os
 
 
 class DBExecutor():
@@ -14,7 +14,7 @@ class DBExecutor():
         self.connection =  sql.connect(db_name, timeout = timeout)
         self.cursor = self.connection.cursor()
 
-        self.constants = {}
+        self.values = {}
         self.__init_db()
 
         self.stdout_contents = params.contents_in_output(self.command)
@@ -29,26 +29,53 @@ class DBExecutor():
         #:::~ Table with the constant values
         self.cursor.execute( "SELECT name,value FROM constants " )
         for k, v in self.cursor:
-            self.constants[k] = v
-
+        #    self.constants[k] = v
+            self.values[k] = v
+            
+        
         #:::~ get the names of the columns
         self.cursor.execute("PRAGMA table_info(variables)")
         self.variables = [ i[1] for i in self.cursor.fetchall() ]
-        print self.variables
+        
+#        print self.variables
         
     def __iter__(self):
         return self
 
     def next(self):
         
-        self.cursor("SELECT * FROM ")
-        try:
-          self.value = self.data[ self.__index ]
-        except:
+        self.cursor.execute(
+                    "SELECT r.id, %s FROM run_status AS r, variables AS v "% ", ".join(["v.%s"%i for i in self.variables]) +
+                    "WHERE r.status = 'N' AND v.id = r.variables_id ORDER BY r.id LIMIT 1" 
+                   )
+                   
+        res = self.cursor.fetchone()
+        if res == None:
           raise StopIteration
-    
-        return self.value
+#        print res    
+        res = list(res)
+        
+        self.cursor.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%res[0]  )
+        self.connection.commit()          
+        
+        for i in range(len(self.variables)):
+            self.values[ self.variables[i] ] = res[i+1]
+        self.current_run_id  = res[0]
+        return self.values
+        
+    def launch_process(self):
+        configuration_filename = "input_%d.dat"%self.current_run_id
+        fconf = open(configuration_filename,"w")
+        for k in self.values.keys():
+            print >> fconf, k, utils.replace_string(self.values[k], self.values) 
+        fconf.close()
 
+                
+        
+        os.remove(configuration_filename)
+        
+        
+    
 #        self.cursor.execute("CREATE TABLE IF NOT EXISTS constants "
 #                            "(id INTEGER PRIMARY KEY, name CHAR(64), value CHAR(64))"
 #                            )
@@ -164,7 +191,10 @@ if __name__ == "__main__":
       else:
           db_name = i_arg
 
-      parser = DBExecutor( db_name , timeout = options.timeout)
-#      parser.init_db()
+      executor = DBExecutor( db_name , timeout = options.timeout)
+      for values in executor:
+          executor.launch_process()
+          
+          #      parser.init_db()
 #          parser.fill_status(repeat = options.repeat )
 
