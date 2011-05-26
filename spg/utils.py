@@ -16,12 +16,12 @@ def replace_list(list_of_vars, dict_of_values, separator = "_"):
                          for k in list_of_vars if k
                      ] )
 
-     return self.replacer(thisstr)
+     return thisstr
 
 
 
 def replace_string(sss,dict_of_values):
-     thisstr=sss
+     thisstr=str(sss)
      for varname in dict_of_values.keys():
         
         thisstr=thisstr.replace(

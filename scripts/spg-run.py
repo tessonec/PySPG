@@ -6,8 +6,11 @@ import spg.params as params
 import spg.utils as utils
 
 import sqlite3 as sql
-import sys, optparse, os
+from subprocess import Popen, PIPE
+import sys, os, os.path
+import optparse
 
+BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
 
 class DBExecutor():
     def __init__(self, db_name, timeout = 60):
@@ -15,6 +18,7 @@ class DBExecutor():
         self.cursor = self.connection.cursor()
 
         self.values = {}
+        self.directory_vars = None
         self.__init_db()
 
         self.stdout_contents = params.contents_in_output(self.command)
@@ -36,6 +40,7 @@ class DBExecutor():
         #:::~ get the names of the columns
         self.cursor.execute("PRAGMA table_info(variables)")
         self.variables = [ i[1] for i in self.cursor.fetchall() ]
+        self.variables = self.variables[1:]
         
 #        print self.variables
         
@@ -54,7 +59,6 @@ class DBExecutor():
           raise StopIteration
 #        print res    
         res = list(res)
-        
         self.cursor.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%res[0]  )
         self.connection.commit()          
         
@@ -62,20 +66,34 @@ class DBExecutor():
             self.values[ self.variables[i] ] = res[i+1]
         self.current_run_id  = res[0]
         return self.values
-        
+
+    def generate_tree(self, dir_vars = None):
+        if dir_vars:
+            self.directory_vars = dir_vars
+        else:
+            self.directory_vars =  self.variables 
+
     def launch_process(self):
+        pwd = os.path.abspath(".")
+        if self.directory_vars:
+            dir = utils.replace_list(self.directory_vars, self.values, separator = "/")
+            if not os.path.exists(dir): os.makedirs(dir)
+            os.chdir(dir)
         configuration_filename = "input_%d.dat"%self.current_run_id
         fconf = open(configuration_filename,"w")
+        
         for k in self.values.keys():
             print >> fconf, k, utils.replace_string(self.values[k], self.values) 
         fconf.close()
-
-                
         
+        cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
+        #cout = Popen(command, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE ).stdout
+        
+        print cmd
         os.remove(configuration_filename)
-        
-        
-    
+        if self.directory_vars:
+            os.chdir(pwd)
+
 #        self.cursor.execute("CREATE TABLE IF NOT EXISTS constants "
 #                            "(id INTEGER PRIMARY KEY, name CHAR(64), value CHAR(64))"
 #                            )
@@ -178,7 +196,13 @@ if __name__ == "__main__":
     parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 project_id2 project_id3... ")
     parser.add_option("--timeout", type="int", action='store', dest="timeout",
                             default = 60 , help = "timeout for database connection" )
-    
+
+    parser.add_option("--tree", action='store_true', dest="tree",
+                       help = "whether to create a directory tree with the key-value pairs" )
+
+    parser.add_option("-d","--directory-var", action='store', type = "string", dest="directory_vars",
+                       default = False, help = "which variables to store as directories, only if tree" )
+
     options, args = parser.parse_args()
     
     if len(args) == 0:
@@ -191,7 +215,11 @@ if __name__ == "__main__":
       else:
           db_name = i_arg
 
-      executor = DBExecutor( db_name , timeout = options.timeout)
+      executor = DBExecutor( db_name, timeout = options.timeout)
+      
+      if options.tree:
+          executor.generate_tree( options.directory_vars )
+
       for values in executor:
           executor.launch_process()
           
