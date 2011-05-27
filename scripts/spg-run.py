@@ -15,6 +15,7 @@ BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
 class DBExecutor():
     def __init__(self, db_name, timeout = 60):
         self.connection =  sql.connect(db_name, timeout = timeout)
+#        self.connection.row_factory = sql.Row
         self.cursor = self.connection.cursor()
 
         self.values = {}
@@ -42,6 +43,11 @@ class DBExecutor():
         self.variables = [ i[1] for i in self.cursor.fetchall() ]
         self.variables = self.variables[1:]
         
+        #:::~ get the names of the outputs
+        self.cursor.execute("PRAGMA table_info(results)")
+        self.output_column = [ i[1] for i in self.cursor.fetchall() ]
+        self.output_column = self.output_column[1:]
+        
 #        print self.variables
         
     def __iter__(self):
@@ -50,7 +56,7 @@ class DBExecutor():
     def next(self):
         
         self.cursor.execute(
-                    "SELECT r.id, %s FROM run_status AS r, variables AS v "% ", ".join(["v.%s"%i for i in self.variables]) +
+                    "SELECT r.id, r.variables_id, %s FROM run_status AS r, variables AS v "% ", ".join(["v.%s"%i for i in self.variables]) +
                     "WHERE r.status = 'N' AND v.id = r.variables_id ORDER BY r.id LIMIT 1" 
                    )
                    
@@ -58,13 +64,14 @@ class DBExecutor():
         if res == None:
           raise StopIteration
 #        print res    
-        res = list(res)
-        self.cursor.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%res[0]  )
-        self.connection.commit()          
-        
-        for i in range(len(self.variables)):
-            self.values[ self.variables[i] ] = res[i+1]
+#        res = list(res)
         self.current_run_id  = res[0]
+        self.current_variables_id  = res[1]
+        self.cursor.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
+        self.connection.commit()          
+#        print res.keys(), dir(res)
+        for i in range(len(self.variables)):
+            self.values[ self.variables[i] ] = res[i+2]
         return self.values
 
     def generate_tree(self, dir_vars = None):
@@ -87,12 +94,31 @@ class DBExecutor():
         fconf.close()
         
         cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
-        #cout = Popen(command, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE ).stdout
-        
-        print cmd
+        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
+        proc.wait()
+        ret_code = proc.returncode
+        output = [i.strip() for i in proc.stdout.readline().split()]
+#        print ret_code, "-->", output
         os.remove(configuration_filename)
         if self.directory_vars:
             os.chdir(pwd)
+#        print self.output_column
+        if ret_code == 0:
+           self.cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
+           all_d = [self.current_variables_id]
+           all_d.extend( output )
+           cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
+           self.cursor.execute( cc )
+           self.connection.commit()
+        else:
+           #:::~ status can be either 
+           #:::~    'N': not run
+           #:::~    'R': running
+           #:::~    'D': successfully run (done)
+           #:::~    'E': run but with non-zero error code
+           self.cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
+           self.connection.commit()
+            
 
 #        self.cursor.execute("CREATE TABLE IF NOT EXISTS constants "
 #                            "(id INTEGER PRIMARY KEY, name CHAR(64), value CHAR(64))"
