@@ -76,11 +76,11 @@ class DBBuilder(spg.MultIteratorParser):
 #        vi = self.varying_items()
 #        print self.data
 #        print self.data
-        elements = "CREATE TABLE IF NOT EXISTS variables (id INTEGER PRIMARY KEY,  %s )"%( ", ".join([ "%s CHAR(64)"%i for i in self.names ] ) )
+        elements = "CREATE TABLE IF NOT EXISTS values_set (id INTEGER PRIMARY KEY,  %s )"%( ", ".join([ "%s CHAR(64)"%i for i in self.names ] ) )
 #        print elements
         self.cursor.execute(elements)
         
-        elements = "INSERT INTO variables ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i in self.names ] ), ", ".join( "?" for i in self.names ) )
+        elements = "INSERT INTO values_set ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i in self.names ] ), ", ".join( "?" for i in self.names ) )
         #query_elements = "SELECT COUNT(*) FROM variables WHERE "%(   "AND ".join([ "%s "%i for i in vi ] ) , ", ".join( "?" for i in vi) )
         #print query_elements
         self.possible_varying_ids = []
@@ -117,8 +117,8 @@ class DBBuilder(spg.MultIteratorParser):
         self.connection.commit()
         
         
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS run_status (id INTEGER PRIMARY KEY, variables_id INTEGER, status CHAR(1), "
-                            "FOREIGN KEY (variables_id ) REFERENCES variables(id) )")
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS run_status (id INTEGER PRIMARY KEY, values_set_id INTEGER, status CHAR(1), "
+                            "FOREIGN KEY (values_set_id ) REFERENCES values_set(id) )")
                             
         self.connection.commit()
 
@@ -134,7 +134,7 @@ class DBBuilder(spg.MultIteratorParser):
                 #:::~    'R': running
                 #:::~    'D': successfully run (done)
                 #:::~    'E': run but with non-zero error code
-                self.cursor.execute( "INSERT INTO run_status ( variables_id, status ) VALUES (%s,'N')"%(i_id) )
+                self.cursor.execute( "INSERT INTO run_status ( values_set_id, status ) VALUES (%s,'N')"%(i_id) )
 
        self.connection.commit()
 

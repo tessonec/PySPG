@@ -31,24 +31,30 @@ class DBExecutor():
         self.cursor.execute( "SELECT name FROM executable " )
         self.command = self.cursor.fetchone()[0]
 
-        #:::~ Table with the constant values
-        self.cursor.execute( "SELECT name,value FROM constants " )
-        for k, v in self.cursor:
-        #    self.constants[k] = v
-            self.values[k] = v
-            
+#        #:::~ Table with the constant values
+#        self.cursor.execute( "SELECT name,value FROM constants " )
+#        for k, v in self.cursor:
+#        #    self.constants[k] = v
+#            self.values[k] = v
+#            
         
+#        #:::~ get the names of the columns
+#        self.cursor.execute("PRAGMA table_info(variables)")
+#        self.entities = [ i[1] for i in self.cursor.fetchall() ]
+#        self.entities = self.entities[1:]
+
         #:::~ get the names of the columns
-        self.cursor.execute("PRAGMA table_info(variables)")
-        self.variables = [ i[1] for i in self.cursor.fetchall() ]
-        self.variables = self.variables[1:]
-        
+        self.cursor.execute("SELECT name FROM entities ORDER BY id")
+        self.entities = [ i[0] for i in self.cursor ]
+#        self.entities = self.entities[1:]
+
+
         #:::~ get the names of the outputs
         self.cursor.execute("PRAGMA table_info(results)")
         self.output_column = [ i[1] for i in self.cursor.fetchall() ]
         self.output_column = self.output_column[1:]
         
-#        print self.variables
+#        print self.entities
         
     def __iter__(self):
         return self
@@ -56,8 +62,8 @@ class DBExecutor():
     def next(self):
         
         self.cursor.execute(
-                    "SELECT r.id, r.variables_id, %s FROM run_status AS r, variables AS v "% ", ".join(["v.%s"%i for i in self.variables]) +
-                    "WHERE r.status = 'N' AND v.id = r.variables_id ORDER BY r.id LIMIT 1" 
+                    "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
+                    "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
                    )
                    
         res = self.cursor.fetchone()
@@ -70,15 +76,15 @@ class DBExecutor():
         self.cursor.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
         self.connection.commit()          
 #        print res.keys(), dir(res)
-        for i in range(len(self.variables)):
-            self.values[ self.variables[i] ] = res[i+2]
+        for i in range(len(self.entities)):
+            self.values[ self.entities[i] ] = res[i+2]
         return self.values
 
     def generate_tree(self, dir_vars = None):
         if dir_vars:
             self.directory_vars = dir_vars
         else:
-            self.directory_vars =  self.variables 
+            self.directory_vars =  self.entities 
 
     def launch_process(self):
         pwd = os.path.abspath(".")
@@ -94,7 +100,8 @@ class DBExecutor():
         fconf.close()
         
         cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
-        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
+        print cmd
+#        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
         proc.wait()
         ret_code = proc.returncode
         output = [i.strip() for i in proc.stdout.readline().split()]

@@ -214,8 +214,9 @@ class MultIterator:
       """ the values of the multiterator are supposed to be accessed 
       only by the operator[] (or by the returned value of next()
       """
+#      print name, self.names
       assert name in self.names, "the requested variable was not found in the multiterator"
-
+      
       return self.__dict[name]
 
 
