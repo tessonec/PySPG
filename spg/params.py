@@ -138,7 +138,7 @@ def check_consistency(exec_file, miparser):
 
   exec_file=exec_file[:exec_file.rfind(".") ]
 
-  possible_lines = backendize("%s/ct-simul/%s.ct"%(CONFIG_DIR,exec_file))
+  possible_lines = backendize("%s/spg-conf/%s.ct"%(CONFIG_DIR,exec_file))
 
 #  print miparser.items(), possible_lines.keys()
   assert len(set(miparser.items() ) - set( possible_lines.keys() ) ) == 0 , "not all the variables are recognised: offending vars: %s"%(set( miparser.items() ) -set( possible_lines.keys() )  )
@@ -206,7 +206,7 @@ def contents_in_output(exec_file):
    ret = []
    exec_file=exec_file[:exec_file.rfind(".") ]
 
-   cfgFile = "%s/ct-simul/%s.stdout"%(CONFIG_DIR,exec_file)
+   cfgFile = "%s/spg-conf/%s.stdout"%(CONFIG_DIR,exec_file)
    for line in open(cfgFile):
        if len(line.strip()) == 0: continue
        l = [ i.strip() for i in line.split(":")]

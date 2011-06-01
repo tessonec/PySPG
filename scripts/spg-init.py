@@ -36,27 +36,49 @@ class DBBuilder(spg.MultIteratorParser):
             self.cursor.execute("INSERT INTO executable (name) VALUES ('%s')"%self.command)
             self.connection.commit()
 
-        #:::~ Table with the constant values
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS constants "
-                            "(id INTEGER PRIMARY KEY, name CHAR(64), value CHAR(64))"
+        #:::~ Table with the defined entities
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS entities "
+                            "(id INTEGER PRIMARY KEY, name CHAR(64), varies INTEGER)"
                             )
-        for k in self.constant_items():
-            self.cursor.execute( "SELECT value FROM constants WHERE name = '%s'"%k)
-            prev_val = self.cursor.fetchone()
-            if prev_val is not None:
-                if prev_val[0] != self[k]:
-                    spg.utils.newline_msg("ERR", "conficting values for parameter '%s' (was %s, is %s)"%(k, self[k], prev_val[0]))
-                    sys.exit(1)
-            else:
-                self.cursor.execute( "INSERT INTO constants (name, value) VALUES (?,?)",(k, self[k]) )
+
+        self.cursor.execute( "SELECT COUNT(*) FROM entities ")
+        n_items = self.cursor.fetchone()
+        if n_items[0] == 0: # table has not been filled
+            for i in self.data:
+                varies = 1 if (i.__class__ != IterConstant) else 0
+                self.cursor.execeute( "INSERT INTO entities (name, varies) VALUES (?,?)",(i.name,  varies)
+        else:
+            self.cursor.execute( "SELECT name FROM entities ")
+            entities = set([i for i in self.cursor])
+            s_names = set(self.names)
+            if entities != set(self.names):
+                spg.utils.newline_msg("ERR", "parameter (was %s, is %s)"%(k, entities, s_names))
+                sys.exit(1)
             
         self.connection.commit()
-        vi = self.varying_items()
-        elements = "CREATE TABLE IF NOT EXISTS variables (id INTEGER PRIMARY KEY,  %s )"%( ", ".join([ "%s CHAR(64)"%i for i in vi ] ) )
+
+
+#        #:::~ Table with the constant values
+#        self.cursor.execute("CREATE TABLE IF NOT EXISTS constants "
+#                            "(id INTEGER PRIMARY KEY, name CHAR(64), value CHAR(64))"
+#                            )
+#        for k in self.constant_items():
+#            self.cursor.execute( "SELECT value FROM constants WHERE name = '%s'"%k)
+#            prev_val = self.cursor.fetchone()
+#            if prev_val is not None:
+#                if prev_val[0] != self[k]:
+#                    spg.utils.newline_msg("ERR", "conficting values for parameter '%s' (was %s, is %s)"%(k, self[k], prev_val[0]))
+#                    sys.exit(1)
+#            else:
+#                self.cursor.execute( "INSERT INTO constants (name, value) VALUES (?,?)",(k, self[k]) )
+            
+#        self.connection.commit()
+#        vi = self.varying_items()
+        elements = "CREATE TABLE IF NOT EXISTS variables (id INTEGER PRIMARY KEY,  %s )"%( ", ".join([ "%s CHAR(64)"%i for i.name in self.data ] ) )
 #        print elements
         self.cursor.execute(elements)
         
-        elements = "INSERT INTO variables ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i in vi ] ), ", ".join( "?" for i in vi) )
+        elements = "INSERT INTO variables ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i.name in self.data ] ), ", ".join( "?" for i in self.data ) )
         #query_elements = "SELECT COUNT(*) FROM variables WHERE "%(   "AND ".join([ "%s "%i for i in vi ] ) , ", ".join( "?" for i in vi) )
         #print query_elements
         self.possible_varying_ids = []
@@ -67,7 +89,7 @@ class DBBuilder(spg.MultIteratorParser):
             i_try += 1
             for i in self:
             
-                self.cursor.execute( elements, [ self[i] for i in vi] )
+                self.cursor.execute( elements, [ self[i.name] for i in self.data] )
                 self.possible_varying_ids.append(self.cursor.lastrowid)
           
 #        print self.possible_varying_ids
