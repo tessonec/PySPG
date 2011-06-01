@@ -45,14 +45,14 @@ class DBBuilder(spg.MultIteratorParser):
         n_items = self.cursor.fetchone()
         if n_items[0] == 0: # table has not been filled
             for i in self.data:
-                varies = 1 if (i.__class__ != IterConstant) else 0
-                self.cursor.execeute( "INSERT INTO entities (name, varies) VALUES (?,?)",(i.name,  varies)
+                varies = 1 if (i.__class__ != spg.IterConstant) else 0
+                self.cursor.execute( "INSERT INTO entities (name, varies) VALUES (?,?)",(i.name,  varies) )
         else:
             self.cursor.execute( "SELECT name FROM entities ")
-            entities = set([i for i in self.cursor])
+            entities = set([i[0] for i in self.cursor])
             s_names = set(self.names)
             if entities != set(self.names):
-                spg.utils.newline_msg("ERR", "parameter (was %s, is %s)"%(k, entities, s_names))
+                spg.utils.newline_msg("ERR", "parameter (was %s, is %s)"%(entities, s_names))
                 sys.exit(1)
             
         self.connection.commit()
@@ -74,29 +74,31 @@ class DBBuilder(spg.MultIteratorParser):
             
 #        self.connection.commit()
 #        vi = self.varying_items()
-        elements = "CREATE TABLE IF NOT EXISTS variables (id INTEGER PRIMARY KEY,  %s )"%( ", ".join([ "%s CHAR(64)"%i for i.name in self.data ] ) )
+#        print self.data
+#        print self.data
+        elements = "CREATE TABLE IF NOT EXISTS variables (id INTEGER PRIMARY KEY,  %s )"%( ", ".join([ "%s CHAR(64)"%i for i in self.names ] ) )
 #        print elements
         self.cursor.execute(elements)
         
-        elements = "INSERT INTO variables ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i.name in self.data ] ), ", ".join( "?" for i in self.data ) )
+        elements = "INSERT INTO variables ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i in self.names ] ), ", ".join( "?" for i in self.names ) )
         #query_elements = "SELECT COUNT(*) FROM variables WHERE "%(   "AND ".join([ "%s "%i for i in vi ] ) , ", ".join( "?" for i in vi) )
         #print query_elements
         self.possible_varying_ids = []
         i_try = 0
         commited = False
         while i_try < retry and not commited:
-          try:   
+#          try:   
             i_try += 1
             for i in self:
-            
-                self.cursor.execute( elements, [ self[i.name] for i in self.data] )
+#                print elements
+                self.cursor.execute( elements, [ self[i] for i in self.names] )
                 self.possible_varying_ids.append(self.cursor.lastrowid)
           
 #        print self.possible_varying_ids
             self.connection.commit()
             commited = True
-          except sql.OperationalError:  
-              utils.newline_msg("DB", "database is locked (%d/%d)"%(i_try, retry))
+#          except sql.OperationalError:  
+#              utils.newline_msg("DB", "database is locked (%d/%d)"%(i_try, retry))
               
         if not commited:
               utils.newline_msg("ERR", "database didn't unlock, exiting")
