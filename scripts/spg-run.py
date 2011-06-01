@@ -101,10 +101,12 @@ class DBExecutor():
         
         cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
         print cmd
-#        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
+        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
         proc.wait()
         ret_code = proc.returncode
+#        ret_code = 0
         output = [i.strip() for i in proc.stdout.readline().split()]
+#        output = ["1" for i in self.output_column[1:] ]
 #        print ret_code, "-->", output
         os.remove(configuration_filename)
         if self.directory_vars:
@@ -115,6 +117,7 @@ class DBExecutor():
            all_d = [self.current_variables_id]
            all_d.extend( output )
            cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
+           print cc
            self.cursor.execute( cc )
            self.connection.commit()
         else:
@@ -125,9 +128,6 @@ class DBExecutor():
            #:::~    'E': run but with non-zero error code
            self.cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
            self.connection.commit()
-            
-
-
 
 
 if __name__ == "__main__":
