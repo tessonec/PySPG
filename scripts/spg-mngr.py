@@ -169,7 +169,7 @@ def process_queue(cmd, name, params):
    
    
    if cmd == "add" and queue:
-          utils.newline_msg("SKP", "queue '%s' already exists"%name )
+          utils.newline_msg("SKP", "add-error queue '%s' already exists"%name )
           sys.exit(2)
    elif cmd == "add" :
        try:
@@ -179,7 +179,7 @@ def process_queue(cmd, name, params):
            
        cursor.execute( "INSERT INTO queues (name, max_jobs, status) VALUES (?,?,?)",(name,  max_jobs, 'S') )
    elif not queue:
-       utils.newline_msg("SKP", "queue does not '%s' exist"%name )
+       utils.newline_msg("SKP", "delete-error queue does not '%s' exist"%name )
        sys.exit(2)
    elif cmd == "remove":
        cursor.execute( "DELETE FROM queues WHERE id = ?",(queue,) )
@@ -204,43 +204,53 @@ def process_queue(cmd, name, params):
 
 
 def process_db(cmd, name, params):
-   # db [add|remove|set|start|stop] DB_NAME {params} 
+   # db [add|remove|set|start|stop|clean] DB_NAME {params} 
    
- #                  "(id INTEGER PRIMARY KEY, name CHAR(64), max_jobs INTEGER, status CHAR(1))")
- 
-   #checks whether the queue is in the 
-   cursor.execute( "SELECT id FROM queues WHERE name = '%s' "%name)
-   queue = cursor.fetchone()
-   if queue is not None:
-       (queue, ) = queue
+#    cursor.execute("CREATE TABLE IF NOT EXISTS dbs "
+#                   "(id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), db_name CHAR(256), status CHAR(1), "
+#                   " total_combinations INTEGER, done_combinations INTEGER, running_combinations INTEGER, error_combinations INTEGER,  "
+#                   " weight FLOAT)")
+#    
+   if os.path.exists( name ):
+       full_name = os.path.realpath(name)
+   else:
+       utils.newline_msg("PTH", "database '%s' does not exist"%name)
+       sys.exit(2)
    
+   path, db_name = os.path.dirname(full_name)
    
+   cursor.execute( "SELECT id FROM dbs WHERE full_name = '%s' "%name)
+   db_id = cursor.fetchone()
+   if db_id is not None:
+       (db_id, ) = queue
+
    if cmd == "add" and queue:
-          utils.newline_msg("SKP", "queue '%s' already exists"%name )
+          utils.newline_msg("SKP", "add-error db '%s' already exists"%full_name )
           sys.exit(2)
    elif cmd == "add" :
        try:
-           max_jobs = params["jobs"]
+           weight = params["weight"]
        except:
-           max_jobs = 1
+           weight = 1.
            
-       cursor.execute( "INSERT INTO queues (name, max_jobs, status) VALUES (?,?,?)",(name,  max_jobs, 'S') )
-   elif not queue:
-       utils.newline_msg("SKP", "queue does not '%s' exist"%name )
+# (full_name, path, db_name, status, total_combinations, done_combinations, 
+#  running_combinations, error_combinations, weight)
+       cursor.execute( "INSERT INTO dbs (full_name, path, db_name, status, weight) VALUES (?,?,?,?,?)",(full_name, path, db_name , 'R', weight) )
+   elif not db_id:
+       utils.newline_msg("SKP", "db does not '%s' exist"%full_name )
        sys.exit(2)
    elif cmd == "remove":
-       cursor.execute( "DELETE FROM queues WHERE id = ?",(queue,) )
+       cursor.execute( "DELETE FROM dbs WHERE id = ?",(db_id,) )
    elif cmd == "set":
 #       try:
-           max_jobs = params["jobs"]
-           cursor.execute( 'UPDATE queues SET max_jobs=? WHERE id = ?', ( max_jobs, queue ) )
+           weight = params["weight"]
+           cursor.execute( 'UPDATE dbs SET weight=? WHERE id = ?', ( weight, db_id ) )
 #       except:
 #           pass
    elif cmd == "start":
-           cursor.execute( "UPDATE queues SET status = 'R' WHERE id = ?", (queue,) )
+           cursor.execute( "UPDATE dbs SET status = 'R' WHERE id = ?", (db_id,) )
    elif cmd == "stop":
-           cursor.execute( "UPDATE queues SET status = 'S' WHERE id = ?", (queue,) )
-   
+           cursor.execute( "UPDATE dbs SET status = 'S' WHERE id = ?", (db_id,) )
    else:
        utils.newline_msg("SYN", "command '%s' not understood"%cmd )
        sys.exit(1)
@@ -283,7 +293,6 @@ if __name__ == "__main__":
     #:::~    'S': stopped
     #:::~    'R': running
     #:::~    'F': finished
-    
     cursor.execute("CREATE TABLE IF NOT EXISTS dbs "
                    "(id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), db_name CHAR(256), status CHAR(1), "
                    " total_combinations INTEGER, done_combinations INTEGER, running_combinations INTEGER, error_combinations INTEGER,  "
@@ -306,24 +315,14 @@ if __name__ == "__main__":
     
     #### :::~ ( end ) DB connection 
     ##################################################################################################
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
 
     parser = optparse.OptionParser(usage = "usage: %prog [options] CMD VERB NAME {params}\n"
                                       "commands [VERBs] NAME {params}: \n"
                                       "   queue [add|remove|set*|start|stop] QUEUE_NAME {params} \n"
                                       "        params :: jobs=NJOBS\n"
                                       "   db    [add|remove|set*|start|stop|clean] DB_NAME {params} \n"
-                                      "        params :: priority=PR[1] \n"
+                                      "        params :: weight=WEIGHT[1] \n"
                                       "VERBs with * indicate that accept params"
                                   )
 
@@ -334,8 +333,5 @@ if __name__ == "__main__":
 #                       default = False, help = "which variables to store as directories, only if tree" )
 
     options, args = parser.parse_args()
-    
+
     execute_command(args)
-    
-    
-    
