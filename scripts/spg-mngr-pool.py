@@ -51,5 +51,5 @@ if __name__ == "__main__":
      pp.update_process_list()
      
      for i_j in pp.running:
-         print len( pp.running[i_j] )
+         print i_j, len( pp.running[i_j] )
      
