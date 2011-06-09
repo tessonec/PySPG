@@ -17,6 +17,7 @@ class DBExecutor():
         self.connection =  sql.connect(db_name, timeout = timeout)
 #        self.connection.row_factory = sql.Row
         self.cursor = self.connection.cursor()
+        self.db_name = db_name
 
         self.values = {}
         self.directory_vars = None
@@ -92,7 +93,7 @@ class DBExecutor():
             dir = utils.replace_list(self.directory_vars, self.values, separator = "/")
             if not os.path.exists(dir): os.makedirs(dir)
             os.chdir(dir)
-        configuration_filename = "input_%d.dat"%self.current_run_id
+        configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
         fconf = open(configuration_filename,"w")
         
         for k in self.values.keys():
@@ -100,7 +101,7 @@ class DBExecutor():
         fconf.close()
         
         cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
-        print cmd
+#        print cmd
         proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
         proc.wait()
         ret_code = proc.returncode
@@ -117,7 +118,7 @@ class DBExecutor():
            all_d = [self.current_variables_id]
            all_d.extend( output )
            cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
-           print cc
+ #          print cc
            self.cursor.execute( cc )
            self.connection.commit()
         else:
