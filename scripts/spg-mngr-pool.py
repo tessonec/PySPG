@@ -20,8 +20,8 @@ class ProcessPool:
         
         
     def update_process_list(self):
-        cmd = "qstat"
-        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
+
+        proc = Popen("qstat", shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
         output = proc.stdout
         proc.wait()
 
@@ -29,7 +29,7 @@ class ProcessPool:
         all_processes = []
 
 
-        for i_q in self.running:
+        for i_q in self.n_jobs:
             self.running[i_q] = []
             
         for l in output:
