@@ -1,0 +1,54 @@
+~/opt/var/spg/running.sqlite
+
+
+
+#######################################################################
+### :::~ Table containing the registered databases
+
+
+###  CREATE TABLE IF NOT EXISTS dbs 
+###    (id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), 
+###     db_name CHAR(256), status CHAR(1), 
+###     total_combinations INTEGER, done_combinations INTEGER, 
+###     running_combinations INTEGER, error_combinations INTEGER, 
+###     weight FLOAT)
+full_name : path + db_name of the registered database
+path : path where the database is to be found
+db_name: filename of the database
+status: status of execution of the database
+    #:::~ status can be either 
+    #:::~    'S': stopped
+    #:::~    'R': running
+    #:::~    'F': finished
+total_combinations: number of parameter combinations found in the database
+done_combinations: number of parameter combinations already run in the database
+running_combinations: number of parameter combinations currently running in the database
+error_combinations: number of parameter combinations that gave error in the database
+weight: weight for selecting this database when compared to others
+
+
+
+#######################################################################
+### :::~ Table containing the queues to which jobs can be submitted
+
+###  CREATE TABLE IF NOT EXISTS queues 
+###           ( id INTEGER PRIMARY KEY, name CHAR(64), max_jobs INTEGER, 
+###           status CHAR(1) )
+name: name of the queue
+max_jobs: maximum number of jobs that can be submitted to the queue
+status: current status of the queue
+    #:::~    'S': stopped
+    #:::~    'R': running
+
+#######################################################################
+### :::~ Table containing the current running jobs
+
+###  CREATE TABLE IF NOT EXISTS running
+###           ( id INTEGER PRIMARY KEY, job_id CHAR(64), 
+###             id_dbs INTEGER, id_params INTEGER )
+
+job_id: for torque job id as given by the environment variable PBS_JOBNAME
+id_dbs: id of the database to which the current running process belongs to
+id_params: id of the currently running set of parameters -obtained from the registered database-
+
+

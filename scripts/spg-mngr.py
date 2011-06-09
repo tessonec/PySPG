@@ -202,7 +202,56 @@ def process_queue(cmd, name, params):
    
 ######################################################################################################
 
-dict_functions = { "register":register_process, "queue": process_queue }
+
+def process_db(cmd, name, params):
+   # db [add|remove|set|start|stop] DB_NAME {params} 
+   
+ #                  "(id INTEGER PRIMARY KEY, name CHAR(64), max_jobs INTEGER, status CHAR(1))")
+ 
+   #checks whether the queue is in the 
+   cursor.execute( "SELECT id FROM queues WHERE name = '%s' "%name)
+   queue = cursor.fetchone()
+   if queue is not None:
+       (queue, ) = queue
+   
+   
+   if cmd == "add" and queue:
+          utils.newline_msg("SKP", "queue '%s' already exists"%name )
+          sys.exit(2)
+   elif cmd == "add" :
+       try:
+           max_jobs = params["jobs"]
+       except:
+           max_jobs = 1
+           
+       cursor.execute( "INSERT INTO queues (name, max_jobs, status) VALUES (?,?,?)",(name,  max_jobs, 'S') )
+   elif not queue:
+       utils.newline_msg("SKP", "queue does not '%s' exist"%name )
+       sys.exit(2)
+   elif cmd == "remove":
+       cursor.execute( "DELETE FROM queues WHERE id = ?",(queue,) )
+   elif cmd == "set":
+#       try:
+           max_jobs = params["jobs"]
+           cursor.execute( 'UPDATE queues SET max_jobs=? WHERE id = ?', ( max_jobs, queue ) )
+#       except:
+#           pass
+   elif cmd == "start":
+           cursor.execute( "UPDATE queues SET status = 'R' WHERE id = ?", (queue,) )
+   elif cmd == "stop":
+           cursor.execute( "UPDATE queues SET status = 'S' WHERE id = ?", (queue,) )
+   
+   else:
+       utils.newline_msg("SYN", "command '%s' not understood"%cmd )
+       sys.exit(1)
+   connection.commit()
+   
+   
+######################################################################################################
+
+
+
+dict_functions = { "db":process_db, "queue": process_queue }
 
 def execute_command( arguments ):
     if len( arguments ) <3 :
@@ -234,7 +283,8 @@ if __name__ == "__main__":
     #:::~    'S': stopped
     #:::~    'R': running
     #:::~    'F': finished
-    cursor.execute("CREATE TABLE IF NOT EXISTS sets "
+    
+    cursor.execute("CREATE TABLE IF NOT EXISTS dbs "
                    "(id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), db_name CHAR(256), status CHAR(1), "
                    " total_combinations INTEGER, done_combinations INTEGER, running_combinations INTEGER, error_combinations INTEGER,  "
                    " weight FLOAT)")
@@ -244,7 +294,14 @@ if __name__ == "__main__":
     #:::~    'R': running
     cursor.execute("CREATE TABLE IF NOT EXISTS queues "
                    "(id INTEGER PRIMARY KEY, name CHAR(64), max_jobs INTEGER, status CHAR(1))")
-    
+
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS running "
+                   "(id INTEGER PRIMARY KEY, jobid CHAR(64), id_dbs INTEGER, id_params INTEGER)")
+
+
+
+
     connection.commit()
     
     #### :::~ ( end ) DB connection 
@@ -261,10 +318,13 @@ if __name__ == "__main__":
     
     
 
-    parser = optparse.OptionParser(usage = "usage: %prog [options] CMD {arguments}"
-                                      "commands: "
-                                      "   queue [add|remove|set|start|stop] QUEUE_NAME {params} "
-                                      "        params::: jobs=NJOBS"
+    parser = optparse.OptionParser(usage = "usage: %prog [options] CMD VERB NAME {params}\n"
+                                      "commands [VERBs] NAME {params}: \n"
+                                      "   queue [add|remove|set*|start|stop] QUEUE_NAME {params} \n"
+                                      "        params :: jobs=NJOBS\n"
+                                      "   db    [add|remove|set*|start|stop|clean] DB_NAME {params} \n"
+                                      "        params :: priority=PR[1] \n"
+                                      "VERBs with * indicate that accept params"
                                   )
 
 #    parser.add_option("--tree", action='store_true', dest="tree",
