@@ -13,13 +13,10 @@ from subprocess import Popen, PIPE
   
 class ProcessPool:
     def __init__(self):
-        self.running_default = []
-        self.running_long = []
-        self.running_short = []
 
-        self.jobs_default = 20
-        self.jobs_long = 5
-        self.jobs_short = 2
+        self.running = {} 
+        self.n_jobs = {"default":20, "short":3, "long":5}
+
         
         
     def update_process_list(self):
@@ -31,23 +28,21 @@ class ProcessPool:
         ret_code = proc.returncode
         all_processes = []
 
-        self.running_default = filter( lambda (job_id, status, queue): status == "R" and queue == "default", all_processes)
-        self.running_long = filter( lambda (job_id, status, queue): status == "R" and queue == "long", all_processes)
-        self.running_short = filter( lambda (job_id, status, queue): status == "R" and queue == "short", all_processes)
 
-
+        for i_q in self.running:
+            self.running[i_q] = []
+            
         for l in output:
             content = l.split()
             try:
                 job_id = int( content[0].split(".")[0] )
                 status = content[4]
                 queue =  content[5]
+                if status == "R":
+                    self.running[queue].append( job_id ) 
             except: 
                 continue
-            all_processes.append( ( job_id, status, queue ) )
-        self.running_default = filter( lambda (job_id, status, queue): status == "R" and queue == "default", all_processes)
-        self.running_long = filter( lambda (job_id, status, queue): status == "R" and queue == "long", all_processes)
-        self.running_short = filter( lambda (job_id, status, queue): status == "R" and queue == "short", all_processes)
+
 
 
 if __name__ == "__main__":
@@ -55,7 +50,5 @@ if __name__ == "__main__":
      pp = ProcessPool()
      pp.update_process_list()
      
-     print pp.running_default
-     print pp.running_long
-     print pp.running_short
+     print pp.running
      
