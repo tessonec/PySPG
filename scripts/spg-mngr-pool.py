@@ -50,5 +50,6 @@ if __name__ == "__main__":
      pp = ProcessPool()
      pp.update_process_list()
      
-     print pp.running
+     for i_j in pp.running:
+         print len( pp.running[i_j] )
      
