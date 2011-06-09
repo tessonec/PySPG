@@ -217,14 +217,14 @@ def process_db(cmd, name, params):
        utils.newline_msg("PTH", "database '%s' does not exist"%name)
        sys.exit(2)
    
-   path, db_name = os.path.dirname(full_name)
+   path, db_name = os.path.split(full_name)
    
-   cursor.execute( "SELECT id FROM dbs WHERE full_name = '%s' "%name)
+   cursor.execute( "SELECT id FROM dbs WHERE full_name = '%s' "%full_name)
    db_id = cursor.fetchone()
    if db_id is not None:
-       (db_id, ) = queue
+       (db_id, ) = db_id
 
-   if cmd == "add" and queue:
+   if cmd == "add" and db_id:
           utils.newline_msg("SKP", "add-error db '%s' already exists"%full_name )
           sys.exit(2)
    elif cmd == "add" :
@@ -237,7 +237,7 @@ def process_db(cmd, name, params):
 #  running_combinations, error_combinations, weight)
        cursor.execute( "INSERT INTO dbs (full_name, path, db_name, status, weight) VALUES (?,?,?,?,?)",(full_name, path, db_name , 'R', weight) )
    elif not db_id:
-       utils.newline_msg("SKP", "db does not '%s' exist"%full_name )
+       utils.newline_msg("SKP", "db '%s' is not registered"%full_name )
        sys.exit(2)
    elif cmd == "remove":
        cursor.execute( "DELETE FROM dbs WHERE id = ?",(db_id,) )
