@@ -82,7 +82,7 @@ class ProcessPool:
         output = proc.stdout
         proc.wait()
 
-        ret_code = proc.returncode
+#        ret_code = proc.returncode
 
         for i_q in self.queues:
             self.queues[i_q].processes = []
