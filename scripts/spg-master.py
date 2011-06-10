@@ -28,11 +28,11 @@ class DBInfo:
    def __init__(self, full_name = "", path= "", db_name= "", id=-1, weight=1.):
        self.full_name = full_name
        self.path = full_name
-       self.db_name = db
+       self.db_name = db_name
        self.weight = weight
-       self.id = id
+       DBInfo.id = id
        
-       Queue.normalising += weight
+       DBInfo.normalising += weight
 
 
 class Queue:
@@ -67,10 +67,10 @@ class ProcessPool:
        res = self.cur_master.execute("SELECT name, max_jobs FROM queues WHERE status = 'R'")
 
        for (name, max_jobs) in res:
+           
            self.queues[name] = Queue(name, max_jobs)
 
        res = self.cur_master.execute("SELECT id, full_name, path, db_name, weight FROM dbs WHERE status = 'R'")
-       
 
        for (id, full_name, path, db_name, weight) in res:
            self.dbs[full_name] = DBInfo(full_name, path, db_name,id, weight)
@@ -106,5 +106,5 @@ if __name__ == "__main__":
      pp.update_process_list()
      
      for i_j in pp.queues:
-         print i_j, pp.queues[i_j]
+         print i_j, pp.queues[i_j].processes
      
