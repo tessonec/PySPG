@@ -199,7 +199,7 @@ if __name__ == "__main__":
 
 
     cursor.execute("CREATE TABLE IF NOT EXISTS running "
-                   "(id INTEGER PRIMARY KEY, jobid CHAR(64), id_dbs INTEGER, id_params INTEGER)")
+                   "(id INTEGER PRIMARY KEY, job_id CHAR(64), dbs_id INTEGER, params_id INTEGER)")
 
 
 
