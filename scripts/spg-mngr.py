@@ -115,31 +115,29 @@ def process_db(cmd, name, params):
            
        conn2 = sql.connect(full_name)
        cur2 = conn2.cursor()
-                #:::~    'N': not run yet
-                #:::~    'R': running
-                #:::~    'D': successfully run (done)
-                #:::~    'E': run but with non-zero error code
-
+       #:::~    'N': not run yet
+       #:::~    'R': running
+       #:::~    'D': successfully run (done)
+       #:::~    'E': run but with non-zero error code
 
        d_status = {"E":0,"R":0,"D":0}
        cur2.execute("SELECT COUNT(*) FROM run_status ;")
        (n_all, ) = cur2.fetchone()
-       d_status["all"] = n_all
+       cur2.execute("SELECT COUNT(*) FROM values_set ;")
+       (total_sov, ) = cur2.fetchone()
+       
        cur2.execute("SELECT status, COUNT(*) FROM run_status GROUP BY status;")
        for k,v in cur2:
            d_status[k] = v
-       cursor.execute( "INSERT INTO dbs (full_name, path, db_name, status, total_combinations, done_combinations, running_combinations, error_combinations,weight) VALUES (?,?,?,?,?,?,?,?,?)",(full_name, path, db_name , 'R', d_status["all"], d_status['D'],d_status['R'],d_status['E'], weight) )
+       cursor.execute( "INSERT INTO dbs (full_name, path, db_name, status, total_values_set, total_combinations, done_combinations, running_combinations, error_combinations,weight) VALUES (?,?,?,?,?,?,?,?,?,?)",(full_name, path, db_name , 'R', total_sov, n_all, d_status['D'],d_status['R'],d_status['E'], weight) )
    elif not db_id:
        utils.newline_msg("SKP", "db '%s' is not registered"%full_name )
        sys.exit(2)
    elif cmd == "remove":
        cursor.execute( "DELETE FROM dbs WHERE id = ?",(db_id,) )
    elif cmd == "set":
-#       try:
            weight = params["weight"]
            cursor.execute( 'UPDATE dbs SET weight=? WHERE id = ?', ( weight, db_id ) )
-#       except:
-#           pass
    elif cmd == "start":
            cursor.execute( "UPDATE dbs SET status = 'R' WHERE id = ?", (db_id,) )
    elif cmd == "stop":
@@ -189,8 +187,8 @@ if __name__ == "__main__":
     #:::~    'R': running
     #:::~    'F': finished
     cursor.execute("CREATE TABLE IF NOT EXISTS dbs "
-                   "(id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), db_name CHAR(256), status CHAR(1), "
-                   " total_combinations INTEGER, done_combinations INTEGER, running_combinations INTEGER, error_combinations INTEGER,  "
+                   "(id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), db_name CHAR(256), status CHAR(1), total_values_set INTEGER, "
+                   " total_combinations INTEGER, done_combinations INTEGER, running_combinations INTEGER, error_combinations INTEGER, "
                    " weight FLOAT)")
     
     #:::~ status can be either 
