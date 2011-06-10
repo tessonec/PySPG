@@ -39,6 +39,11 @@ if __name__ == "__main__":
         if options.tree:
           executor.generate_tree( options.directory_vars )
         executor.next()
+        running_id = executor.current_run_id 
+        
+        selected.update_master_db(process_id, running_id)
+        
+        
         executor.launch_process()
         
         
