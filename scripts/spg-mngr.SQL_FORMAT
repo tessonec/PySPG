@@ -19,7 +19,7 @@ status: status of execution of the database
     #:::~ status can be either 
     #:::~    'S': stopped
     #:::~    'R': running
-    #:::~    'F': finished
+    #:::~    'D': done, finished
 total_combinations: number of parameter combinations found in the database
 done_combinations: number of parameter combinations already run in the database
 running_combinations: number of parameter combinations currently running in the database

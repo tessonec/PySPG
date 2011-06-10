@@ -111,7 +111,7 @@ class DBBuilder(spg.MultIteratorParser):
                 self.number_of_columns += 2
 
 
-        results = "CREATE TABLE IF NOT EXISTS results (id INTEGER PRIMARY KEY, variables_id INTEGER,  %s , FOREIGN KEY(variables_id) REFERENCES variables(id))"%( ", ".join([ "%s CHAR(64)"%ic for ic, iv in self.stdout_contents ] ) )
+        results = "CREATE TABLE IF NOT EXISTS results (id INTEGER PRIMARY KEY, values_set_id INTEGER,  %s , FOREIGN KEY(values_set_id) REFERENCES values_set(id))"%( ", ".join([ "%s CHAR(64)"%ic for ic, iv in self.stdout_contents ] ) )
 #        print results
         self.cursor.execute(results)
         self.connection.commit()
