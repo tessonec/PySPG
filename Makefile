@@ -8,7 +8,7 @@ BASEDIR         = $(HOME)/opt
 
 
 install:
-	install scripts/spg-db-init.py ${BASEDIR}/bin
+	install scripts/spg-db.py ${BASEDIR}/bin
 	install scripts/spg-run.py ${BASEDIR}/bin
 	install scripts/spg-master.py ${BASEDIR}/bin
 	install scripts/spg-worker.py ${BASEDIR}/bin

@@ -1,6 +1,3 @@
-~/opt/var/spg/running.sqlite
-
-
 
 #######################################################################
 ### :::~ Table with the name of the executable
@@ -48,5 +45,4 @@ status: the status of the program output. Status can be either
                 #:::~    'R': running
                 #:::~    'D': successfully run (done)
                 #:::~    'E': run but with non-zero error code
-
 

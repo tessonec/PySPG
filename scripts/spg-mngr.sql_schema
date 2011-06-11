@@ -14,7 +14,7 @@
 ###     db_name CHAR(256), status CHAR(1), 
 ###     total_combinations INTEGER, done_combinations INTEGER, 
 ###     running_combinations INTEGER, error_combinations INTEGER, 
-###     weight FLOAT)
+###     weight FLOAT
 full_name : path + db_name of the registered database
 path : path where the database is to be found
 db_name: filename of the database
@@ -28,6 +28,7 @@ done_combinations: number of parameter combinations already run in the database
 running_combinations: number of parameter combinations currently running in the database
 error_combinations: number of parameter combinations that gave error in the database
 weight: weight for selecting this database when compared to others
+queue: comma separated list containing to which queues the job may be submitted. 'any' if any
 
 
 

@@ -198,8 +198,8 @@ def get_stats(cmd, name, params):
 dict_functions = { "db":process_db, "queue": process_queue, "stat": get_stats }
 
 def execute_command( arguments ):
-    if len( arguments ) <3 :
-        return
+#    if len( arguments ) <3 :
+#        return
     name = None
     params = {}
     

@@ -9,6 +9,9 @@ import sqlite3 as sql
 import sys, optparse
 import time
 
+
+VAR_PATH = os.path.abspath(params.CONFIG_DIR+"/../var/spg")
+
 class DBBuilder(spg.MultIteratorParser):
     def __init__(self, stream=None, db_name = "results.sqlite", timeout = 5):
         spg.parser.MultIteratorParser.__init__(self, stream)
@@ -147,6 +150,8 @@ class DBBuilder(spg.MultIteratorParser):
        self.cursor.execute('UPDATE run_status SET status = "N"')
        self.connection.commit()
 
+    
+
 #===============================================================================
 #     cursor.execute("CREATE TABLE IF NOT EXISTS revision_history "
 #                "( id INTEGER PRIMARY KEY, revision INTEGER, author CHAR(64), date CHAR(64), "
@@ -167,6 +172,89 @@ class DBBuilder(spg.MultIteratorParser):
 
 
 
+def init_db(i_arg,params,options):
+      i_arg, db_name = translate_name(i_arg)
+      parser = DBBuilder( stream = open(i_arg), db_name=db_name , timeout = options.timeout )
+      repeat = 1
+      if 'repeat' in params:
+         repeat = params['repeat']
+      sql_retries = 1
+      if 'sql_retries' in params:
+         sql_retries = params['sql_retries']
+      if 'executable' in params:
+          parser.command = repeat = params['executable']
+      parser.init_db(retry = sql_retries)
+      parser.fill_status(repeat = repeat)
+
+
+def clean_all_db(i_arg,params,options):
+          i_arg, db_name = translate_name(i_arg)
+          parser = DBBuilder( stream = open(i_arg), db_name=db_name , timeout = options.timeout )
+
+          parser.clean_all_status()
+
+
+def clean_db(i_arg,params,options):
+      i_arg, db_name = translate_name(i_arg)
+      parser = DBBuilder( stream = open(i_arg), db_name=db_name , timeout = options.timeout )
+
+      parser.clean_status()
+
+
+
+def remove_db(i_arg,params,parser)    
+    i_arg, db_name = translate_name(i_arg)
+    connection = sql.connect("%s/running.sqlite"%VAR_PATH)
+    cursor = connection.cursor()
+    cursor.execute( "DELETE FROM dbs WHERE full_name = ?",(os.path.realpath(db_name),) )
+
+    connection.commit()
+
+def translate_name(st):
+    if ".sqlite" in st:
+      par_name = st.replace("results","").replace(".sqlite","")
+      par_name = "parameters%s.dat"%par_name
+      return par_name, st
+    else:
+      db_name = st.replace("parameters","").replace(".dat","")
+      db_name = "results%s.sqlite"%db_name
+      return st,db_name
+        
+
+
+def get_parameters(arg):
+    ret = {}
+    
+    for i in arg.split(":"):
+        [k,v] = i.split("=")
+        ret[k] = v
+
+    return ret
+
+
+
+dict_functions = { "init":init_db, "clean": clean_db, "clean_all": clean_all_db , "remove": remove_db}
+
+def execute_command( arguments , options):
+#    if len( arguments ) <3 :
+#        return
+    name = None
+    params = {}
+    
+    full_command = arguments[0]
+
+    i_arg, db_name = translate_name( arguments[1] ) 
+    if len(arguments) > 2 :
+        params = get_parameters( arguments[2] )
+    else:
+        params = {}
+
+    f = dict_functions[ full_command ] 
+
+#      print db_name
+
+    f(name, params, options)
+
 
 
 
@@ -177,43 +265,20 @@ if __name__ == "__main__":
 
 
     
-    parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 project_id2 project_id3... ")
-    
-    parser.add_option("--exe", type="string", action='store', dest="executable",
-                            default = None, help = "The program to be run" )
-    
-    parser.add_option("-r","--repeat", type="int", action='store', dest="repeat",
-                            default = 1 , help = "how many times the simulation is to be run" )
-    
-    parser.add_option("--sql-retries", type="int", action='store', dest="sql_retries",
-                            default = 1 , help = "how many retries should attempt while writting to the database" )
+    parser = optparse.OptionParser(usage = "usage: %prog [options] CMD VERB NAME {params}\n"
+                                      "commands NAME {params}: \n"
+                                      "   init PARAMETERS_NAME|DB_NAME \n"
+                                      "        params :: executable=EXE_NAME , repeat=REPEAT, sql_retries=1\n"
+                                      "   clean-all PARAMETERS_NAME|DB_NAME \n"
+                                      "   clean PARAMETERS_NAME|DB_NAME \n"
+                                      "   remove PARAMETERS_NAME|DB_NAME \n"
+                                  )
     
     parser.add_option("--timeout", type="int", action='store', dest="timeout",
                             default = 5 , help = "timeout for database connection" )
     
-    parser.add_option("--clean", action='store_true', dest = "clean",
-                          help = 'cleans the running status in the database of the running processes')
-    
-    parser.add_option("--clean-all", action='store_true', dest = "clean_all",
-                          help = 'clean the all the running status information')
-    
     options, args = parser.parse_args()
-    
-    if len(args) == 0:
-        args = ["parameters.dat"]
-    
-    for i_arg in args:
-      db_name = i_arg.replace("parameters","").replace(".dat","")
-      db_name = "results%s.sqlite"%db_name
-#      print db_name
-      parser = DBBuilder( stream = open(i_arg), db_name=db_name , timeout = options.timeout )
-      if options.executable is not None:
-          parser.command = options.executable
-      if options.clean_all:
-          parser.clean_all_status()
-      elif options.clean:
-          parser.clean_status()
-      else:
-          parser.init_db(retry = options.sql_retries)
-          parser.fill_status(repeat = options.repeat )
+
+    execute_command(args, options)
+
 
