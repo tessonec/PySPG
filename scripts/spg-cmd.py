@@ -164,13 +164,14 @@ def process_db(cmd, name, params):
 def get_stats(cmd, name, params):
    # queue [add|remove|set|stop] QUEUE_NAME {params} 
    pp = ProcessPool()
+
    if cmd == "queue":
        pp.update_worker_info()
        
        for q in pp.queues:
-           print "queue: '%s' -- running jobs: %d"(q, len(pp.queues[q].processes) )
+           print "queue: '%s' -- running jobs: %d -- maximum: %s"%(q, len(pp.queues[q].processes), pp.queues[q].jobs)
    # "(id INTEGER PRIMARY KEY, name CHAR(64), max_jobs INTEGER, status CHAR(1))")
-   if cmd == "db":
+   elif cmd == "db":
        res = pp.curr_cur.execute("SELECT full_name, status, total_combinations, done_combinations "
                         "running_combinations, error_combinations FROM dbs")
                         
@@ -186,7 +187,7 @@ def get_stats(cmd, name, params):
 ###     running_combinations INTEGER, error_combinations INTEGER, 
 ###     weight FLOAT)
 
-   if cmd == "process":
+   elif cmd == "process":
        res = pp.curr_cur.execute("SELECT dbs.full_name, dbs.weight, COUNT(*), queue FROM dbs, running WHERE dbs.id = running.dbs_id GROUP BY running.dbs_id ")
        for fn, w, c, q in res:
            print "db: '%s' -- weight=%f -- running proc: %d -- queueable in: '%s'"%(fn,w,c,q)
