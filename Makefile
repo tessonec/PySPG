@@ -10,6 +10,7 @@ BASEDIR         = $(HOME)/opt
 install:
 	install scripts/spg-db.py ${BASEDIR}/bin
 	install scripts/spg-run.py ${BASEDIR}/bin
+	install scripts/spg-cmd.py ${BASEDIR}/bin
 	install scripts/spg-master.py ${BASEDIR}/bin
 	install scripts/spg-worker.py ${BASEDIR}/bin
 	install -m 0644 spg/__init__.py ${BASEDIR}/lib/spg

@@ -184,7 +184,7 @@ def init_db(i_arg,params,options):
       if 'executable' in params:
           parser.command = repeat = params['executable']
       parser.init_db(retry = sql_retries)
-      parser.fill_status(repeat = repeat)
+      parser.fill_status(repeat = int(repeat))
 
 
 def clean_all_db(i_arg,params,options):
