@@ -7,7 +7,7 @@ import spg.utils as utils
 
 import sqlite3 as sql
 import sys, optparse
-import time
+import time, os, os.path
 
 
 VAR_PATH = os.path.abspath(params.CONFIG_DIR+"/../var/spg")
@@ -202,7 +202,7 @@ def clean_db(i_arg,params,options):
 
 
 
-def remove_db(i_arg,params,parser)    
+def remove_db(i_arg,params,parser):
     i_arg, db_name = translate_name(i_arg)
     connection = sql.connect("%s/running.sqlite"%VAR_PATH)
     cursor = connection.cursor()
@@ -238,7 +238,6 @@ dict_functions = { "init":init_db, "clean": clean_db, "clean_all": clean_all_db 
 def execute_command( arguments , options):
 #    if len( arguments ) <3 :
 #        return
-    name = None
     params = {}
     
     full_command = arguments[0]
@@ -253,7 +252,7 @@ def execute_command( arguments , options):
 
 #      print db_name
 
-    f(name, params, options)
+    f(i_arg, params, options)
 
 
 
