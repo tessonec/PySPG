@@ -172,15 +172,13 @@ def get_stats(cmd, name, params):
            print "queue: '%s' -- running jobs: %d -- maximum: %s"%(q, len(pp.queues[q].processes), pp.queues[q].jobs)
    # "(id INTEGER PRIMARY KEY, name CHAR(64), max_jobs INTEGER, status CHAR(1))")
    elif cmd == "db":
-       res = pp.curr_cur.execute("SELECT full_name, status, total_combinations, done_combinations "
+       res = pp.cur_master.execute("SELECT full_name, status, total_combinations, done_combinations, "
                         "running_combinations, error_combinations FROM dbs")
-                        
        for full_name, status, total, done, running, error in res:
            frac_done = float(done)/float(total)
            frac_running = float(running)/float(total)
            frac_error = float(error)/float(total)
-           print "db: '%s' [%s] -- total: %d-- done: %d (%.5f) -- running: %d (%.5f) -- error: %d (%.5f)"%(full_name, status, total, done, frac_done, running, frac_running, error, frac_error) 
-          
+           print "db: '%s' [%s] TOT: %d - D: %d (%.5f) - R: %d (%.5f) -- E: %d (%.5f)"%(os.path.relpath(full_name,"/home/tessonec"), status, total, done, frac_done, running, frac_running, error, frac_error) 
 ###    (id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), 
 ###     db_name CHAR(256), status CHAR(1), 
 ###     total_combinations INTEGER, done_combinations INTEGER, 
