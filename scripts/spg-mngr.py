@@ -4,6 +4,8 @@
 import spg
 import spg.params as params
 import spg.utils as utils
+from spg.pool import ProcessPool
+
 
 import sqlite3 as sql
 from subprocess import Popen, PIPE
@@ -153,17 +155,54 @@ def process_db(cmd, name, params):
 ######################################################################################################
 
 
+def get_stats(cmd, name, params):
+   # queue [add|remove|set|stop] QUEUE_NAME {params} 
+   pp = ProcessPool()
+   if cmd == "queue":
+       pp.update_worker_info()
+       
+       for q in pp.queues:
+           print "queue: '%s' -- running jobs: %d"(q, len(pp.queues[q].processes) )
+   # "(id INTEGER PRIMARY KEY, name CHAR(64), max_jobs INTEGER, status CHAR(1))")
+   if cmd == "db":
+       res = pp.curr_cur.execute("SELECT full_name, status, total_combinations, done_combinations "
+                        "running_combinations, error_combinations FROM dbs")
+                        
+       for full_name, status, total, done, running, error in res:
+           frac_done = float(done)/float(total)
+           frac_running = float(running)/float(total)
+           frac_error = float(error)/float(total)
+           print "db: '%s' [%s] -- total: %d-- done: %d (%.5f) -- running: %d (%.5f) -- error: %d (%.5f)"%(full_name, status, total, done, frac_done, running, frac_running, error, frac_error) 
+          
+###    (id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), 
+###     db_name CHAR(256), status CHAR(1), 
+###     total_combinations INTEGER, done_combinations INTEGER, 
+###     running_combinations INTEGER, error_combinations INTEGER, 
+###     weight FLOAT)
 
-dict_functions = { "db":process_db, "queue": process_queue }
+   if cmd == "process":
+       res = pp.curr_cur.execute("SELECT dbs.full_name, dbs.weight, COUNT(*) FROM dbs, running WHERE dbs.id = running.dbs_id GROUP BY running.dbs_id ")
+       for fn, w, c in res:
+           print "db: '%s' -- weight=%f -- running proc: %d"%(fn,w,c)
+   else:
+       utils.newline_msg("SYN", "command '%s' not understood"%cmd )
+       sys.exit(1)
+
+
+dict_functions = { "db":process_db, "queue": process_queue, "stat": get_stats }
 
 def execute_command( arguments ):
     if len( arguments ) <3 :
         return
-        
+    name = None
+    params = {}
+    
     full_command = arguments[0]
 
     cmd = arguments[1] 
-    name = arguments[2]
+    if len(arguments) > 2 :
+        name = arguments[2]
+    
     if len(arguments) > 3 :
         params = get_parameters( arguments[3] )
     else:
@@ -216,6 +255,7 @@ if __name__ == "__main__":
                                       "        params :: jobs=NJOBS\n"
                                       "   db    [add|remove|set*|start|stop|clean] DB_NAME {params} \n"
                                       "        params :: weight=WEIGHT[1] \n"
+                                      "   stat  [queue|db] \n"
                                       "VERBs with * indicate that accept params"
                                   )
 
