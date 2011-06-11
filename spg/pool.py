@@ -108,7 +108,7 @@ class ProcessPool:
            self.dbs[full_name] = DBInfo(full_name, path, db_name,id, weight)
 
 
-    def update_process_list(self):
+    def update_worker_info(self):
 
         proc = Popen("qstat", shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
         output = proc.stdout
@@ -128,6 +128,36 @@ class ProcessPool:
             except: 
                 continue
 
+
+    def update_dbs_info(self):
+
+        for i in self.dbs[full_name]:
+            curr_db = self.dbs[i]
+            
+            curr_conn = sql.connect( curr_db.full_name )
+            curr_cur = curr_conn.cursor()
+            
+            curr_cur.execute("SELECT status, COUNT(*) FROM run_status GROUP BY status")
+            
+            res = {}
+            ac = 0
+            for (k,v) in curr_cur:
+                res[k] = int(v)
+                ac += int(v)
+                #:::~    'N': not run yet
+                #:::~    'R': running
+                #:::~    'D': successfully run (done)
+                #:::~    'E': run but with non-zero error code
+            self.cur_master.execute("UPDATE dbs" 
+                                    "SET total_combinations = ?, done_combinations = ?,"
+                                    "running_combinations =  ? , error_combinations = ?, "
+                                    "WHERE id = ?", (ac, res['D'], res['R'], res['E'],i.id))
+        self.conn_master.commit()
+###    (id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), 
+###     db_name CHAR(256), status CHAR(1), 
+###     total_combinations INTEGER, done_combinations INTEGER, 
+###     running_combinations INTEGER, error_combinations INTEGER, 
+            
 
 
 ###################################################################################################
