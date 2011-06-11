@@ -17,13 +17,13 @@ BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
 
 class DBInfo:
     normalising = 0.
-    def __init__(self, full_name = "", path= "", db_name= "", id=-1, weight=1.):
+    def __init__(self, full_name = "", path= "", db_name= "", id=-1, weight=1.,queue = 'any'):
        self.full_name = full_name
        self.path = full_name
        self.db_name = db_name
        self.weight = weight
        self.id = id
-       
+       self.queue = 'any'
        DBInfo.normalising += weight
 
     def set_db(self, db):
@@ -102,10 +102,10 @@ class ProcessPool:
            self.queues[name] = Queue(name, max_jobs)
            self.queues[name].set_db(self.conn_master)
 
-       res = self.cur_master.execute("SELECT id, full_name, path, db_name, weight FROM dbs WHERE status = 'R'")
+       res = self.cur_master.execute("SELECT id, full_name, path, db_name, weight, queue FROM dbs WHERE status = 'R'")
 
-       for (id, full_name, path, db_name, weight) in res:
-           self.dbs[full_name] = DBInfo(full_name, path, db_name,id, weight)
+       for (id, full_name, path, db_name, weight, queue) in res:
+           self.dbs[full_name] = DBInfo(full_name, path, db_name,id, weight, queue)
 
 
     def update_worker_info(self):

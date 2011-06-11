@@ -114,6 +114,10 @@ def process_db(cmd, name, params):
            weight = params["weight"]
        except:
            weight = 1.
+       try:
+           queue = params["queue"]
+       except:
+           queue = 'any'
            
        conn2 = sql.connect(full_name)
        cur2 = conn2.cursor()
@@ -131,15 +135,17 @@ def process_db(cmd, name, params):
        cur2.execute("SELECT status, COUNT(*) FROM run_status GROUP BY status;")
        for k,v in cur2:
            d_status[k] = v
-       cursor.execute( "INSERT INTO dbs (full_name, path, db_name, status, total_values_set, total_combinations, done_combinations, running_combinations, error_combinations,weight) VALUES (?,?,?,?,?,?,?,?,?,?)",(full_name, path, db_name , 'R', total_sov, n_all, d_status['D'],d_status['R'],d_status['E'], weight) )
+       cursor.execute( "INSERT INTO dbs (full_name, path, db_name, status, total_values_set, total_combinations, done_combinations, running_combinations, error_combinations,weight,queue) VALUES (?,?,?,?,?,?,?,?,?,?,?)",(full_name, path, db_name , 'R', total_sov, n_all, d_status['D'],d_status['R'],d_status['E'], weight, queue) )
    elif not db_id:
        utils.newline_msg("SKP", "db '%s' is not registered"%full_name )
        sys.exit(2)
    elif cmd == "remove":
        cursor.execute( "DELETE FROM dbs WHERE id = ?",(db_id,) )
    elif cmd == "set":
-           weight = params["weight"]
-           cursor.execute( 'UPDATE dbs SET weight=? WHERE id = ?', ( weight, db_id ) )
+           if weight in params.keys():
+               cursor.execute( 'UPDATE dbs SET weight=? WHERE id = ?', ( params["weight"], db_id ) )
+           if queue in params.keys():
+               cursor.execute( 'UPDATE dbs SET queue=? WHERE id = ?', ( params["queue"], db_id ) )
    elif cmd == "start":
            cursor.execute( "UPDATE dbs SET status = 'R' WHERE id = ?", (db_id,) )
    elif cmd == "stop":
@@ -181,9 +187,9 @@ def get_stats(cmd, name, params):
 ###     weight FLOAT)
 
    if cmd == "process":
-       res = pp.curr_cur.execute("SELECT dbs.full_name, dbs.weight, COUNT(*) FROM dbs, running WHERE dbs.id = running.dbs_id GROUP BY running.dbs_id ")
-       for fn, w, c in res:
-           print "db: '%s' -- weight=%f -- running proc: %d"%(fn,w,c)
+       res = pp.curr_cur.execute("SELECT dbs.full_name, dbs.weight, COUNT(*), queue FROM dbs, running WHERE dbs.id = running.dbs_id GROUP BY running.dbs_id ")
+       for fn, w, c, q in res:
+           print "db: '%s' -- weight=%f -- running proc: %d -- queueable in: '%s'"%(fn,w,c,q)
    else:
        utils.newline_msg("SYN", "command '%s' not understood"%cmd )
        sys.exit(1)
@@ -228,7 +234,7 @@ if __name__ == "__main__":
     cursor.execute("CREATE TABLE IF NOT EXISTS dbs "
                    "(id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), db_name CHAR(256), status CHAR(1), total_values_set INTEGER, "
                    " total_combinations INTEGER, done_combinations INTEGER, running_combinations INTEGER, error_combinations INTEGER, "
-                   " weight FLOAT)")
+                   " weight FLOAT, queue CHAR(64))")
     
     #:::~ status can be either 
     #:::~    'S': stopped
@@ -254,7 +260,7 @@ if __name__ == "__main__":
                                       "   queue [add|remove|set*|start|stop] QUEUE_NAME {params} \n"
                                       "        params :: jobs=NJOBS\n"
                                       "   db    [add|remove|set*|start|stop|clean] DB_NAME {params} \n"
-                                      "        params :: weight=WEIGHT[1] \n"
+                                      "        params :: weight=WEIGHT[1] queue=STR[any] \n"
                                       "   stat  [queue|db] \n"
                                       "VERBs with * indicate that accept params"
                                   )

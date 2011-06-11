@@ -5,6 +5,9 @@
 #######################################################################
 ### :::~ Table containing the registered databases
 
+                   "(id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), db_name CHAR(256), status CHAR(1), total_values_set INTEGER, "
+                   " total_combinations INTEGER, done_combinations INTEGER, running_combinations INTEGER, error_combinations INTEGER, "
+                   " weight FLOAT, queue CHAR(64))")
 
 ###  CREATE TABLE IF NOT EXISTS dbs 
 ###    (id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), 
