@@ -130,17 +130,22 @@ class ProcessPool:
                 continue
 
 
+
     def update_dbs_info(self):
 
-        for i in self.dbs[full_name]:
-            curr_db = self.dbs[i]
+        for i in self.dbs.keys():
+            self.update_db_info(i)
+
+    def update_db_info(self,db_fullname): 
+
+            curr_db = self.dbs[db_fullname]
             
-            curr_conn = sql.connect( curr_db.full_name )
+            curr_conn = sql.connect( db_fullname )
             curr_cur = curr_conn.cursor()
             
             curr_cur.execute("SELECT status, COUNT(*) FROM run_status GROUP BY status")
             
-            res = {}
+            res = {'D':0, 'R':0, 'E':0}
             ac = 0
             for (k,v) in curr_cur:
                 res[k] = int(v)
@@ -149,11 +154,11 @@ class ProcessPool:
                 #:::~    'R': running
                 #:::~    'D': successfully run (done)
                 #:::~    'E': run but with non-zero error code
-            self.cur_master.execute("UPDATE dbs" 
+            self.cur_master.execute("UPDATE dbs " 
                                     "SET total_combinations = ?, done_combinations = ?,"
-                                    "running_combinations =  ? , error_combinations = ?, "
-                                    "WHERE id = ?", (ac, res['D'], res['R'], res['E'],i.id))
-        self.conn_master.commit()
+                                    "running_combinations =  ? , error_combinations = ? "
+                                    "WHERE id = ?", (ac, res['D'], res['R'], res['E'],curr_db.id))
+            self.conn_master.commit()
 ###    (id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), 
 ###     db_name CHAR(256), status CHAR(1), 
 ###     total_combinations INTEGER, done_combinations INTEGER, 
@@ -242,8 +247,10 @@ class DBExecutor():
         if dir_vars:
             self.directory_vars = dir_vars
         else:
-            self.directory_vars =  self.entities 
 
+           self.cursor.execute("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
+           self.directory_vars  = [ i[0] for i in self.cursor ]
+           
     def launch_process(self):
         pwd = os.path.abspath(".")
         if self.directory_vars:
@@ -289,5 +296,6 @@ class DBExecutor():
 
 
     def create_trees(self):
-        ret = self.cursor.execute("SELECT * FROM entities WHERE name LIKE 'store_%'")
+        ret = self.cursor.execute("SELECT * FROM entities WHERE name LIKE 'store_%'").fetchone()
+        
         return ret is not None

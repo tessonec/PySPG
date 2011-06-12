@@ -49,16 +49,22 @@ if __name__ == "__main__":
         os.chdir(selected.path)
         
         executor = DBExecutor( selected.db_name, timeout = DB_TIMEOUT)
-        
+#        print executor.create_trees()
         if executor.create_trees():
           executor.generate_tree( )
-        executor.next()
+        try:
+          executor.next()
+        except StopIteration:
+          pp.cur_master.execute('UPDATE dbs SET status = "D" where id = ?',(selected.id,))
+          pp.conn_master.commit()
+          continue
         running_id = executor.current_run_id 
         selected.set_db( pp.conn_master )
         selected.update_master_db(process_id, running_id)
         
         print process_id, selected.full_name, selected.weight
 #        executor.launch_process()
+        pp.update_db_info( selected.full_name )
         
         
         
