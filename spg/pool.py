@@ -19,12 +19,13 @@ class DBInfo:
     normalising = 0.
     def __init__(self, full_name = "", path= "", db_name= "", id=-1, weight=1.,queue = 'any'):
        self.full_name = full_name
-       self.path = full_name
+       self.path = path
        self.db_name = db_name
        self.weight = weight
        self.id = id
        self.queue = 'any'
        DBInfo.normalising += weight
+       
 
     def set_db(self, db):
         self.connection = db
@@ -33,7 +34,7 @@ class DBInfo:
     def update_master_db( self, process_id, running_id ):
 #        job_id CHAR(64), 
 ###             id_dbs INTEGER, id_params INTEGER UPDATE run_status SET status ="R" WHERE id 
-        self.cursor.execute("UPDATE running SET job_id = ?, params_id = ? WHERE id_dbs = ? " , (process_id, running_id, self.id) )
+        self.cursor.execute("UPDATE running SET job_id = ?, params_id = ? WHERE dbs_id = ? " , (process_id, running_id, self.id) )
         self.connection.commit()
 
 
@@ -103,7 +104,7 @@ class ProcessPool:
            self.queues[name].set_db(self.conn_master)
 
        res = self.cur_master.execute("SELECT id, full_name, path, db_name, weight, queue FROM dbs WHERE status = 'R'")
-
+       DBInfo.normalising = 0.
        for (id, full_name, path, db_name, weight, queue) in res:
            self.dbs[full_name] = DBInfo(full_name, path, db_name,id, weight, queue)
 

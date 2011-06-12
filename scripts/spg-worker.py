@@ -12,9 +12,10 @@ import os, os.path, random
     
 DB_TIMEOUT = 180
 
-process_id = int(os.environ()['PBS_JOBID'].split(".")[0])
-this_queue = int(os.environ()['PBS_QUEUE'])
-
+# process_id = int(os.environ()['PBS_JOBID'].split(".")[0])
+# this_queue = int(os.environ()['PBS_QUEUE'])
+process_id = 12345
+this_queue = "default"
 
 def pick_db(pp):
     db_fits = False
@@ -23,11 +24,13 @@ def pick_db(pp):
         dbs = sorted( pp.dbs.keys() )
         curr_db = dbs.pop()
         ac = pp.dbs[ curr_db ].weight
+ #       print DBInfo.normalising , rnd, dbs, pp.dbs[ curr_db ].full_name, pp.dbs[ curr_db ].weight
         while rnd > ac:
             curr_db = dbs.pop()
             ac += pp.dbs[ curr_db ].weight
-        res = pp.curr_cur.execute("SELECT queue FROM dbs WHERE id = ?",(pp.dbs[ curr_db ].id,))
-        (res, )= res
+        res = pp.cur_master.execute("SELECT queue FROM dbs WHERE id = ?",(pp.dbs[ curr_db ].id,)).fetchone()
+        (res,) = res
+#        print res
         if res == 'any' or this_queue in res.split(","):
             db_fits = True
     return  pp.dbs[ curr_db ]
@@ -39,7 +42,7 @@ if __name__ == "__main__":
      while True:
          
         pp = ProcessPool()
-        pp.update_process_list()
+        pp.update_worker_info()
         
         selected = pick_db(pp)
         
@@ -51,11 +54,11 @@ if __name__ == "__main__":
           executor.generate_tree( )
         executor.next()
         running_id = executor.current_run_id 
-        
+        selected.set_db( pp.conn_master )
         selected.update_master_db(process_id, running_id)
         
-        
-        executor.launch_process()
+        print process_id, selected.full_name, selected.weight
+#        executor.launch_process()
         
         
         

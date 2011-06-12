@@ -93,11 +93,7 @@ def process_db(cmd, name, params):
 #                   " total_combinations INTEGER, done_combinations INTEGER, running_combinations INTEGER, error_combinations INTEGER,  "
 #                   " weight FLOAT)")
 #    
-   if os.path.exists( name ):
-       full_name = os.path.realpath(name)
-   else:
-       utils.newline_msg("PTH", "database '%s' does not exist"%name)
-       sys.exit(2)
+   full_name = os.path.realpath(name)
    
    path, db_name = os.path.split(full_name)
    
@@ -118,7 +114,12 @@ def process_db(cmd, name, params):
            queue = params["queue"]
        except:
            queue = 'any'
-           
+       if os.path.exists( name ):
+          full_name = os.path.realpath(name)
+       else:
+          utils.newline_msg("PTH", "database '%s' does not exist"%name)
+          sys.exit(2)
+          
        conn2 = sql.connect(full_name)
        cur2 = conn2.cursor()
        #:::~    'N': not run yet
@@ -142,9 +143,9 @@ def process_db(cmd, name, params):
    elif cmd == "remove":
        cursor.execute( "DELETE FROM dbs WHERE id = ?",(db_id,) )
    elif cmd == "set":
-           if weight in params.keys():
+           if 'weight' in params.keys():
                cursor.execute( 'UPDATE dbs SET weight=? WHERE id = ?', ( params["weight"], db_id ) )
-           if queue in params.keys():
+           if 'queue' in params.keys():
                cursor.execute( 'UPDATE dbs SET queue=? WHERE id = ?', ( params["queue"], db_id ) )
    elif cmd == "start":
            cursor.execute( "UPDATE dbs SET status = 'R' WHERE id = ?", (db_id,) )
