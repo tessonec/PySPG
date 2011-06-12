@@ -5,7 +5,7 @@ Created on Wed Jun  8 16:20:26 2011
 
 @author: -
 """
-
+import optparse
 # logica del programa
 #   leer la cantidad de procesos a ejecutar de la DB central
 #   si este numero es menor (para alguna cola) que el que esta corriendo. lanzar los que faltan
