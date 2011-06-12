@@ -33,7 +33,7 @@ if __name__ == "__main__":
      
       
        for i_j in pp.queues:
-         print i_j.normalise_processes()
+         print pp.queues[i_j].normalise_processes()
      
        pp.update_dbs_info()
        
