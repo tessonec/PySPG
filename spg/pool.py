@@ -25,43 +25,60 @@ class SQLHelper:
 
     def select_fetchone(self, query, tuple = None):
       n_retry = 0
-      while n_retry < self.retry:
+      cont = True
+      while n_retry < self.retry and cont:
         try:
           n_retry += 1
           conn = sql.connect(self.location, timeout = self.timeout)
+          cursor = conn.cursor()
           if not tuple:
-            conn.cursor().execute(query)
+            cursor.execute(query)
           else:
-            conn.cursor().execute(query,tuple)
-          ret = conn.cursor().fetchone()
+            cursor.execute(query,tuple)
+          ret = cursor.fetchone()
           conn.close()
-          
+          cont = False
           del conn
           return ret
         except:
           pass
 
     def select_fetchall(self, query, tuple = None):
-        conn = sql.connect(self.location, timeout = self.timeout)
-        if not tuple:
-          conn.cursor().execute(query)
-        else:
-          conn.cursor().execute(query,tuple)
-        ret = [ l for l in conn.cursor() ]
-        conn.close()
-        del conn
-        return ret
+      n_retry = 0
+      cont = True
+      while n_retry < self.retry and cont:
+        try:
+          conn = sql.connect(self.location, timeout = self.timeout)
+          cursor = conn.cursor()
+          # print self.location, query
+          if not tuple:
+            cursor .execute(query)
+          else:
+            cursor.execute(query,tuple)
+          ret = [ l for l in cursor ]
+#          print ret
+          conn.close()
+          del conn
+          return ret
+        except:
+          pass
 
     def execute(self, query, tuple = None):
-        conn = sql.connect(self.location, timeout = self.timeout)
-        if not tuple:
-          conn.cursor().execute(query)
-        else:
-          conn.cursor().execute(query,tuple)
-        ret = [ l for l in conn.cursor() ]
-        conn.close()
-        del conn
-        return ret
+      n_retry = 0
+      cont = True
+      while n_retry < self.retry and cont:
+        try:
+          conn = sql.connect(self.location, timeout = self.timeout)
+          if not tuple:
+            conn.cursor().execute(query)
+          else:
+            conn.cursor().execute(query,tuple)
+          ret = [ l for l in conn.cursor() ]
+          conn.close()
+          del conn
+          return ret
+        except:
+          pass
 
 ################################################################################
 
@@ -140,7 +157,7 @@ class ProcessPool:
 
        for (name, max_jobs) in res:
            self.queues[name] = Queue(name, max_jobs)
-           self.queues[name].set_db(self.conn_master)
+           self.queues[name].set_db(self.db_master)
 
        DBInfo.normalising = 0.
        res = self.db_master.select_fetchall("SELECT id, full_name, path, db_name, weight, queue FROM dbs WHERE status = 'R'")

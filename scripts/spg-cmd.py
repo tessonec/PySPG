@@ -43,15 +43,11 @@ def get_parameters(arg):
 
 def process_queue(cmd, name, params):
    # queue [add|remove|set|stop] QUEUE_NAME {params} 
-   
    # "(id INTEGER PRIMARY KEY, name CHAR(64), max_jobs INTEGER, status CHAR(1))")
- 
    #checks whether the queue is in the 
    queue = db_master.select_fetchone( "SELECT id FROM queues WHERE name = '%s' "%name)
    if queue is not None:
        (queue, ) = queue
-   
-   
    if cmd == "add" and queue:
           utils.newline_msg("SKP", "add-error queue '%s' already exists"%name )
           sys.exit(2)
@@ -60,7 +56,6 @@ def process_queue(cmd, name, params):
            max_jobs = params["jobs"]
        except:
            max_jobs = 1
-           
        db_master.execute( "INSERT INTO queues (name, max_jobs, status) VALUES (?,?,?)",(name,  max_jobs, 'S') )
    elif not queue:
        utils.newline_msg("SKP", "delete-error queue does not '%s' exist"%name )
@@ -93,7 +88,7 @@ def process_db(cmd, name, params):
    
    path, db_name = os.path.split(full_name)
    
-   db_master.select_fetchone( "SELECT id FROM dbs WHERE full_name = '%s' "%full_name)
+   db_id = db_master.select_fetchone( "SELECT id FROM dbs WHERE full_name = '%s' "%full_name)
    if db_id is not None:
        (db_id, ) = db_id
 
@@ -157,7 +152,6 @@ def process_db(cmd, name, params):
 def get_stats(cmd, name, params):
    # queue [add|remove|set|stop] QUEUE_NAME {params} 
    pp = ProcessPool()
-
    if cmd == "queue":
        pp.update_worker_info()
        
@@ -167,6 +161,7 @@ def get_stats(cmd, name, params):
    elif cmd == "db":
        res = pp.db_master.select_fetchall("SELECT full_name, status, total_combinations, done_combinations, "
                         "running_combinations, error_combinations FROM dbs")
+#       print res
        for full_name, status, total, done, running, error in res:
            frac_done = float(done)/float(total)
            frac_running = float(running)/float(total)
