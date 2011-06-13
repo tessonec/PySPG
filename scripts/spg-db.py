@@ -7,7 +7,7 @@ import spg.utils as utils
 
 import sqlite3 as sql
 import sys, optparse
-import time, os, os.path
+import os, os.path
 
 
 VAR_PATH = os.path.abspath(params.CONFIG_DIR+"/../var/spg")
