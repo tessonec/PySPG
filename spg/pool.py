@@ -194,9 +194,8 @@ class ProcessPool:
 
     def update_db_info(self,db_fullname): 
 
-            curr_db = SQLHelper(db_fullname)
-            
-            sel = curr_db.select_fetchall("SELECT status, COUNT(*) FROM run_status GROUP BY status")
+            curr_sql = SQLHelper(db_fullname)
+            sel = curr_sql.select_fetchall("SELECT status, COUNT(*) FROM run_status GROUP BY status")
             
             res = {'D':0, 'R':0, 'E':0}
             ac = 0
@@ -210,7 +209,7 @@ class ProcessPool:
             self.db_master.execute("UPDATE dbs " 
                                     "SET total_combinations = ?, done_combinations = ?,"
                                     "running_combinations =  ? , error_combinations = ? "
-                                    "WHERE id = ?", (ac, res['D'], res['R'], res['E'],curr_db.id))
+                                    "WHERE full_name = ?", (ac, res['D'], res['R'], res['E'],db_fullname))
             
 ###    (id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), 
 ###     db_name CHAR(256), status CHAR(1), 

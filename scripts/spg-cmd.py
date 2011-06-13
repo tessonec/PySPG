@@ -7,7 +7,7 @@ import spg.utils as utils
 from spg.pool import ProcessPool, SQLHelper
 
 
-import sqlite3 as sql
+# import sqlite3 as sql
 #from subprocess import Popen, PIPE
 import sys, os, os.path
 import optparse
