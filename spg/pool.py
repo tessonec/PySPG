@@ -345,6 +345,6 @@ class DBExecutor():
 
 
     def create_trees(self):
-        ret = self.sql_db.select_fetch_one("SELECT * FROM entities WHERE name LIKE 'store_%'")
+        ret = self.sql_db.select_fetchone("SELECT * FROM entities WHERE name LIKE 'store_%'")
         
         return ret is not None
