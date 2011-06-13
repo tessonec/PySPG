@@ -4,8 +4,8 @@
 
 import spg.params as params
 import spg.utils as utils
-from spg.pool import ProcessPool, DBExecutor, DBInfo
-
+from spg.pool import ProcessPool, DBExecutor, DBInfo, VAR_PATH 
+import spg.pool 
 
 import os, os.path, random
     
@@ -56,7 +56,7 @@ if __name__ == "__main__":
  #         pp.conn_master.commit()
           continue
         running_id = executor.current_run_id 
-        selected.set_db( pp.conn_master )
+        selected.set_db( VAR_PATH+"/running.sqlite")
         selected.update_master_db(process_id, running_id)
         
   #      print process_id, selected.full_name, selected.weight
