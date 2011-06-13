@@ -12,10 +12,10 @@ import os, os.path, random
     
 DB_TIMEOUT = 180
 
-# process_id = int(os.environ()['PBS_JOBID'].split(".")[0])
-# this_queue = int(os.environ()['PBS_QUEUE'])
-process_id = 12345
-this_queue = "default"
+process_id = int(os.environ['PBS_JOBID'].split(".")[0])
+this_queue = os.environ['PBS_QUEUE']
+#process_id = 12345
+#this_queue = "default"
 
 def pick_db(pp):
     db_fits = False
