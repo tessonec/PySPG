@@ -27,7 +27,7 @@ class SQLHelper:
       n_retry = 0
       cont = True
       while n_retry < self.retry and cont:
-        try:
+#        try:
           n_retry += 1
           conn = sql.connect(self.location, timeout = self.timeout)
           cursor = conn.cursor()
@@ -40,14 +40,14 @@ class SQLHelper:
           cont = False
           del conn
           return ret
-        except:
-          pass
+#        except:
+#          pass
 
     def select_fetchall(self, query, tuple = None):
       n_retry = 0
       cont = True
       while n_retry < self.retry and cont:
-        try:
+#        try:
           conn = sql.connect(self.location, timeout = self.timeout)
           cursor = conn.cursor()
           # print self.location, query
@@ -60,14 +60,14 @@ class SQLHelper:
           conn.close()
           del conn
           return ret
-        except:
-          pass
+#        except:
+#          pass
 
     def execute(self, query, tuple = None):
       n_retry = 0
       cont = True
       while n_retry < self.retry and cont:
-        try:
+ #       try:
           conn = sql.connect(self.location, timeout = self.timeout)
           if not tuple:
             conn.cursor().execute(query)
@@ -77,8 +77,8 @@ class SQLHelper:
           conn.close()
           del conn
           return ret
-        except:
-          pass
+  #      except:
+   #       pass
 
 ################################################################################
 
