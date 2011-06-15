@@ -4,15 +4,14 @@
 
 import spg.params as params
 import spg.utils as utils
-from spg.pool import ProcessPool, PickledExecutor, DBInfo, VAR_PATH 
+from spg.pool import PickledExecutor, VAR_PATH 
 
 
 
 
 import os, time
     
-  #  
-#DB_TIMEOUT = 180
+EXE_TIMEOUT = 60*10 # in seconds
 
 #process_id = int(os.environ['PBS_JOBID'].split(".")[0])
 #this_queue = os.environ['PBS_QUEUE']
@@ -30,10 +29,10 @@ if __name__ == "__main__":
           
         except ValueError:
           utils.newline_msg("WRN", "no newly pickled elements")
-          time.sleep(10*60)
+          time.sleep(EXE_TIMEOUT)
 
         pex = PickledExecutor(next_file)
+        pex.load()
         pex.launch_process()
         pex.store()
-
 

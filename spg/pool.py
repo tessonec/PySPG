@@ -11,7 +11,6 @@ import os.path, pickle
 from subprocess import Popen, PIPE
 import sqlite3 as sql
 
-CONFIG_DIR = params.CONFIG_DIR
 VAR_PATH = os.path.abspath(params.CONFIG_DIR+"/../var/spg")
 BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
 
@@ -21,28 +20,46 @@ BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
 ################################################################################
 ################################################################################
 
-class PickledExecutor:
+class PickledData:
     def __init__(self, fname):
         self.command = None
         self.path = None
         self.db_name = None
-        
+
         self.id = fname
         self.values = {}
         self.current_run_id = None
         self.variables = []
         self.output = ""
         self.return_code  = None
-        
-        self.load()
-        
+
+
+
+    def load(self, src = 'queued'):
+          full_name = "%s/%s/%s"%(VAR_PATH,src,self.id) 
+          vals = pickle.load( open(full_name)  )
+          self.__dict__ = vals.__dict__
+
+          os.remove( full_name )
+
+    def dump(self,src = 'run'):
+          full_name = "%s/%s/%s"%(VAR_PATH,src,self.id)
+          pickle.dump( open(full_name, "w" ), self  )
+
+
+################################################################################
+################################################################################
+
+class PickledExecutor(PickledData):
+    def __init__(self, fname):
+        PickledData.__init__(fname)
+
 
     def create_tree(self):
         for k in self.values:
           if k.find("store_") != -1: return True
         return False
 
-           
     def launch_process(self):
         os.chdir(self.path)
 
@@ -59,7 +76,6 @@ class PickledExecutor:
             print >> fconf, k, utils.replace_string(self.values[k], self.values) 
         fconf.close()
 
-        
         cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
         proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
         proc.wait()
@@ -67,16 +83,6 @@ class PickledExecutor:
         self.output = [i.strip() for i in proc.stdout.readline().split()]
         os.remove(configuration_filename)
 
-    def load(self):
-          full_name = "%s/queued/%s"%(VAR_PATH,self.id) 
-          vals = pickle.load( open(full_name)  )
-          self.__dict__ = vals.__dict__
-          
-          os.remove( full_name )
-
-    def store(self):
-          full_name = "%s/var/%s"%(VAR_PATH,self.id) 
-          pickle.dump( open(full_name, "w" ), self  )
 
 
 
@@ -100,6 +106,12 @@ class ParametersDB:
 #
 #    def update_master_db( self, process_id, running_id ):
 #        self.master_db.execute("UPDATE running SET job_id = ?, params_id = ? WHERE dbs_id = ? " , (process_id, running_id, self.id) )
+
+################################################################################
+################################################################################
+################################################################################
+
+
 
 class Queue:
     def __init__(self, name, max_jobs):
@@ -141,30 +153,28 @@ class Queue:
 
 class ProcessPool:
     def __init__(self):
-        
         self.dbs = {} 
         self.queues = {}
         self.db_master = sql.connect("%s/running.sqlite"%VAR_PATH)
         self.update_queue_info()
-        self.update_registered_db_info()
+        self.get_registered_dbs()
 #        self.update_process_list()
 
+    def get_registered_dbs(self): # These are the dbs that are registered and running
+        self.dbs = {} 
+        ParametersDB.normalising = 0.
+        res = self.db_master.execute("SELECT id, full_name, path, db_name, weight, queue FROM dbs WHERE status = 'R'")
+        for (id, full_name, path, db_name, weight, queue) in res:
+            self.dbs[full_name] = ParametersDB(full_name, path, db_name,id, weight, queue)
+
     def update_queue_info(self): # These are the queues available to launch the processes in
-       res = self.db_master.execute("SELECT name, max_jobs FROM queues WHERE status = 'R'")
-
-       for (name, max_jobs) in res:
-           self.queues[name] = Queue(name, max_jobs)
-           self.queues[name].set_db(self.db_master)
-
-    def update_registered_db_info(self): # These are 
-       ParametersDB.normalising = 0.
-       res = self.db_master.select_fetchall("SELECT id, full_name, path, db_name, weight, queue FROM dbs WHERE status = 'R'")
-       for (id, full_name, path, db_name, weight, queue) in res:
-           self.dbs[full_name] = ParametersDB(full_name, path, db_name,id, weight, queue)
-
+        self.queues = {}
+        res = self.db_master.execute("SELECT name, max_jobs FROM queues WHERE status = 'R'")
+        for (name, max_jobs) in res:
+            self.queues[name] = Queue(name, max_jobs)
+#           self.queues[name].set_db(self.db_master)
 
     def update_worker_info(self):  # These are the spg-worker instances in the queueing system
-
         proc = Popen("qstat", shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
         output = proc.stdout
         proc.wait()
@@ -184,31 +194,64 @@ class ProcessPool:
                 continue
 
 
-
-    def update_dbs_info(self):
-
-        for i in self.dbs.keys():
-            self.update_db_info(i)
-
-    def update_db_info(self,db_fullname): 
-
-            curr_sql = SQLHelper(db_fullname)
-            sel = curr_sql.select_fetchall("SELECT status, COUNT(*) FROM run_status GROUP BY status")
+    def harvest_data(self):
+        for i_d in os.listdir("%s/run"%(VAR_PATH) ):
+            pd = PickledData(id)
+            pd.load(src='run')
+            conn = sql.connect("%s/%s"%(pd.path,pd.db_name))
+            cursor = conn.cursor()
             
-            res = {'D':0, 'R':0, 'E':0}
-            ac = 0
-            for (k,v) in sel :
-                res[k] = int(v)
-                ac += int(v)
-                #:::~    'N': not run yet
-                #:::~    'R': running
-                #:::~    'D': successfully run (done)
-                #:::~    'E': run but with non-zero error code
-            self.db_master.execute("UPDATE dbs " 
-                                    "SET total_combinations = ?, done_combinations = ?,"
-                                    "running_combinations =  ? , error_combinations = ? "
-                                    "WHERE full_name = ?", (ac, res['D'], res['R'], res['E'],db_fullname))
+
+            #:::~ get the names of the outputs
+            fa = cursor.execute("PRAGMA table_info(results)")
+            output_column = [ i[1] for i in fa ]
+            output_column = self.output_column[1:]
             
+            
+            if pd.return_code == 0:
+               cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%pd.current_run_id )
+               all_d = [pd.current_variables_id]
+               all_d.extend( pd.output )
+               cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(output_column) , ", ".join([str(i) for i in all_d]) )
+               cursor.execute( cc )
+            else:
+           #:::~ status can be either 
+           #:::~    'N': not run
+           #:::~    'R': running
+           #:::~    'D': successfully run (done)
+           #:::~    'E': run but with non-zero error code
+               cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%pd.current_run_id )
+           #self.connection.commit()
+            
+            conn.commit()
+            conn.close()
+            del cursor
+            del conn
+            
+######
+######    def update_dbs_info(self):   # 
+######        for i in self.dbs.keys():
+######            self.update_db_info(i)
+######
+######    def update_db_info(self,db_fullname): 
+######            
+######            curr_sql = SQLHelper(db_fullname)
+######            sel = curr_sql.select_fetchall("SELECT status, COUNT(*) FROM run_status GROUP BY status")
+######            
+######            res = {'D':0, 'R':0, 'E':0}
+######            ac = 0
+######            for (k,v) in sel :
+######                res[k] = int(v)
+######                ac += int(v)
+######                #:::~    'N': not run yet
+######                #:::~    'R': running
+######                #:::~    'D': successfully run (done)
+######                #:::~    'E': run but with non-zero error code
+######            self.db_master.execute("UPDATE dbs " 
+######                                    "SET total_combinations = ?, done_combinations = ?,"
+######                                    "running_combinations =  ? , error_combinations = ? "
+######                                    "WHERE full_name = ?", (ac, res['D'], res['R'], res['E'],db_fullname))
+######            
 ###    (id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), 
 ###     db_name CHAR(256), status CHAR(1), 
 ###     total_combinations INTEGER, done_combinations INTEGER, 

@@ -17,7 +17,6 @@ import time
 
 from spg.pool import ProcessPool
 
-    
 
 if __name__ == "__main__":
     parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 ")
