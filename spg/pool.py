@@ -7,83 +7,86 @@ Created on Fri Jun 10 22:22:19 2011
 
 import params, utils
 
-import os.path
+import os.path, pickle
 from subprocess import Popen, PIPE
 import sqlite3 as sql
-import time
 
 CONFIG_DIR = params.CONFIG_DIR
 VAR_PATH = os.path.abspath(params.CONFIG_DIR+"/../var/spg")
 BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
 
 
-class SQLHelper:
-    def __init__(self, full_name, timeout = 60, retry = 100):
-        self.location = full_name
-        self.timeout = timeout
-        self.retry = retry
 
-    def select_fetchone(self, query, tuple = None):
-      n_retry = 0
-      cont = True
-      while n_retry < self.retry and cont:
-#        try:
-          n_retry += 1
-          conn = sql.connect(self.location, timeout = self.timeout)
-          cursor = conn.cursor()
-          if not tuple:
-            cursor.execute(query)
-          else:
-            cursor.execute(query,tuple)
-          ret = cursor.fetchone()
-          conn.close()
-          cont = False
-          del conn
-          return ret
-#        except:
-#          pass
+################################################################################
+################################################################################
+################################################################################
 
-    def select_fetchall(self, query, tuple = None):
-      n_retry = 0
-      cont = True
-      while n_retry < self.retry and cont:
-#        try:
-          conn = sql.connect(self.location, timeout = self.timeout)
-          cursor = conn.cursor()
-          # print self.location, query
-          if not tuple:
-            cursor .execute(query)
-          else:
-            cursor.execute(query,tuple)
-          ret = [ l for l in cursor ]
-#          print ret
-          conn.close()
-          del conn
-          return ret
-#        except:
-#          pass
+class PickledExecutor:
+    def __init__(self, fname):
+        self.command = None
+        self.path = None
+        self.db_name = None
+        
+        self.id = fname
+        self.values = {}
+        self.current_run_id = None
+        self.variables = []
+        self.output = ""
+        self.return_code  = None
+        
+        self.load()
+        
 
-    def execute(self, query, tuple = None):
-      n_retry = 0
-      cont = True
-      while n_retry < self.retry and cont:
- #       try:
-          conn = sql.connect(self.location, timeout = self.timeout)
-          if not tuple:
-            conn.cursor().execute(query)
-          else:
-            conn.cursor().execute(query,tuple)
-          ret = [ l for l in conn.cursor() ]
-          conn.close()
-          del conn
-          return ret
-  #      except:
-   #       pass
+    def create_tree(self):
+        for k in self.values:
+          if k.find("store_") != -1: return True
+        return False
 
+           
+    def launch_process(self):
+        os.chdir(self.path)
+
+        if self.create_tree():
+            dir_n = utils.replace_list(self.variables, self.values, separator = "/")
+            if not os.path.exists(dir_n): 
+                os.makedirs(dir_n)
+            os.chdir(dir_n)
+
+
+        configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
+        fconf = open(configuration_filename,"w")
+        for k in self.values.keys():
+            print >> fconf, k, utils.replace_string(self.values[k], self.values) 
+        fconf.close()
+
+        
+        cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
+        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
+        proc.wait()
+        self.return_code = proc.returncode
+        self.output = [i.strip() for i in proc.stdout.readline().split()]
+        os.remove(configuration_filename)
+
+    def load(self):
+          full_name = "%s/queued/%s"%(VAR_PATH,self.id) 
+          vals = pickle.load( open(full_name)  )
+          self.__dict__ = vals.__dict__
+          
+          os.remove( full_name )
+
+    def store(self):
+          full_name = "%s/var/%s"%(VAR_PATH,self.id) 
+          pickle.dump( open(full_name, "w" ), self  )
+
+
+
+
+################################################################################
+################################################################################
 ################################################################################
 
 
-class DBInfo:
+class ParametersDB:
     normalising = 0.
     def __init__(self, full_name = "", path= "", db_name= "", id=-1, weight=1.,queue = 'any'):
        self.full_name = full_name
@@ -92,14 +95,11 @@ class DBInfo:
        self.weight = weight
        self.id = id
        self.queue = 'any'
-       DBInfo.normalising += weight
+       ParametersDB.normalising += weight
        
-
-    def set_db(self, master_db_name):
-        self.master_db = SQLHelper(master_db_name)
-
-    def update_master_db( self, process_id, running_id ):
-        self.master_db.execute("UPDATE running SET job_id = ?, params_id = ? WHERE dbs_id = ? " , (process_id, running_id, self.id) )
+#
+#    def update_master_db( self, process_id, running_id ):
+#        self.master_db.execute("UPDATE running SET job_id = ?, params_id = ? WHERE dbs_id = ? " , (process_id, running_id, self.id) )
 
 class Queue:
     def __init__(self, name, max_jobs):
@@ -107,10 +107,6 @@ class Queue:
         self.jobs = max_jobs
         self.processes = []
 
-
-    def set_db(self, master_db_name):
-        self.master_db = SQLHelper(master_db_name)
-        
     def populate_processes( self, new_jobs ):
         for i in range(new_jobs):
             cmd = "qsub -q %s %s/spg-worker.py"%(self.name, BINARY_PATH)
@@ -148,24 +144,26 @@ class ProcessPool:
         
         self.dbs = {} 
         self.queues = {}
-        self.db_master = SQLHelper("%s/running.sqlite"%VAR_PATH)
-        self.reload_master_info()
+        self.db_master = sql.connect("%s/running.sqlite"%VAR_PATH)
+        self.update_queue_info()
+        self.update_registered_db_info()
 #        self.update_process_list()
 
-    def reload_master_info(self):
-       res = self.db_master.select_fetchall("SELECT name, max_jobs FROM queues WHERE status = 'R'")
+    def update_queue_info(self): # These are the queues available to launch the processes in
+       res = self.db_master.execute("SELECT name, max_jobs FROM queues WHERE status = 'R'")
 
        for (name, max_jobs) in res:
            self.queues[name] = Queue(name, max_jobs)
            self.queues[name].set_db(self.db_master)
 
-       DBInfo.normalising = 0.
+    def update_registered_db_info(self): # These are 
+       ParametersDB.normalising = 0.
        res = self.db_master.select_fetchall("SELECT id, full_name, path, db_name, weight, queue FROM dbs WHERE status = 'R'")
        for (id, full_name, path, db_name, weight, queue) in res:
-           self.dbs[full_name] = DBInfo(full_name, path, db_name,id, weight, queue)
+           self.dbs[full_name] = ParametersDB(full_name, path, db_name,id, weight, queue)
 
 
-    def update_worker_info(self):
+    def update_worker_info(self):  # These are the spg-worker instances in the queueing system
 
         proc = Popen("qstat", shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
         output = proc.stdout
