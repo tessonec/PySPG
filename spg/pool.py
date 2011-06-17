@@ -7,7 +7,7 @@ Created on Fri Jun 10 22:22:19 2011
 
 import params, utils
 
-import os.path, pickle
+import os.path, pickle, random
 from subprocess import Popen, PIPE
 import sqlite3 as sql
 
@@ -68,7 +68,6 @@ class PickledExecutor(PickledData):
             if not os.path.exists(dir_n): 
                 os.makedirs(dir_n)
             os.chdir(dir_n)
-
 
         configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
         fconf = open(configuration_filename,"w")
@@ -156,8 +155,7 @@ class ProcessPool:
         self.update_time = 60 * 1
         self.waiting_processes = 100
         self.last_finished_processes = 0
-        self.
-        
+
         self.dbs = {} 
         self.queues = {}
         self.db_master = sql.connect("%s/running.sqlite"%VAR_PATH)
@@ -234,11 +232,28 @@ class ProcessPool:
             self.last_finished_processes  += 1
 
 
+
+    def generate_new_process(self):
+        db_fits = False
+        while not db_fits :
+            rnd = ParametersDB.normalising * random.random()
+            ls_dbs = sorted( self.dbs.keys() )
+            curr_db = self.pop()
+            ac = self.dbs[ curr_db ].weight
+ #           print DBInfo.normalising , rnd, dbs, pp.dbs[ curr_db ].full_name, pp.dbs[ curr_db ].weight
+            while rnd > ac:
+                curr_db = ls_dbs.pop()
+                ac += self.dbs[ curr_db ].weight
+
+
+        return  self.dbs[ curr_db ]
+
+
     def initialise_infiles(self):
         to_run_processes =  self.waiting_processes - len(os.listdir("%s/queued"%(VAR_PATH) ) ) 
 #        process_rate = self.last_finished_processes  - self.waiting_processes 
         for i in range(to_run_processes):
-
+            self.generate_new_process(  )
 ######
 ######    def update_dbs_info(self):   # 
 ######        for i in self.dbs.keys():
@@ -283,7 +298,7 @@ class DBExecutor():
 #        self.connection =  sql.connect(db_name, timeout = timeout)
 #        self.cursor = self.connection.cursor()
         self.db_name = db_name
-        self.sql_db = SQLHelper(db_name)
+        self.sql_db = sql.connect(db_name)
         self.values = {}
         self.directory_vars = None
         self.__init_db()
@@ -294,7 +309,7 @@ class DBExecutor():
     def __init_db(self):
 
         #:::~ Table with the name of the executable
-        (self.command, ) = self.sql_db.select_fetchone( "SELECT name FROM executable " )
+        (self.command, ) = self.sql_db.execute( "SELECT name FROM executable " ).fetchone()
 
 
 #        #:::~ Table with the constant values
@@ -310,13 +325,13 @@ class DBExecutor():
 #        self.entities = self.entities[1:]
 
         #:::~ get the names of the columns
-        sel = self.sql_db.select_fetchall("SELECT name FROM entities ORDER BY id")
+        sel = self.sql_db.execute("SELECT name FROM entities ORDER BY id")
         self.entities = [ i[0] for i in sel ]
 #        self.entities = self.entities[1:]
 
 
         #:::~ get the names of the outputs
-        fa = self.sql_db.select_fetchall("PRAGMA table_info(results)")
+        fa = self.sql_db.execute("PRAGMA table_info(results)")
         self.output_column = [ i[1] for i in fa ]
         self.output_column = self.output_column[1:]
         
@@ -327,10 +342,10 @@ class DBExecutor():
 
     def next(self):
         
-        res = self.sql_db.select_fetchone(
+        res = self.sql_db.execute(
                     "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
                     "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
-                   )
+                   ).fetchone()
         if res == None:
           raise StopIteration
 #        print res    
@@ -397,6 +412,6 @@ class DBExecutor():
 
 
     def create_trees(self):
-        ret = self.sql_db.select_fetchone("SELECT * FROM entities WHERE name LIKE 'store_%'")
+        ret = self.sql_db.select("SELECT * FROM entities WHERE name LIKE 'store_%'").fetchone()
         
         return ret is not None
