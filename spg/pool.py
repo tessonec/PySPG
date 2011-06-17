@@ -36,11 +36,11 @@ class PickledData:
 
 
     def load(self, src = 'queued'):
-          full_name = "%s/%s/%s"%(VAR_PATH,src,self.id) 
-          vals = pickle.load( open(full_name)  )
-          self.__dict__ = vals.__dict__
+        full_name = "%s/%s/%s"%(VAR_PATH,src,self.id) 
+        vals = pickle.load( open(full_name)  )
+        self.__dict__ = vals.__dict__
 
-          os.remove( full_name )
+        os.remove( full_name )
 
     def dump(self,src = 'run'):
           full_name = "%s/%s/%s"%(VAR_PATH,src,self.id)
@@ -153,6 +153,11 @@ class Queue:
 
 class ProcessPool:
     def __init__(self):
+        self.update_time = 60 * 1
+        self.waiting_processes = 100
+        self.last_finished_processes = 0
+        self.
+        
         self.dbs = {} 
         self.queues = {}
         self.db_master = sql.connect("%s/running.sqlite"%VAR_PATH)
@@ -195,18 +200,17 @@ class ProcessPool:
 
 
     def harvest_data(self):
+        self.last_finished_processes  = 0
         for i_d in os.listdir("%s/run"%(VAR_PATH) ):
             pd = PickledData(id)
             pd.load(src='run')
             conn = sql.connect("%s/%s"%(pd.path,pd.db_name))
             cursor = conn.cursor()
-            
 
             #:::~ get the names of the outputs
             fa = cursor.execute("PRAGMA table_info(results)")
             output_column = [ i[1] for i in fa ]
             output_column = self.output_column[1:]
-            
             
             if pd.return_code == 0:
                cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%pd.current_run_id )
@@ -215,19 +219,26 @@ class ProcessPool:
                cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(output_column) , ", ".join([str(i) for i in all_d]) )
                cursor.execute( cc )
             else:
-           #:::~ status can be either 
-           #:::~    'N': not run
-           #:::~    'R': running
-           #:::~    'D': successfully run (done)
-           #:::~    'E': run but with non-zero error code
+                #:::~ status can be either 
+                #:::~    'N': not run
+                #:::~    'R': running
+                #:::~    'D': successfully run (done)
+                #:::~    'E': run but with non-zero error code
                cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%pd.current_run_id )
-           #self.connection.commit()
+               #self.connection.commit()
             
             conn.commit()
             conn.close()
             del cursor
             del conn
-            
+            self.last_finished_processes  += 1
+
+
+    def initialise_infiles(self):
+        to_run_processes =  self.waiting_processes - len(os.listdir("%s/queued"%(VAR_PATH) ) ) 
+#        process_rate = self.last_finished_processes  - self.waiting_processes 
+        for i in range(to_run_processes):
+
 ######
 ######    def update_dbs_info(self):   # 
 ######        for i in self.dbs.keys():
