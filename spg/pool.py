@@ -33,7 +33,6 @@ class PickledData:
         self.return_code  = None
 
 
-
     def load(self, src = 'queued'):
         full_name = "%s/%s/%s"%(VAR_PATH,src,self.id) 
         vals = pickle.load( open(full_name)  )
@@ -45,6 +44,38 @@ class PickledData:
           full_name = "%s/%s/%s"%(VAR_PATH,src,self.id)
           pickle.dump( open(full_name, "w" ), self  )
 
+
+    def store_in_db(self):
+
+          conn = sql.connect("%s/%s"%(self.path,self.db_name))
+          cursor = conn.cursor()
+
+          #:::~ get the names of the outputs
+          fa = cursor.execute("PRAGMA table_info(results)")
+          output_column = [ i[1] for i in fa ]
+          output_column = self.output_column[1:]
+            
+          if self.return_code == 0:
+             cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
+             all_d = [self.current_variables_id]
+             all_d.extend( self.output )
+             cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(output_column) , ", ".join([str(i) for i in all_d]) )
+             cursor.execute( cc )
+          else:
+                #:::~ status can be either 
+                #:::~    'N': not run
+                #:::~    'R': running
+                #:::~    'D': successfully run (done)
+                #:::~    'E': run but with non-zero error code
+             cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
+               #self.connection.commit()
+            
+          conn.commit()
+          conn.close()
+          del cursor
+          del conn
+          self.last_finished_processes  += 1
+        
 
 ################################################################################
 ################################################################################
@@ -147,15 +178,6 @@ class ParameterExtractor():
         sql_db.close()
         del sql_db
 
-    def generate_tree(self, dir_vars = None):
-        sql_db = sql.connect(self.db_name, timeout = TIMEOUT)
-        if dir_vars:
-           self.directory_vars = dir_vars
-        else:
-           res = self.sql_db.execute("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
-           self.directory_vars  = [ i[0] for i in res ]
-        sql_db.close()
-        del sql_db
     
 
 ################################################################################
@@ -233,6 +255,15 @@ class DBExecutor(ParameterExtractor):
         return ret is not None
 
 
+    def generate_tree(self, dir_vars = None):
+        sql_db = sql.connect(self.db_name, timeout = TIMEOUT)
+        if dir_vars:
+           self.directory_vars = dir_vars
+        else:
+           res = self.sql_db.execute("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
+           self.directory_vars  = [ i[0] for i in res ]
+        sql_db.close()
+        del sql_db
 ################################################################################
 ################################################################################
 ################################################################################
@@ -332,35 +363,8 @@ class ProcessPool:
         for i_d in os.listdir("%s/run"%(VAR_PATH) ):
             pd = PickledData(id)
             pd.load(src='run')
-            conn = sql.connect("%s/%s"%(pd.path,pd.db_name))
-            cursor = conn.cursor()
-
-            #:::~ get the names of the outputs
-            fa = cursor.execute("PRAGMA table_info(results)")
-            output_column = [ i[1] for i in fa ]
-            output_column = self.output_column[1:]
-            
-            if pd.return_code == 0:
-               cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%pd.current_run_id )
-               all_d = [pd.current_variables_id]
-               all_d.extend( pd.output )
-               cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(output_column) , ", ".join([str(i) for i in all_d]) )
-               cursor.execute( cc )
-            else:
-                #:::~ status can be either 
-                #:::~    'N': not run
-                #:::~    'R': running
-                #:::~    'D': successfully run (done)
-                #:::~    'E': run but with non-zero error code
-               cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%pd.current_run_id )
-               #self.connection.commit()
-            
-            conn.commit()
-            conn.close()
-            del cursor
-            del conn
-            self.last_finished_processes  += 1
-
+            pd.store_in_db()
+ 
 
 
     def generate_new_process(self):
