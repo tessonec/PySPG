@@ -13,8 +13,7 @@ import sqlite3 as sql
 
 VAR_PATH = os.path.abspath(params.CONFIG_DIR+"/../var/spg")
 BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
-
-
+TIMEOUT = 120
 
 ################################################################################
 ################################################################################
@@ -89,27 +88,158 @@ class PickledExecutor(PickledData):
 ################################################################################
 ################################################################################
 ################################################################################
+################################################################################
+################################################################################
+################################################################################
 
 
-class ParametersDB:
+
+
+class ParameterExtractor():
+    def __init__(self, db_name):
+        self.db_name = db_name
+        
+        self.values = {}
+        self.directory_vars = None
+        self.__init_db()
+
+        self.stdout_contents = params.contents_in_output(self.command)
+
+
+    def __init_db(self):
+
+        sql_db = sql.connect(self.db_name, timeout = TIMEOUT)
+
+        #:::~ Table with the name of the executable
+        (self.command, ) = sql_db.execute( "SELECT name FROM executable " ).fetchone()
+
+        #:::~ get the names of the columns
+        sel = sql_db.execute("SELECT name FROM entities ORDER BY id")
+        self.entities = [ i[0] for i in sel ]
+
+        #:::~ get the names of the outputs
+        fa = self.sql_db.execute("PRAGMA table_info(results)")
+        self.output_column = [ i[1] for i in fa ]
+        self.output_column = self.output_column[1:]
+        sql_db.close()
+        del sql_db
+        
+    def __iter__(self):
+        return self
+
+    def next(self):
+        sql_db = sql.connect(self.db_name, timeout = TIMEOUT)
+        res = sql_db.execute(
+                    "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
+                    "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
+                   ).fetchone()
+        if res == None:
+          raise StopIteration
+
+        self.current_run_id  = res[0]
+        self.current_variables_id  = res[1]
+        self.sql_db.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
+        
+        for i in range( len(self.entities) ):
+            self.values[ self.entities[i] ] = res[i+2]
+        return self.values
+
+        sql_db.close()
+        del sql_db
+
+    def generate_tree(self, dir_vars = None):
+        sql_db = sql.connect(self.db_name, timeout = TIMEOUT)
+        if dir_vars:
+           self.directory_vars = dir_vars
+        else:
+           res = self.sql_db.execute("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
+           self.directory_vars  = [ i[0] for i in res ]
+        sql_db.close()
+        del sql_db
+    
+
+################################################################################
+################################################################################
+
+
+
+class ParameterDB(ParameterExtractor):
     normalising = 0.
     def __init__(self, full_name = "", path= "", db_name= "", id=-1, weight=1.,queue = 'any'):
+       ParameterExtractor.__init__(full_name)
        self.full_name = full_name
        self.path = path
        self.db_name = db_name
        self.weight = weight
        self.id = id
        self.queue = 'any'
-       ParametersDB.normalising += weight
-       
-#
-#    def update_master_db( self, process_id, running_id ):
-#        self.master_db.execute("UPDATE running SET job_id = ?, params_id = ? WHERE dbs_id = ? " , (process_id, running_id, self.id) )
+       ParameterDB.normalising += weight
+
+
+
+################################################################################
+################################################################################
+
+class DBExecutor(ParameterExtractor):
+    def __init__(self, db_name):
+        ParameterExtractor.__init__(db_name)
+           
+    def launch_process(self):
+        pwd = os.path.abspath(".")
+        if self.directory_vars:
+            dir = utils.replace_list(self.directory_vars, self.values, separator = "/")
+            if not os.path.exists(dir): os.makedirs(dir)
+            os.chdir(dir)
+        configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
+        fconf = open(configuration_filename,"w")
+        
+        for k in self.values.keys():
+            print >> fconf, k, utils.replace_string(self.values[k], self.values) 
+        fconf.close()
+        
+        cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
+        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
+        proc.wait()
+        ret_code = proc.returncode
+        output = [i.strip() for i in proc.stdout.readline().split()]
+        os.remove(configuration_filename)
+        if self.directory_vars:
+            os.chdir(pwd)
+        
+        sql_db = sql.connect(self.db_name, timeout = TIMEOUT)
+        if ret_code == 0:
+           sql_db.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
+           all_d = [self.current_variables_id]
+           all_d.extend( output )
+           cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
+           sql_db.execute( cc )
+        else:
+           #:::~ status can be either 
+           #:::~    'N': not run
+           #:::~    'R': running
+           #:::~    'D': successfully run (done)
+           #:::~    'E': run but with non-zero error code
+           sql_db.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
+        sql_db.close()
+        del sql_db
+
+
+    def create_trees(self):
+        sql_db = sql.connect(self.db_name, timeout = TIMEOUT)
+        ret = sql_db.select("SELECT * FROM entities WHERE name LIKE 'store_%'").fetchone()
+        
+        sql_db.close()
+        del sql_db
+        return ret is not None
+
 
 ################################################################################
 ################################################################################
 ################################################################################
-
+################################################################################
+################################################################################
+################################################################################
+################################################################################
 
 
 class Queue:
@@ -165,10 +295,10 @@ class ProcessPool:
 
     def get_registered_dbs(self): # These are the dbs that are registered and running
         self.dbs = {} 
-        ParametersDB.normalising = 0.
+        ParameterDB.normalising = 0.
         res = self.db_master.execute("SELECT id, full_name, path, db_name, weight, queue FROM dbs WHERE status = 'R'")
         for (id, full_name, path, db_name, weight, queue) in res:
-            self.dbs[full_name] = ParametersDB(full_name, path, db_name,id, weight, queue)
+            self.dbs[full_name] = ParameterDB(full_name, path, db_name,id, weight, queue)
 
     def update_queue_info(self): # These are the queues available to launch the processes in
         self.queues = {}
@@ -236,11 +366,11 @@ class ProcessPool:
     def generate_new_process(self):
         db_fits = False
         while not db_fits :
-            rnd = ParametersDB.normalising * random.random()
+            rnd = ParameterDB.normalising * random.random()
             ls_dbs = sorted( self.dbs.keys() )
             curr_db = self.pop()
             ac = self.dbs[ curr_db ].weight
- #           print DBInfo.normalising , rnd, dbs, pp.dbs[ curr_db ].full_name, pp.dbs[ curr_db ].weight
+            
             while rnd > ac:
                 curr_db = ls_dbs.pop()
                 ac += self.dbs[ curr_db ].weight
@@ -251,7 +381,6 @@ class ProcessPool:
 
     def initialise_infiles(self):
         to_run_processes =  self.waiting_processes - len(os.listdir("%s/queued"%(VAR_PATH) ) ) 
-#        process_rate = self.last_finished_processes  - self.waiting_processes 
         for i in range(to_run_processes):
             self.generate_new_process(  )
 ######
@@ -293,125 +422,3 @@ class ProcessPool:
 
 
 
-class DBExecutor():
-    def __init__(self, db_name, timeout = 60):
-#        self.connection =  sql.connect(db_name, timeout = timeout)
-#        self.cursor = self.connection.cursor()
-        self.db_name = db_name
-        self.sql_db = sql.connect(db_name)
-        self.values = {}
-        self.directory_vars = None
-        self.__init_db()
-
-        self.stdout_contents = params.contents_in_output(self.command)
-
-
-    def __init_db(self):
-
-        #:::~ Table with the name of the executable
-        (self.command, ) = self.sql_db.execute( "SELECT name FROM executable " ).fetchone()
-
-
-#        #:::~ Table with the constant values
-#        self.cursor.execute( "SELECT name,value FROM constants " )
-#        for k, v in self.cursor:
-#        #    self.constants[k] = v
-#            self.values[k] = v
-#            
-        
-#        #:::~ get the names of the columns
-#        self.cursor.execute("PRAGMA table_info(variables)")
-#        self.entities = [ i[1] for i in self.cursor.fetchall() ]
-#        self.entities = self.entities[1:]
-
-        #:::~ get the names of the columns
-        sel = self.sql_db.execute("SELECT name FROM entities ORDER BY id")
-        self.entities = [ i[0] for i in sel ]
-#        self.entities = self.entities[1:]
-
-
-        #:::~ get the names of the outputs
-        fa = self.sql_db.execute("PRAGMA table_info(results)")
-        self.output_column = [ i[1] for i in fa ]
-        self.output_column = self.output_column[1:]
-        
-#        print self.entities
-        
-    def __iter__(self):
-        return self
-
-    def next(self):
-        
-        res = self.sql_db.execute(
-                    "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
-                    "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
-                   ).fetchone()
-        if res == None:
-          raise StopIteration
-#        print res    
-#        res = list(res)
-        self.current_run_id  = res[0]
-        self.current_variables_id  = res[1]
-        self.sql_db.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
-        # self.connection.commit()          
-#        print res.keys(), dir(res)
-        for i in range( len(self.entities) ):
-            self.values[ self.entities[i] ] = res[i+2]
-        return self.values
-
-    def generate_tree(self, dir_vars = None):
-        if dir_vars:
-            self.directory_vars = dir_vars
-        else:
-
-           res = self.sql_db.execute("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
-           self.directory_vars  = [ i[0] for i in res ]
-           
-    def launch_process(self):
-        pwd = os.path.abspath(".")
-        if self.directory_vars:
-            dir = utils.replace_list(self.directory_vars, self.values, separator = "/")
-            if not os.path.exists(dir): os.makedirs(dir)
-            os.chdir(dir)
-        configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
-        fconf = open(configuration_filename,"w")
-        
-        for k in self.values.keys():
-            print >> fconf, k, utils.replace_string(self.values[k], self.values) 
-        fconf.close()
-        
-        cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
-#        print cmd
-        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
-        proc.wait()
-        ret_code = proc.returncode
-#        ret_code = 0
-        output = [i.strip() for i in proc.stdout.readline().split()]
-#        output = ["1" for i in self.output_column[1:] ]
-#        print ret_code, "-->", output
-        os.remove(configuration_filename)
-        if self.directory_vars:
-            os.chdir(pwd)
-#        print self.output_column
-        if ret_code == 0:
-           self.sql_db.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
-           all_d = [self.current_variables_id]
-           all_d.extend( output )
-           cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
- #          print cc
-           self.sql_db.execute( cc )
-           #self.connection.commit()
-        else:
-           #:::~ status can be either 
-           #:::~    'N': not run
-           #:::~    'R': running
-           #:::~    'D': successfully run (done)
-           #:::~    'E': run but with non-zero error code
-           self.sql_db.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
-           #self.connection.commit()
-
-
-    def create_trees(self):
-        ret = self.sql_db.select("SELECT * FROM entities WHERE name LIKE 'store_%'").fetchone()
-        
-        return ret is not None
