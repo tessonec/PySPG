@@ -292,7 +292,6 @@ class Queue:
             proc.wait()
             self.master_db.execute("DELETE FROM running WHERE job_id = ?" , i)
 
-
     def normalise_processes(self):
         running_proc = len( self.processes )
         if running_proc > self.jobs :
