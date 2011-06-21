@@ -28,12 +28,13 @@ if __name__ == "__main__":
     while True:
        pp = ProcessPool()
        pp.update_worker_info()
-     
-     
-      
        for i_j in pp.queues:
          print pp.queues[i_j].normalise_processes()
-     
+       
        pp.update_dbs_info()
+       
+       pex = ParameterExchanger( pp.db_master )
+       pex.initialise_infiles()
+       pex.harvest_data()
        
        time.sleep(options.sleep)

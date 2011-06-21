@@ -438,6 +438,8 @@ class ParameterExchanger:
             self.current_counter += 1
             in_name = "in_%.10d"%self.current_counter
             pd = PickledData(in_name)
+            pd.load_next_from_db( sel_db.db_name )
+            
             pd.command = sel_db.command
             pd.db_name = sel_db.db_name
             pd.path = sel_db.db_name[:sel_db.db_name.rfind("/")]
