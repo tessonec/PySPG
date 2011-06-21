@@ -25,57 +25,28 @@ class PickledData:
         self.path = None
         self.db_name = None
 
-        self.id = fname
+        self.in_name = fname
         self.values = {}
         self.current_run_id = None
         self.variables = []
         self.output = ""
         self.return_code  = None
+        self.current_run_id  = None
+        self.current_variables_id  = None
 
 
     def load(self, src = 'queued'):
-        full_name = "%s/%s/%s"%(VAR_PATH,src,self.id) 
+        full_name = "%s/%s/%s"%(VAR_PATH,src,self.in_name) 
         vals = pickle.load( open(full_name)  )
         self.__dict__ = vals.__dict__
 
         os.remove( full_name )
 
     def dump(self,src = 'run'):
-          full_name = "%s/%s/%s"%(VAR_PATH,src,self.id)
+          full_name = "%s/%s/%s"%(VAR_PATH,src,self.in_name)
           pickle.dump( open(full_name, "w" ), self  )
 
 
-    def store_in_db(self):
-
-          conn = sql.connect("%s/%s"%(self.path,self.db_name))
-          cursor = conn.cursor()
-
-          #:::~ get the names of the outputs
-          fa = cursor.execute("PRAGMA table_info(results)")
-          output_column = [ i[1] for i in fa ]
-          output_column = self.output_column[1:]
-            
-          if self.return_code == 0:
-             cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
-             all_d = [self.current_variables_id]
-             all_d.extend( self.output )
-             cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(output_column) , ", ".join([str(i) for i in all_d]) )
-             cursor.execute( cc )
-          else:
-                #:::~ status can be either 
-                #:::~    'N': not run
-                #:::~    'R': running
-                #:::~    'D': successfully run (done)
-                #:::~    'E': run but with non-zero error code
-             cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
-               #self.connection.commit()
-            
-          conn.commit()
-          conn.close()
-          del cursor
-          del conn
-          self.last_finished_processes  += 1
-        
 
 ################################################################################
 ################################################################################
@@ -90,7 +61,7 @@ class PickledExecutor(PickledData):
           if k.find("store_") != -1: return True
         return False
 
-    def launch_process(self):
+    def launch_process(self, configuration_filename):
         os.chdir(self.path)
 
         if self.create_tree():
@@ -99,7 +70,7 @@ class PickledExecutor(PickledData):
                 os.makedirs(dir_n)
             os.chdir(dir_n)
 
-        configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
+#        configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
         fconf = open(configuration_filename,"w")
         for k in self.values.keys():
             print >> fconf, k, utils.replace_string(self.values[k], self.values) 
@@ -114,8 +85,6 @@ class PickledExecutor(PickledData):
 
 
 
-
-
 ################################################################################
 ################################################################################
 ################################################################################
@@ -125,38 +94,33 @@ class PickledExecutor(PickledData):
 
 
 
-
-class ParameterExtractor():
+class ParameterExtractor:
     def __init__(self, db_name):
         self.db_name = db_name
-        
+
         self.values = {}
         self.directory_vars = None
         self.__init_db()
 
-        self.stdout_contents = params.contents_in_output(self.command)
-
-
     def __init_db(self):
 
         sql_db = sql.connect(self.db_name, timeout = TIMEOUT)
-
         #:::~ Table with the name of the executable
-        (self.command, ) = sql_db.execute( "SELECT name FROM executable " ).fetchone()
-
+        (self.command, ) = self.sql_db.select_fetchone( "SELECT name FROM executable " )
         #:::~ get the names of the columns
-        sel = sql_db.execute("SELECT name FROM entities ORDER BY id")
+        sel = self.sql_db.select_fetchall("SELECT name FROM entities ORDER BY id")
         self.entities = [ i[0] for i in sel ]
-
         #:::~ get the names of the outputs
-        fa = self.sql_db.execute("PRAGMA table_info(results)")
+        fa = self.sql_db.select_fetchall("PRAGMA table_info(results)")
         self.output_column = [ i[1] for i in fa ]
         self.output_column = self.output_column[1:]
         sql_db.close()
         del sql_db
-        
+    
+
     def __iter__(self):
         return self
+
 
     def next(self):
         sql_db = sql.connect(self.db_name, timeout = TIMEOUT)
@@ -169,16 +133,45 @@ class ParameterExtractor():
 
         self.current_run_id  = res[0]
         self.current_variables_id  = res[1]
-        self.sql_db.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
-        
+        sql_db.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
+
         for i in range( len(self.entities) ):
             self.values[ self.entities[i] ] = res[i+2]
-        return self.values
 
         sql_db.close()
         del sql_db
+        return self.values
 
-    
+    def store_pickleddata_in_db(self, pd):
+        conn = sql.connect("%s/%s"%(self.db_name))
+        cursor = conn.cursor()
+
+        #:::~ get the names of the outputs
+        fa = cursor.execute("PRAGMA table_info(results)")
+        self.output_column = [ i[1] for i in fa ]
+        self.output_column = self.output_column[1:]
+
+        if self.return_code == 0:
+             cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
+             all_d = [self.current_run_id]
+             all_d.extend( pd.output )
+             cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
+             cursor.execute( cc )
+        else:
+             #:::~ status can be either 
+             #:::~    'N': not run
+             #:::~    'R': running
+             #:::~    'D': successfully run (done)
+             #:::~    'E': run but with non-zero error code
+             cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%pd.id )
+             #self.connection.commit()
+
+        conn.commit()
+        conn.close()
+        del cursor
+        del conn
+
+
 
 ################################################################################
 ################################################################################
@@ -193,7 +186,7 @@ class ParameterDB(ParameterExtractor):
        self.path = path
        self.db_name = db_name
        self.weight = weight
-       self.id = id
+       self.current_run_id = id
        self.queue = 'any'
        ParameterDB.normalising += weight
 
@@ -308,27 +301,15 @@ class Queue:
 ###################################################################################################
 
 
-
-
 class ProcessPool:
     def __init__(self):
         self.update_time = 60 * 1
         self.waiting_processes = 100
         self.last_finished_processes = 0
 
-        self.dbs = {} 
         self.queues = {}
         self.db_master = sql.connect("%s/running.sqlite"%VAR_PATH)
         self.update_queue_info()
-        self.get_registered_dbs()
-#        self.update_process_list()
-
-    def get_registered_dbs(self): # These are the dbs that are registered and running
-        self.dbs = {} 
-        ParameterDB.normalising = 0.
-        res = self.db_master.execute("SELECT id, full_name, path, db_name, weight, queue FROM dbs WHERE status = 'R'")
-        for (id, full_name, path, db_name, weight, queue) in res:
-            self.dbs[full_name] = ParameterDB(full_name, path, db_name,id, weight, queue)
 
     def update_queue_info(self): # These are the queues available to launch the processes in
         self.queues = {}
@@ -355,15 +336,6 @@ class ProcessPool:
                     self.queues[queue].processes.append( job_id ) 
             except: 
                 continue
-
-
-    def harvest_data(self):
-        self.last_finished_processes  = 0
-        for i_d in os.listdir("%s/run"%(VAR_PATH) ):
-            pd = PickledData(id)
-            pd.load(src='run')
-            pd.store_in_db()
- 
 
 
     def generate_new_process(self):
@@ -422,6 +394,72 @@ class ProcessPool:
 ###################################################################################################
 ###################################################################################################
 ###################################################################################################
+
+
+
+class ParameterExchanger:
+    def __init__(self, db_master):
+        self.db_master = db_master
+        self.dbs = {} 
+        self.get_registered_dbs()
+        self.current_counter = 0
+#        self.update_process_list()
+
+    def get_registered_dbs(self): # These are the dbs that are registered and running
+        self.dbs = {} 
+        ParameterDB.normalising = 0.
+        res = self.db_master.execute("SELECT id, full_name, path, db_name, weight, queue FROM dbs WHERE status = 'R'")
+        for (id, full_name, path, db_name, weight, queue) in res:
+            self.dbs[full_name] = ParameterDB(full_name, path, db_name,id, weight, queue)
+
+
+    def generate_new_process(self):
+        db_fits = False
+        while not db_fits :
+            rnd = ParameterDB.normalising * random.random()
+            ls_dbs = sorted( self.dbs.keys() )
+            curr_db = self.pop()
+            ac = self.dbs[ curr_db ].weight
+            
+            while rnd > ac:
+                curr_db = ls_dbs.pop()
+                ac += self.dbs[ curr_db ].weight
+
+
+        return  self.dbs[ curr_db ]
+
+
+    def initialise_infiles(self):
+        to_run_processes =  self.waiting_processes - len(os.listdir("%s/queued"%(VAR_PATH) ) ) 
+        for i in range(to_run_processes):
+            sel_db = self.generate_new_process(  )
+            sel_db.next()
+        
+            self.current_counter += 1
+            in_name = "in_%.10d"%self.current_counter
+            pd = PickledData(in_name)
+            pd.command = sel_db.command
+            pd.db_name = sel_db.db_name
+            pd.path = sel_db.db_name[:sel_db.db_name.rfind("/")]
+
+            pd.id = in_name 
+            pd.values = sel_db.values
+            pd.current_run_id = sel_db.current_run_id
+            pd.variables = sel_db.entities
+
+            pd.current_run_id  = sel_db.current_run_id  
+            pd.current_variables_id  = sel_db.current_variables_id  
+            pd.dump(in_name ,  src = "queued")
+
+    def harvest_data(self):
+        self.last_finished_processes  = 0
+        for i_d in os.listdir("%s/run"%(VAR_PATH) ):
+            pd = PickledData(id)
+            pd.load(src='run')
+            pd.store_in_db()
+    
+
+
 
 
 
