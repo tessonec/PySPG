@@ -15,8 +15,8 @@ import optparse
   
 import time
 
-from spg.pool import ProcessPool
-
+from spg.pool import ProcessPool, ParameterExchanger
+from spg.utils import newline_msg
 
 if __name__ == "__main__":
     parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 ")
@@ -27,14 +27,16 @@ if __name__ == "__main__":
 
     while True:
        pp = ProcessPool()
+  #     pp.update_worker_info()
+  #     for i_j in pp.queues:
+   #       print pp.queues[i_j].normalise_processes()
+       
        pp.update_worker_info()
-       for i_j in pp.queues:
-         print pp.queues[i_j].normalise_processes()
-       
-       pp.update_dbs_info()
-       
-       pex = ParameterExchanger( pp.db_master )
+
+       pex = ParameterExchanger( pp.db_master, pp.cur_master )
+       newline_msg("INF", "initialise_infiles()")
        pex.initialise_infiles()
+       newline_msg("INF", "harvesting_data()")
        pex.harvest_data()
        
-       time.sleep(options.sleep)
+#       time.sleep(options.sleep)

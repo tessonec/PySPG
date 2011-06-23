@@ -95,8 +95,11 @@ class PickledExecutor(PickledData):
 
 
 class ParameterExtractor:
-    def __init__(self, db_name):
+    def __init__(self, full_name = "", path = "", db_name = ""):
+        self.full_name = full_name
+        self.path = path
         self.db_name = db_name
+        
 
         self.values = {}
         self.directory_vars = None
@@ -104,27 +107,30 @@ class ParameterExtractor:
 
     def __init_db(self):
 
-        sql_db = sql.connect(self.db_name, timeout = TIMEOUT)
+        sql_db = sql.connect(self.full_name, timeout = TIMEOUT)
+        cur_db = sql_db.cursor()
         #:::~ Table with the name of the executable
-        (self.command, ) = self.sql_db.select_fetchone( "SELECT name FROM executable " )
+        (self.command, ) = cur_db.execute( "SELECT name FROM executable " ).fetchone()
         #:::~ get the names of the columns
-        sel = self.sql_db.select_fetchall("SELECT name FROM entities ORDER BY id")
+        sel = cur_db.execute("SELECT name FROM entities ORDER BY id")
         self.entities = [ i[0] for i in sel ]
         #:::~ get the names of the outputs
-        fa = self.sql_db.select_fetchall("PRAGMA table_info(results)")
+        fa = cur_db.execute("PRAGMA table_info(results)")
         self.output_column = [ i[1] for i in fa ]
         self.output_column = self.output_column[1:]
+        del cur_db
         sql_db.close()
         del sql_db
-    
 
     def __iter__(self):
         return self
 
 
     def next(self):
-        sql_db = sql.connect(self.db_name, timeout = TIMEOUT)
-        res = sql_db.execute(
+        sql_db = sql.connect(self.full_name, timeout = TIMEOUT)
+        cur_db = sql_db.cursor()
+        print self.db_name
+        res = cur_db.execute(
                     "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
                     "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
                    ).fetchone()
@@ -133,8 +139,8 @@ class ParameterExtractor:
 
         self.current_run_id  = res[0]
         self.current_variables_id  = res[1]
-        sql_db.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
-
+        cur_db.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
+        sql_db.commit()
         for i in range( len(self.entities) ):
             self.values[ self.entities[i] ] = res[i+2]
 
@@ -165,7 +171,6 @@ class ParameterExtractor:
              #:::~    'E': run but with non-zero error code
              cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%pd.id )
              #self.connection.commit()
-
         conn.commit()
         conn.close()
         del cursor
@@ -181,12 +186,10 @@ class ParameterExtractor:
 class ParameterDB(ParameterExtractor):
     normalising = 0.
     def __init__(self, full_name = "", path= "", db_name= "", id=-1, weight=1.,queue = 'any'):
-       ParameterExtractor.__init__(full_name)
-       self.full_name = full_name
-       self.path = path
-       self.db_name = db_name
+       ParameterExtractor.__init__(self, full_name , path, db_name)
        self.weight = weight
-       self.current_run_id = id
+       #self.current_run_id = current_run_id 
+       self.id = id
        self.queue = 'any'
        ParameterDB.normalising += weight
 
@@ -196,13 +199,14 @@ class ParameterDB(ParameterExtractor):
 ################################################################################
 
 class DBExecutor(ParameterExtractor):
-    def __init__(self, db_name):
-        ParameterExtractor.__init__(db_name)
+    def __init__(self, full_name = "", path= "", db_name= ""):
+        ParameterExtractor.__init__(self, full_name , path, db_name)
            
     def launch_process(self):
         pwd = os.path.abspath(".")
         if self.directory_vars:
             dir = utils.replace_list(self.directory_vars, self.values, separator = "/")
+            if not os.path.exists(dir): os.makedirs(dir)
             if not os.path.exists(dir): os.makedirs(dir)
             os.chdir(dir)
         configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
@@ -222,6 +226,7 @@ class DBExecutor(ParameterExtractor):
             os.chdir(pwd)
         
         sql_db = sql.connect(self.db_name, timeout = TIMEOUT)
+        cur_db = sql_db.cursor()
         if ret_code == 0:
            sql_db.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
            all_d = [self.current_variables_id]
@@ -309,11 +314,13 @@ class ProcessPool:
 
         self.queues = {}
         self.db_master = sql.connect("%s/running.sqlite"%VAR_PATH)
+        self.cur_master = self.db_master.cursor()
+
         self.update_queue_info()
 
     def update_queue_info(self): # These are the queues available to launch the processes in
         self.queues = {}
-        res = self.db_master.execute("SELECT name, max_jobs FROM queues WHERE status = 'R'")
+        res = self.cur_master.execute("SELECT name, max_jobs FROM queues WHERE status = 'R'")
         for (name, max_jobs) in res:
             self.queues[name] = Queue(name, max_jobs)
 #           self.queues[name].set_db(self.db_master)
@@ -338,26 +345,6 @@ class ProcessPool:
                 continue
 
 
-    def generate_new_process(self):
-        db_fits = False
-        while not db_fits :
-            rnd = ParameterDB.normalising * random.random()
-            ls_dbs = sorted( self.dbs.keys() )
-            curr_db = self.pop()
-            ac = self.dbs[ curr_db ].weight
-            
-            while rnd > ac:
-                curr_db = ls_dbs.pop()
-                ac += self.dbs[ curr_db ].weight
-
-
-        return  self.dbs[ curr_db ]
-
-
-    def initialise_infiles(self):
-        to_run_processes =  self.waiting_processes - len(os.listdir("%s/queued"%(VAR_PATH) ) ) 
-        for i in range(to_run_processes):
-            self.generate_new_process(  )
 ######
 ######    def update_dbs_info(self):   # 
 ######        for i in self.dbs.keys():
@@ -398,8 +385,12 @@ class ProcessPool:
 
 
 class ParameterExchanger:
-    def __init__(self, db_master):
+    waiting_processes = 100
+    
+    def __init__(self, db_master, cur_master):
         self.db_master = db_master
+        self.cur_master = cur_master
+        
         self.dbs = {} 
         self.get_registered_dbs()
         self.current_counter = 0
@@ -408,7 +399,7 @@ class ParameterExchanger:
     def get_registered_dbs(self): # These are the dbs that are registered and running
         self.dbs = {} 
         ParameterDB.normalising = 0.
-        res = self.db_master.execute("SELECT id, full_name, path, db_name, weight, queue FROM dbs WHERE status = 'R'")
+        res = self.cur_master.execute("SELECT id, full_name, path, db_name, weight, queue FROM dbs WHERE status = 'R'")
         for (id, full_name, path, db_name, weight, queue) in res:
             self.dbs[full_name] = ParameterDB(full_name, path, db_name,id, weight, queue)
 
@@ -418,21 +409,27 @@ class ParameterExchanger:
         while not db_fits :
             rnd = ParameterDB.normalising * random.random()
             ls_dbs = sorted( self.dbs.keys() )
-            curr_db = self.pop()
+            curr_db = ls_dbs.pop()
             ac = self.dbs[ curr_db ].weight
             
             while rnd > ac:
                 curr_db = ls_dbs.pop()
                 ac += self.dbs[ curr_db ].weight
-
-
+            
+            res = self.dbs[ curr_db ].queue
+            if res == 'any' or res in res.split(","):
+               db_fits = True
+     
         return  self.dbs[ curr_db ]
 
 
     def initialise_infiles(self):
         to_run_processes =  self.waiting_processes - len(os.listdir("%s/queued"%(VAR_PATH) ) ) 
+        utils.newline_msg("INF", "initialise_infiles - %d"%to_run_processes )
+
         for i in range(to_run_processes):
             sel_db = self.generate_new_process(  )
+            utils.newline_msg("INF", "  >> %s"%sel_db.db_name )
             sel_db.next()
         
             self.current_counter += 1

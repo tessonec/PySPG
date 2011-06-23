@@ -147,10 +147,9 @@ class DBBuilder(spg.MultIteratorParser):
        self.connection.commit()
 
     def clean_all_status(self):
-       self.cursor.execute('UPDATE run_status SET status = "N"')
+       self.cursor.execute('UPDATE run_status SET status = "N" ')
        self.connection.commit()
 
-    
 
 #===============================================================================
 #     cursor.execute("CREATE TABLE IF NOT EXISTS revision_history "
@@ -233,7 +232,7 @@ def get_parameters(arg):
 
 
 
-dict_functions = { "init":init_db, "clean": clean_db, "clean_all": clean_all_db , "remove": remove_db}
+dict_functions = { "init":init_db, "clean": clean_db, "clean-all": clean_all_db , "remove": remove_db}
 
 def execute_command( arguments , options):
 #    if len( arguments ) <3 :
