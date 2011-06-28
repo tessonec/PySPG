@@ -70,7 +70,7 @@ class DataExchanger:
 
         for i in range(to_run_processes):
             sel_db = self.generate_new_process(  )
-            utils.newline_msg("INF", "  >> %s"%sel_db.db_name )
+       #     utils.newline_msg("INF", "  >> %s"%sel_db.db_name )
             sel_db.next()
         
             self.current_counter += 1
