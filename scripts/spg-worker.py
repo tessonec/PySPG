@@ -33,6 +33,6 @@ if __name__ == "__main__":
 
         pex = PickledExecutor(next_file)
         pex.load()
-        pex.launch_process()
-        pex.store()
+        pex.launch_process("%s.dat"%next_file)
+        pex.dump()
 

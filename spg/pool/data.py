@@ -33,11 +33,15 @@ class PickledData:
 
 
     def load(self, src = 'queued'):
-        full_name = "%s/%s/%s"%(VAR_PATH,src,self.in_name) 
-        vals = pickle.load( open(full_name)  )
+        full_inname = "%s/%s/%s"%(VAR_PATH,src,self.in_name) 
+        vals = pickle.load( open(full_inname)  )
         self.__dict__ = vals.__dict__
-
-        os.remove( full_name )
+        try:
+          self.path = self.full_name[:self.full_name.rfind("/")]
+          self.db_name = self.full_name[self.full_name.rfind("/")+1:]
+        except:
+          pass
+        os.remove( full_inname )
 
     def dump(self,src = 'run'):
           full_name = "%s/%s/%s"%(VAR_PATH,src,self.in_name)
@@ -49,7 +53,7 @@ class PickledData:
         cur_db = sql_db.cursor()
 
         #:::~ Table with the name of the executable
-     #   (self.command, ) = cur_db.execute( "SELECT name FROM executable " ).fetchone()
+        (self.command, ) = cur_db.execute( "SELECT name FROM executable " ).fetchone()
         #:::~ get the names of the columns
         sel = cur_db.execute("SELECT name FROM entities ORDER BY id")
         self.entities = [ i[0] for i in sel ]
@@ -59,7 +63,7 @@ class PickledData:
                     "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
                    ).fetchone()
         if res == None:
-          raise StopIteration
+          return None
 
         self.current_run_id  = res[0]
         self.current_variables_id  = res[1]
@@ -108,7 +112,7 @@ class PickledData:
 
 class PickledExecutor(PickledData):
     def __init__(self, fname):
-        PickledData.__init__(fname)
+        PickledData.__init__(self, fname)
 
 
     def create_tree(self):
@@ -120,12 +124,12 @@ class PickledExecutor(PickledData):
         os.chdir(self.path)
 
         if self.create_tree():
-            dir_n = utils.replace_list(self.variables, self.values, separator = "/")
+            dir_n = utils.replace_list(self.entities, self.values, separator = "/")
             if not os.path.exists(dir_n): 
                 os.makedirs(dir_n)
             os.chdir(dir_n)
 
-#        configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
+  #      configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
         fconf = open(configuration_filename,"w")
         for k in self.values.keys():
             print >> fconf, k, utils.replace_string(self.values[k], self.values) 
@@ -134,8 +138,10 @@ class PickledExecutor(PickledData):
         cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
         proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
         proc.wait()
+#        print self.command,  self.path, self.db_name,  configuration_filename  , self.values, <$$$$$$$
+#        print self.current_run_id, self.current_variables_id, self.entities, configuration_filename
         self.return_code = proc.returncode
         self.output = [i.strip() for i in proc.stdout.readline().split()]
+#        self.return_code = 0
+#        self.output = ""
         os.remove(configuration_filename)
-
-

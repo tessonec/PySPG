@@ -19,19 +19,19 @@ from spg.pool import ProcessPool, DataExchanger
 from spg.utils import newline_msg
 
 if __name__ == "__main__":
-  #  parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 ")
- #   parser.add_option("--sleep", type="int", action='store', dest="sleep",
-       #                     default = 1800 , help = "waiting time before refresh" )
+    parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 ")
+    parser.add_option("--sleep", type="int", action='store', dest="sleep",
+                            default = 1800 , help = "waiting time before refresh" )
 
- #   options, args = parser.parse_args()
+    options, args = parser.parse_args()
 
-#    while True:
+    while True:
        pp = ProcessPool()
-  #     pp.update_worker_info()
-  #     for i_j in pp.queues:
-   #       print pp.queues[i_j].normalise_processes()
+       pp.update_worker_info()
+       for i_j in pp.queues:
+          print pp.queues[i_j].normalise_processes()
        
-  #     pp.update_worker_info()
+       pp.update_worker_info()
 
        pex = DataExchanger( pp.db_master, pp.cur_master )
      #  newline_msg("INF", "initialise_infiles()")

@@ -72,16 +72,17 @@ class DataExchanger:
             sel_db = self.generate_new_process(  )
        #     utils.newline_msg("INF", "  >> %s"%sel_db.db_name )
             sel_db.next()
-        
+
             self.current_counter += 1
             in_name = "in_%.10d"%self.current_counter
             pd = PickledData(in_name)
             pd.full_name = sel_db.full_name
-            pd.load_next_from_db( )
-            
+            ret = pd.load_next_from_db( )
+            if ret = None:
+                continue
+
             pd.dump(src = "queued")
 
-            
 
 
     def harvest_data(self):
@@ -113,8 +114,10 @@ class DataExchanger:
            
             
             self.cur_master.execute("UPDATE dbs SET total_values_set = ? , total_combinations = ?, done_combinations = ?, running_combinations = ?, error_combinations = ? WHERE full_name = ? ",(total_values_set, no_combinations, done, running, error,  self.dbs[i].full_name ))
+            if not_run == 0:
+                self.cur_master.execute("UPDATE dbs SET status = ? WHERE full_name = ? ",('D',self.dbs[i].full_name))
+
         self.db_master.commit()
-            
-        
+
 
 
