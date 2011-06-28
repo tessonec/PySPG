@@ -34,11 +34,11 @@ if __name__ == "__main__":
   #     pp.update_worker_info()
 
        pex = DataExchanger( pp.db_master, pp.cur_master )
-       newline_msg("INF", "initialise_infiles()")
+     #  newline_msg("INF", "initialise_infiles()")
        pex.initialise_infiles()
-       newline_msg("INF", "harvesting_data()")
+     #  newline_msg("INF", "harvesting_data()")
        pex.harvest_data()
 
-       newline_msg("INF", "synchronise_master()")
+     #  newline_msg("INF", "synchronise_master()")
        pex.synchronise_master()
 #       time.sleep(options.sleep)

@@ -66,7 +66,7 @@ class DataExchanger:
 
     def initialise_infiles(self):
         to_run_processes =  self.waiting_processes - len(os.listdir("%s/queued"%(VAR_PATH) ) ) 
-        utils.newline_msg("INF", "initialise_infiles - %d"%to_run_processes )
+  #      utils.newline_msg("INF", "initialise_infiles - %d"%to_run_processes )
 
         for i in range(to_run_processes):
             sel_db = self.generate_new_process(  )
