@@ -71,6 +71,37 @@ class PickledData:
         del sql_db
         return self.values
 
+
+    def dump_in_db(self, pd):
+        conn = sql.connect("%s/%s"%(self.full_name))
+        cursor = conn.cursor()
+
+        #:::~ get the names of the outputs
+        fa = cursor.execute("PRAGMA table_info(results)")
+        self.output_column = [ i[1] for i in fa ]
+        self.output_column = self.output_column[1:]
+
+        if self.return_code == 0:
+             cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
+             all_d = [self.current_run_id]
+             all_d.extend( self.output )
+             cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
+             cursor.execute( cc )
+        else:
+             #:::~ status can be either 
+             #:::~    'N': not run
+             #:::~    'R': running
+             #:::~    'D': successfully run (done)
+             #:::~    'E': run but with non-zero error code
+             cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%pd.id )
+             #self.connection.commit()
+        conn.commit()
+        conn.close()
+        del cursor
+        del conn
+
+
+
 ################################################################################
 ################################################################################
 
