@@ -1,0 +1,109 @@
+from ... import utils, params
+
+
+
+import os.path, pickle
+from subprocess import Popen, PIPE
+import sqlite3 as sql
+
+VAR_PATH = os.path.abspath(params.CONFIG_DIR+"/../var/spg")
+BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
+TIMEOUT = 120
+
+
+################################################################################
+################################################################################
+################################################################################
+
+class PickledData:
+    def __init__(self, fname):
+        self.command = None
+        self.path = None
+        self.db_name = None
+
+        self.in_name = fname
+        self.values = {}
+        self.current_run_id = None
+        self.entities = []
+        self.output = ""
+        self.return_code  = None
+        self.current_run_id  = None
+        self.current_variables_id  = None
+
+
+    def load(self, src = 'queued'):
+        full_name = "%s/%s/%s"%(VAR_PATH,src,self.in_name) 
+        vals = pickle.load( open(full_name)  )
+        self.__dict__ = vals.__dict__
+
+        os.remove( full_name )
+
+    def dump(self,src = 'run'):
+          full_name = "%s/%s/%s"%(VAR_PATH,src,self.in_name)
+          pickle.dump( open(full_name, "w" ), self  )
+
+
+    def load_next_from_db(self):
+        sql_db = sql.connect(self.full_name, timeout = TIMEOUT)
+        cur_db = sql_db.cursor()
+
+        #:::~ Table with the name of the executable
+        (self.command, ) = cur_db.execute( "SELECT name FROM executable " ).fetchone()
+        #:::~ get the names of the columns
+        sel = cur_db.execute("SELECT name FROM entities ORDER BY id")
+        self.entities = [ i[0] for i in sel ]
+
+        res = cur_db.execute(
+                    "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
+                    "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
+                   ).fetchone()
+        if res == None:
+          raise StopIteration
+
+        self.current_run_id  = res[0]
+        self.current_variables_id  = res[1]
+        cur_db.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
+        sql_db.commit()
+        for i in range( len(self.entities) ):
+            self.values[ self.entities[i] ] = res[i+2]
+
+        sql_db.close()
+        del sql_db
+        return self.values
+
+################################################################################
+################################################################################
+
+class PickledExecutor(PickledData):
+    def __init__(self, fname):
+        PickledData.__init__(fname)
+
+
+    def create_tree(self):
+        for k in self.values:
+          if k.find("store_") != -1: return True
+        return False
+
+    def launch_process(self, configuration_filename):
+        os.chdir(self.path)
+
+        if self.create_tree():
+            dir_n = utils.replace_list(self.variables, self.values, separator = "/")
+            if not os.path.exists(dir_n): 
+                os.makedirs(dir_n)
+            os.chdir(dir_n)
+
+#        configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
+        fconf = open(configuration_filename,"w")
+        for k in self.values.keys():
+            print >> fconf, k, utils.replace_string(self.values[k], self.values) 
+        fconf.close()
+
+        cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
+        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
+        proc.wait()
+        self.return_code = proc.returncode
+        self.output = [i.strip() for i in proc.stdout.readline().split()]
+        os.remove(configuration_filename)
+
+
