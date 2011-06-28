@@ -8,9 +8,9 @@ Created on Tue Jun 28 08:10:30 2011
 ###################################################################################################
 
 
-from ... import utils, params
+from spg import utils, params
 from parameter import ParameterDB
-from pickle import PickledData
+from data import PickledData
 
 
 import os.path
@@ -77,13 +77,13 @@ class DataExchanger:
             pd.full_name = sel_db.full_name
             pd.load_next_from_db( )
             
-            pd.dump(in_name ,  src = "queued")
+            pd.dump(src = "queued")
 
     def harvest_data(self):
         self.last_finished_processes  = 0
         for i_d in os.listdir("%s/run"%(VAR_PATH) ):
             pd = PickledData(id)
-            pd.load(src='run')
+            pd.load(src = 'run')
             pd.dump_in_db()
     
 

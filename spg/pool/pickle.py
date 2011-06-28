@@ -1,8 +1,9 @@
-from ... import utils, params
+from spg import utils, params
 
 
 
-import os.path, pickle
+import os.path
+import pickle as py_pickle
 from subprocess import Popen, PIPE
 import sqlite3 as sql
 
@@ -33,14 +34,14 @@ class PickledData:
 
     def load(self, src = 'queued'):
         full_name = "%s/%s/%s"%(VAR_PATH,src,self.in_name) 
-        vals = pickle.load( open(full_name)  )
+        vals = py_pickle.load( open(full_name)  )
         self.__dict__ = vals.__dict__
 
         os.remove( full_name )
 
     def dump(self,src = 'run'):
           full_name = "%s/%s/%s"%(VAR_PATH,src,self.in_name)
-          pickle.dump( open(full_name, "w" ), self  )
+          py_pickle.dumps( self, open(full_name, "w" ) )
 
 
     def load_next_from_db(self):
@@ -93,7 +94,7 @@ class PickledData:
              #:::~    'R': running
              #:::~    'D': successfully run (done)
              #:::~    'E': run but with non-zero error code
-             cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%pd.id )
+             cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
              #self.connection.commit()
         conn.commit()
         conn.close()
