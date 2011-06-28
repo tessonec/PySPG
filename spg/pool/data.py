@@ -3,7 +3,7 @@ from spg import utils, params
 
 
 import os.path
-import pickle as py_pickle
+import pickle 
 from subprocess import Popen, PIPE
 import sqlite3 as sql
 
@@ -34,14 +34,14 @@ class PickledData:
 
     def load(self, src = 'queued'):
         full_name = "%s/%s/%s"%(VAR_PATH,src,self.in_name) 
-        vals = py_pickle.load( open(full_name)  )
+        vals = pickle.load( open(full_name)  )
         self.__dict__ = vals.__dict__
 
         os.remove( full_name )
 
     def dump(self,src = 'run'):
           full_name = "%s/%s/%s"%(VAR_PATH,src,self.in_name)
-          py_pickle.dumps( self, open(full_name, "w" ) )
+          pickle.dumps( self, open(full_name, "w" ) )
 
 
     def load_next_from_db(self):

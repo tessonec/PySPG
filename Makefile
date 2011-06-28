@@ -16,9 +16,13 @@ install:
 	install -m 0644 spg/__init__.py ${BASEDIR}/lib/spg
 	install -m 0644 spg/iterator.py ${BASEDIR}/lib/spg
 	install -m 0644 spg/load.py ${BASEDIR}/lib/spg
-	install -m 0644 spg/pool.py ${BASEDIR}/lib/spg
 	install -m 0644 spg/params.py ${BASEDIR}/lib/spg
 	install -m 0644 spg/parser.py ${BASEDIR}/lib/spg
 	install -m 0644 spg/utils.py ${BASEDIR}/lib/spg
+	install -m 0644 spg/pool/__init__.py ${BASEDIR}/lib/spg/pool
+	install -m 0644 spg/pool/exchange.py ${BASEDIR}/lib/spg/pool
+	install -m 0644 spg/pool/parameter.py ${BASEDIR}/lib/spg/pool
+	install -m 0644 spg/pool/process.py ${BASEDIR}/lib/spg/pool
+	install -m 0644 spg/pool/data.py ${BASEDIR}/lib/spg/pool
 
 
