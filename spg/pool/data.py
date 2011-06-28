@@ -41,7 +41,7 @@ class PickledData:
 
     def dump(self,src = 'run'):
           full_name = "%s/%s/%s"%(VAR_PATH,src,self.in_name)
-          pickle.dumps( self, open(full_name, "w" ) )
+          pickle.dump( self, open(full_name, "w" ) )
 
 
     def load_next_from_db(self):

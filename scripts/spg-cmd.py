@@ -47,13 +47,21 @@ def process_queue(cmd, name, params):
    # queue [add|remove|set|stop] QUEUE_NAME {params} 
    # "(id INTEGER PRIMARY KEY, name CHAR(64), max_jobs INTEGER, status CHAR(1))")
    #checks whether the queue is in the 
-   queue = cur_master.execute( "SELECT id FROM queues WHERE name = '%s' "%name)
+   #print cmd, name, params
+   queue = cur_master.execute( "SELECT id FROM queues WHERE name = '%s' "%name).fetchone()
+   queue_exists = False
    if queue is not None:
-       (queue, ) = queue
-   if cmd == "add" and queue:
+       queue_exists = True
+       (queue_id,) = queue
+       
+#   if cmd == "add" and queue:
+#          utils.newline_msg("SKP", "add-error queue '%s' already exists"%name )
+#          sys.exit(2)
+   if cmd == "add"  :
+       if queue_exists:
           utils.newline_msg("SKP", "add-error queue '%s' already exists"%name )
           sys.exit(2)
-   elif cmd == "add" :
+           
        try:
            max_jobs = params["jobs"]
        except:
@@ -63,18 +71,19 @@ def process_queue(cmd, name, params):
        utils.newline_msg("SKP", "delete-error queue does not '%s' exist"%name )
        sys.exit(2)
    elif cmd == "remove":
-       cur_master.execute( "DELETE FROM queues WHERE id = ?",(queue,) )
+       cur_master.execute( "DELETE FROM queues WHERE id = ?",(queue_id ,) )
    elif cmd == "set":
            max_jobs = params["jobs"]
-           cur_master.execute( 'UPDATE queues SET max_jobs=? WHERE id = ?', ( max_jobs, queue ) )
+           cur_master.execute( 'UPDATE queues SET max_jobs=? WHERE id = ?', ( max_jobs, queue_id  ) )
    elif cmd == "start":
-           cur_master.execute( "UPDATE queues SET status = 'R' WHERE id = ?", (queue,) )
+           cur_master.execute( "UPDATE queues SET status = 'R' WHERE id = ?", (queue_id ,) )
    elif cmd == "stop":
-           cur_master.execute( "UPDATE queues SET status = 'S' WHERE id = ?", (queue,) )
+           cur_master.execute( "UPDATE queues SET status = 'S' WHERE id = ?", (queue_id ,) )
    
    else:
        utils.newline_msg("SYN", "command '%s' not understood"%cmd )
        sys.exit(1)
+   db_master.commit()
 ######################################################################################################
 
 

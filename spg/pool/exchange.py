@@ -31,17 +31,19 @@ class DataExchanger:
         self.cur_master = cur_master
         
         self.dbs = {} 
-        self.get_registered_dbs()
+        self.__get_registered_dbs()
         self.current_counter = 0
 #        self.update_process_list()
 
-    def get_registered_dbs(self): # These are the dbs that are registered and running
+    def __get_registered_dbs(self): # These are the dbs that are registered and running
         self.dbs = {} 
         ParameterDB.normalising = 0.
         res = self.cur_master.execute("SELECT id, full_name, path, db_name, weight, queue FROM dbs WHERE status = 'R'")
         for (id, full_name, path, db_name, weight, queue) in res:
             self.dbs[full_name] = ParameterDB(full_name, path, db_name,id, weight, queue)
 
+
+    
 
     def generate_new_process(self):
         db_fits = False
@@ -79,6 +81,9 @@ class DataExchanger:
             
             pd.dump(src = "queued")
 
+            
+
+
     def harvest_data(self):
         self.last_finished_processes  = 0
         for i_d in os.listdir("%s/run"%(VAR_PATH) ):
@@ -88,6 +93,28 @@ class DataExchanger:
     
 
 
-
+    def synchronise_master(self):
+        for i in self.dbs:
+            conn = sql.connect( self.dbs[i].full_name )
+            cursor = conn.cursor()
+            cursor.execute("SELECT status, COUNT(*) FROM run_status GROUP BY status")
+            done, not_run, running,error = 0,0,0,0
+            for (k,v) in cursor:
+                if k == "D":
+                  done = v
+                elif k == "N":
+                  not_run = v
+                elif k == "R":
+                  running = v
+                elif k == "E":
+                  error = v
+            (no_combinations,) = cursor.execute("SELECT COUNT(*) FROM run_status ").fetchone()
+            (total_values_set,) = cursor.execute("SELECT COUNT(*) FROM values_set ").fetchone()
+           
+            
+            self.cur_master.execute("UPDATE dbs SET total_values_set = ? , total_combinations = ?, done_combinations = ?, running_combinations = ?, error_combinations = ? WHERE full_name = ? ",(total_values_set, no_combinations, done, running, error,  self.dbs[i].full_name ))
+        self.db_master.commit()
+            
+        
 
 
