@@ -74,19 +74,9 @@ class DataExchanger:
             self.current_counter += 1
             in_name = "in_%.10d"%self.current_counter
             pd = PickledData(in_name)
-            pd.load_next_from_db( sel_db.db_name )
+            pd.full_name = sel_db.full_name
+            pd.load_next_from_db( )
             
-            pd.command = sel_db.command
-            pd.db_name = sel_db.db_name
-            pd.path = sel_db.db_name[:sel_db.db_name.rfind("/")]
-
-            pd.id = in_name 
-            pd.values = sel_db.values
-            pd.current_run_id = sel_db.current_run_id
-            pd.variables = sel_db.entities
-
-            pd.current_run_id  = sel_db.current_run_id  
-            pd.current_variables_id  = sel_db.current_variables_id  
             pd.dump(in_name ,  src = "queued")
 
     def harvest_data(self):
@@ -94,7 +84,7 @@ class DataExchanger:
         for i_d in os.listdir("%s/run"%(VAR_PATH) ):
             pd = PickledData(id)
             pd.load(src='run')
-            pd.store_in_db()
+            pd.dump_in_db()
     
 
 

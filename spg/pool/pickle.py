@@ -48,7 +48,7 @@ class PickledData:
         cur_db = sql_db.cursor()
 
         #:::~ Table with the name of the executable
-        (self.command, ) = cur_db.execute( "SELECT name FROM executable " ).fetchone()
+     #   (self.command, ) = cur_db.execute( "SELECT name FROM executable " ).fetchone()
         #:::~ get the names of the columns
         sel = cur_db.execute("SELECT name FROM entities ORDER BY id")
         self.entities = [ i[0] for i in sel ]
@@ -72,7 +72,7 @@ class PickledData:
         return self.values
 
 
-    def dump_in_db(self, pd):
+    def dump_in_db(self):
         conn = sql.connect("%s/%s"%(self.full_name))
         cursor = conn.cursor()
 
