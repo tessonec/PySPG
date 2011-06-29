@@ -88,7 +88,7 @@ class DataExchanger:
     def harvest_data(self):
         self.last_finished_processes  = 0
         for i_d in os.listdir("%s/run"%(VAR_PATH) ):
-            pd = PickledData(id)
+            pd = PickledData(i_d)
             pd.load(src = 'run')
             pd.dump_in_db()
     
