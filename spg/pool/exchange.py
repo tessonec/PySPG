@@ -78,7 +78,7 @@ class DataExchanger:
             pd = PickledData(in_name)
             pd.full_name = sel_db.full_name
             ret = pd.load_next_from_db( )
-            if ret = None:
+            if ret == None:
                 continue
 
             pd.dump(src = "queued")
