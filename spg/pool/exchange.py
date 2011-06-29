@@ -38,7 +38,7 @@ class DataExchanger:
         if res == None:
            self.cur_master.execute("INSERT INTO infiles  (last) VALUES (0)")
            self.db_master.commit()
-        print res
+      #  print res
         
 #        self.update_process_list()
 
