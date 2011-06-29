@@ -24,12 +24,11 @@ class PickledData:
 
         self.in_name = fname
         self.values = {}
-        self.current_run_id = None
         self.entities = []
         self.output = ""
         self.return_code  = None
         self.current_run_id  = None
-        self.current_variables_id  = None
+        self.values_set_id  = None
 
 
     def load(self, src = 'queued'):
@@ -66,7 +65,7 @@ class PickledData:
           return None
 
         self.current_run_id  = res[0]
-        self.current_variables_id  = res[1]
+        self.values_set_id = res[1]
         cur_db.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
         sql_db.commit()
         for i in range( len(self.entities) ):
@@ -85,14 +84,19 @@ class PickledData:
         fa = cursor.execute("PRAGMA table_info(results)")
         self.output_column = [ i[1] for i in fa ]
         self.output_column = self.output_column[1:]
+        utils.newline_msg("PRT","%s -- %s , %s -- %s"%( self.return_code , self.current_run_id, self.values_set_id , self.output_column))
 
         if self.return_code == 0:
-             cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
-             all_d = [self.current_run_id]
+             all_d = [self.values_set_id ]
              all_d.extend( self.output )
-             cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
-             print cc
-             cursor.execute( cc )
+             cc = 'INSERT INTO results (%s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
+             print cc, self.current_run_id 
+             try:
+                 cursor.execute( cc )
+                 cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
+             except:
+                 cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
+                 
         else:
              #:::~ status can be either 
              #:::~    'N': not run
