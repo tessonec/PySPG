@@ -90,12 +90,12 @@ def get_variables(string):
 
 #########################################################################################
 #########################################################################################
-def inline_msg( type, msg ):
-  print >> sys.stderr, "[%s - %5s ] %s...\r"%(os.path.split(sys.argv[0])[1], type, msg),
+def inline_msg( type, msg, indent = 0 ):
+  print >> sys.stderr, "%s[%s - %5s ] %s...\r"%(" "*indent, os.path.split(sys.argv[0])[1], type, msg),
   sys.stderr.flush()
 
-def newline_msg( type, msg ):
-  print >> sys.stderr, "[%s - %5s ] %s"%(os.path.split(sys.argv[0])[1], type, msg)
+def newline_msg( type, msg, indent = 0 ):
+  print >> sys.stderr, "%s[%s - %5s ] %s"%(" "*indent, os.path.split(sys.argv[0])[1], type, msg)
   sys.stderr.flush()
 #########################################################################################
 #########################################################################################
