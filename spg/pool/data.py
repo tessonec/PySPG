@@ -78,7 +78,7 @@ class PickledData:
 
 
     def dump_in_db(self):
-        conn = sql.connect("%s/%s"%(self.full_name))
+        conn = sql.connect(self.full_name)
         cursor = conn.cursor()
 
         #:::~ get the names of the outputs
