@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 
-from spg.pool import DBExecutor
+from spg.pool import ParameterExecutor
 import spg.params as params
 
 
@@ -33,11 +33,11 @@ if __name__ == "__main__":
           db_name = "results%s.sqlite"%db_name
       else:
           db_name = i_arg
-
-      executor = DBExecutor( db_name, timeout = options.timeout)
+      full_name = os.path.realpath(db_name)
+      path = full_name[:full_name.rfind("/")]
+      executor = ParameterExecutor( full_name ,  path, db_name )
       
-      if options.tree:
-          executor.generate_tree( options.directory_vars )
+      executor.generate_tree( options.directory_vars )
 
       for values in executor:
           executor.launch_process()

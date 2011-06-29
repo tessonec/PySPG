@@ -2,7 +2,7 @@ from spg import utils, params
 
 
 
-import os.path
+import os.path, os
 from subprocess import Popen, PIPE
 import sqlite3 as sql
 
@@ -16,6 +16,7 @@ TIMEOUT = 120
 class ParameterExtractor:
     def __init__(self, full_name = "", path = "", db_name = ""):
         self.full_name = full_name
+        
         self.path = path
         self.db_name = db_name
         
@@ -118,15 +119,15 @@ class ParameterDB(ParameterExtractor):
 ################################################################################
 ################################################################################
 
-class DBExecutor(ParameterExtractor):
+class ParameterExecutor(ParameterExtractor):
     def __init__(self, full_name = "", path= "", db_name= ""):
         ParameterExtractor.__init__(self, full_name , path, db_name)
+        os.chdir(self.path)
            
     def launch_process(self):
         pwd = os.path.abspath(".")
-        if self.directory_vars:
+        if self.directory_vars or self.create_trees():
             dir = utils.replace_list(self.directory_vars, self.values, separator = "/")
-            if not os.path.exists(dir): os.makedirs(dir)
             if not os.path.exists(dir): os.makedirs(dir)
             os.chdir(dir)
         configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
@@ -178,7 +179,7 @@ class DBExecutor(ParameterExtractor):
     def generate_tree(self, dir_vars = None):
         sql_db = sql.connect(self.db_name, timeout = TIMEOUT)
         if dir_vars:
-           self.directory_vars = dir_vars
+           self.directory_vars = dir_vars.split(",")
         else:
            res = self.sql_db.execute("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
            self.directory_vars  = [ i[0] for i in res ]
