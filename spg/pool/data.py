@@ -78,6 +78,7 @@ class PickledData:
 
 
     def dump_in_db(self):
+        print self.full_name
         conn = sql.connect(self.full_name)
         cursor = conn.cursor()
 
@@ -85,7 +86,7 @@ class PickledData:
         fa = cursor.execute("PRAGMA table_info(results)")
         self.output_column = [ i[1] for i in fa ]
         self.output_column = self.output_column[1:]
-        utils.newline_msg("PRT","%s -- %s,%s -- %s"%( self.return_code , self.current_run_id, self.current_variables_id , self.output_column))
+        utils.newline_msg("PRT","%s -- %s,%s -- %s"%( self.return_code , self.current_run_id, self.current_variables_id , self.output_column) )
 
         if self.return_code == 0:
              all_d = [self.current_run_id]
