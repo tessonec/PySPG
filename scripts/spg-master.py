@@ -30,6 +30,7 @@ if __name__ == "__main__":
        newline_msg("INF", "pp.update_worker_info()")
        pp.update_worker_info()
        for i_j in pp.queues:
+          newline_msg("INF", "%s - queue.normalise_processes()"%pp.queues[i_j].name)
           print pp.queues[i_j].normalise_processes()
        
 #       pp.update_worker_info()
