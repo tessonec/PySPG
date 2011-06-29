@@ -26,23 +26,27 @@ if __name__ == "__main__":
     options, args = parser.parse_args()
 
     while True:
+       newline_msg("INF", "process pool")
        pp = ProcessPool()
-       newline_msg("INF", "pp.update_worker_info()")
+#       newline_msg("INF", "pp.update_worker_info()")
        pp.update_worker_info()
        for i_j in pp.queues:
-          newline_msg("INF", "%s - queue.normalise_processes()"%pp.queues[i_j].name)
-          print pp.queues[i_j].normalise_processes()
+          #newline_msg("INF", "%s - queue.normalise_processes()"%pp.queues[i_j].name)
+          pp.queues[i_j].normalise_processes()
        
 #       pp.update_worker_info()
-
+#       newline_msg("INF", "initialise_infiles()")
+       newline_msg("INF", "populate/harvest data")
        pex = DataExchanger( pp.db_master, pp.cur_master )
-       newline_msg("INF", "initialise_infiles()")
+#       newline_msg("INF", "initialise_infiles()")
        pex.initialise_infiles()
-       newline_msg("INF", "harvesting_data()")
+#       newline_msg("INF", "harvesting_data()")
        pex.harvest_data()
 
-       newline_msg("INF", "synchronise_master()")
+#       newline_msg("INF", "synchronise_master()")
        pex.synchronise_master()
 
-       newline_msg("INF", "sleeping()")
+       newline_msg("INF", "sleep %s"%options.sleep)
+       del pp
+       del pex
        time.sleep(options.sleep)
