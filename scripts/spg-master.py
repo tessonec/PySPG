@@ -16,7 +16,7 @@ import optparse
 import time
 
 from spg.pool import ProcessPool, DataExchanger
-from spg.utils import newline_msg
+from spg.utils import newline_msg, inline_msg
 
 if __name__ == "__main__":
     parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 ")
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     while True:
        newline_msg("INF", "awaken @%s"%time.ctime())
        
-       newline_msg("INF", "process pool",indent = 2)
+       inline_msg("INF", "process pool",indent = 2)
        pp = ProcessPool()
 #       newline_msg("INF", "pp.update_worker_info()")
        pp.update_worker_info()
@@ -38,17 +38,17 @@ if __name__ == "__main__":
        
 #       pp.update_worker_info()
 #       newline_msg("INF", "initialise_infiles()")
-       newline_msg("INF", "populate/harvest data",indent = 2)
+       inline_msg("INF", "populate/harvest data",indent = 2)
        pex = DataExchanger( pp.db_master, pp.cur_master )
 #       newline_msg("INF", "initialise_infiles()")
        pex.initialise_infiles()
 #       newline_msg("INF", "harvesting_data()")
        pex.harvest_data()
 
-       newline_msg("INF", "syncing", indent = 2)
+       inline_msg("INF", "syncing", indent = 2)
        pex.synchronise_master()
 
-       newline_msg("INF", "sleep %s"%options.sleep,indent = 2)
+       inline_msg("INF", "sleep %s"%options.sleep,indent = 2)
        del pp
        del pex
        time.sleep(options.sleep)

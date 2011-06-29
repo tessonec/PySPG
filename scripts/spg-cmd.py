@@ -201,7 +201,8 @@ def execute_command( arguments ):
     params = {}
     
     full_command = arguments[0]
-
+    if len(arguments) == 1:
+        return 
     cmd = arguments[1] 
     if len(arguments) > 2 :
         name = arguments[2]
@@ -242,6 +243,9 @@ if __name__ == "__main__":
 
     cur_master.execute("CREATE TABLE IF NOT EXISTS running "
                    "(id INTEGER PRIMARY KEY, job_id CHAR(64), dbs_id INTEGER, params_id INTEGER)")
+
+    cur_master.execute("CREATE TABLE IF NOT EXISTS infiles "
+                      "(id INTEGER PRIMARY KEY, last INTEGER)")
 
     #### :::~ ( end ) DB connection 
     ##################################################################################################

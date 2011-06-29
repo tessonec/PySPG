@@ -91,6 +91,7 @@ class PickledData:
              all_d = [self.current_run_id]
              all_d.extend( self.output )
              cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
+             print cc
              cursor.execute( cc )
         else:
              #:::~ status can be either 
