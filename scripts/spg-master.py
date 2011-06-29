@@ -45,7 +45,7 @@ if __name__ == "__main__":
 #       newline_msg("INF", "harvesting_data()")
        pex.harvest_data()
 
-#       newline_msg("INF", "synchronise_master()")
+       newline_msg("INF", "syncing", indent = 2)
        pex.synchronise_master()
 
        newline_msg("INF", "sleep %s"%options.sleep,indent = 2)
