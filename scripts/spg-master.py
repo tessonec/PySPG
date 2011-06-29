@@ -21,7 +21,7 @@ from spg.utils import newline_msg
 if __name__ == "__main__":
     parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 ")
     parser.add_option("--sleep", type="int", action='store', dest="sleep",
-                            default = 1800 , help = "waiting time before refresh" )
+                            default = 120 , help = "waiting time before refresh" )
 
     options, args = parser.parse_args()
 
@@ -42,4 +42,6 @@ if __name__ == "__main__":
 
        newline_msg("INF", "synchronise_master()")
        pex.synchronise_master()
+
+       newline_msg("INF", "sleeping()")
        time.sleep(options.sleep)

@@ -24,10 +24,10 @@ class Queue:
 
     def kill_processes( self, n_jobs ):
         for i in sorted(self.processes)[:n_jobs] :
-            cmd = "qdel "%(i)
+            cmd = "qdel %s"%(i)
             proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
             proc.wait()
-            self.master_db.execute("DELETE FROM running WHERE job_id = ?" , i)
+#            self.master_db.execute("DELETE FROM running WHERE job_id = ?" , i)
 
     def normalise_processes(self):
         running_proc = len( self.processes )
