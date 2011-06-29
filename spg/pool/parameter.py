@@ -54,7 +54,8 @@ class ParameterExtractor:
                     "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
                    ).fetchone()
         if res == None:
-          raise StopIteration
+            utils.newline_msg("WRN","db '%s' did not return any new data point"%self.full_name)
+            return None
 
         self.current_run_id  = res[0]
         self.current_variables_id  = res[1]
@@ -78,7 +79,7 @@ class ParameterExtractor:
 
         if self.return_code == 0:
              cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
-             all_d = [self.current_run_id]
+             all_d = [self.current_variables_id]
              all_d.extend( pd.output )
              cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
              cursor.execute( cc )
