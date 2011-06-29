@@ -85,13 +85,13 @@ class PickledData:
         fa = cursor.execute("PRAGMA table_info(results)")
         self.output_column = [ i[1] for i in fa ]
         self.output_column = self.output_column[1:]
-        utils.newline_msg("PRT","%s -- %s,%s -- %s"%( self.return_code , self.current_run_id, current_variables_id , self.output_column))
+        utils.newline_msg("PRT","%s -- %s,%s -- %s"%( self.return_code , self.current_run_id, self.current_variables_id , self.output_column))
 
         if self.return_code == 0:
              all_d = [self.current_run_id]
              all_d.extend( self.output )
              cc = 'INSERT INTO results (%s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
-             print cc, self.current_run_id 
+#             print cc, self.current_run_id 
              try:
                  cursor.execute( cc )
                  cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
