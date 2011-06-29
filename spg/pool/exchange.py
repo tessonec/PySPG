@@ -32,7 +32,14 @@ class DataExchanger:
         
         self.dbs = {} 
         self.__get_registered_dbs()
+        
         self.current_counter = 0
+        res = self.cur_master.execute("SELECT last FROM infiles WHERE id = 1").fetchone()
+        if res == None:
+           self.cur_master.execute("INSERT INTO infiles  (last) VALUES (0)")
+           self.db_master.commit()
+        print res
+        
 #        self.update_process_list()
 
     def __get_registered_dbs(self): # These are the dbs that are registered and running
@@ -72,8 +79,11 @@ class DataExchanger:
             sel_db = self.generate_new_process(  )
        #     utils.newline_msg("INF", "  >> %s"%sel_db.db_name )
             sel_db.next()
-
+            
+            (self.current_counter, ) = self.cur_master.execute("SELECT last FROM infiles WHERE id = 1").fetchone()
             self.current_counter += 1
+            self.cur_master.execute("UPDATE infiles SET last = ? WHERE id = 1",(self.current_counter ,))
+            self.db_master.commit()
             in_name = "in_%.10d"%self.current_counter
             pd = PickledData(in_name)
             pd.full_name = sel_db.full_name

@@ -200,9 +200,10 @@ def execute_command( arguments ):
     name = None
     params = {}
     
-    full_command = arguments[0]
-    if len(arguments) == 1:
+
+    if len(arguments) == 0:
         return 
+    full_command = arguments[0]
     cmd = arguments[1] 
     if len(arguments) > 2 :
         name = arguments[2]

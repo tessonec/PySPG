@@ -36,7 +36,7 @@ class DBBuilder(spg.MultIteratorParser):
             if prev_val[0] != self.command:
                 utils.newline_msg("ERR","conflict in executable name (in db '%s', in param '%s')"%(prev_val, self.command))
         else:
-            self.cursor.execute("INSERT INTO executable (name) VALUES ('%s')"%self.command)
+            self.cursor.execute("INSERT INTO executable (name) VALUES (?)",(self.command,))
             self.connection.commit()
 
         #:::~ Table with the defined entities

@@ -26,9 +26,9 @@ if __name__ == "__main__":
     options, args = parser.parse_args()
 
     while True:
-       newline_msg("INF", "awaken @%s"%time.ctime())
+       newline_msg("INF", "awaken @%s......................."%time.ctime())
        
-       inline_msg("INF", "process pool",indent = 2)
+       inline_msg("INF", "process pool......................",indent = 2)
        pp = ProcessPool()
 #       newline_msg("INF", "pp.update_worker_info()")
        pp.update_worker_info()
@@ -38,17 +38,17 @@ if __name__ == "__main__":
        
 #       pp.update_worker_info()
 #       newline_msg("INF", "initialise_infiles()")
-       inline_msg("INF", "populate/harvest data",indent = 2)
+       inline_msg("INF", "populate/harvest data.......................",indent = 2)
        pex = DataExchanger( pp.db_master, pp.cur_master )
 #       newline_msg("INF", "initialise_infiles()")
        pex.initialise_infiles()
 #       newline_msg("INF", "harvesting_data()")
        pex.harvest_data()
 
-       inline_msg("INF", "syncing", indent = 2)
+       inline_msg("INF", "syncing..................................", indent = 2)
        pex.synchronise_master()
 
-       inline_msg("INF", "sleep %s"%options.sleep,indent = 2)
+       inline_msg("INF", "sleep %s.........................."%options.sleep,indent = 2)
        del pp
        del pex
        time.sleep(options.sleep)
