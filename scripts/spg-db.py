@@ -210,6 +210,12 @@ def remove_db(i_arg,params,parser):
     connection.commit()
 
 def translate_name(st):
+    if not os.path.exists(st):
+       st = os.path.realpath( "~/%s"%st )
+    if not os.path.exists(st):
+        utils.newline_msg("ERR","database '%s' does not exist"%st)
+        sys.exit(2)
+       
     if ".sqlite" in st:
       par_name = st.replace("results","").replace(".sqlite","")
       par_name = "parameters%s.dat"%par_name
@@ -232,7 +238,7 @@ def get_parameters(arg):
 
 
 
-dict_functions = { "init":init_db, "clean": clean_db, "clean-all": clean_all_db , "remove": remove_db}
+dict_functions = { "init":init_db, "clean": clean_db, "clean-all": clean_all_db , "remove": remove_db, "start":start_queue}
 
 def execute_command( arguments , options):
 #    if len( arguments ) <3 :
