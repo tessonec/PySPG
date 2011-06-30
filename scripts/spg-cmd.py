@@ -88,14 +88,17 @@ def process_queue(cmd, name, params):
 
 
 def process_db(cmd, name, params):
-   # db [add|remove|set|start|stop|clean] DB_NAME {params} 
-   
+# db [add|remove|set|start|stop|clean] DB_NAME {params} 
 #    cursor.execute("CREATE TABLE IF NOT EXISTS dbs "
 #                   "(id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), db_name CHAR(256), status CHAR(1), "
 #                   " total_combinations INTEGER, done_combinations INTEGER, running_combinations INTEGER, error_combinations INTEGER,  "
 #                   " weight FLOAT)")
-#    
    full_name = os.path.realpath(name)
+   if not os.path.exists(full_name):
+       full_name = os.path.realpath( "~/%s"%full_name )
+   if not os.path.exists(full_name):
+     utils.newline_msg("ERR", "db soesn't exist")
+     sys.exit(3)       
    
    path, db_name = os.path.split(full_name)
    
