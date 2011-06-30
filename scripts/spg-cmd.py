@@ -96,9 +96,9 @@ def process_db(cmd, name, params):
    full_name = os.path.realpath(name)
    print full_name
    if not os.path.exists(full_name):
-       full_name = os.path.realpath( "~/%s"%name )
+       full_name = os.path.expanduser( "~/%s"%name )
    print full_name 
-   if not os.path.expanduser(full_name):
+   if not os.path.exists(full_name):
      utils.newline_msg("ERR", "db soesn't exist")
      sys.exit(3)       
    
