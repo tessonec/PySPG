@@ -238,7 +238,7 @@ def get_parameters(arg):
 
 
 
-dict_functions = { "init":init_db, "clean": clean_db, "clean-all": clean_all_db , "remove": remove_db, "start":start_queue}
+dict_functions = { "init":init_db, "clean": clean_db, "clean-all": clean_all_db , "remove": remove_db}
 
 def execute_command( arguments , options):
 #    if len( arguments ) <3 :
