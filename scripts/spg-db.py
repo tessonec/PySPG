@@ -211,7 +211,7 @@ def remove_db(i_arg,params,parser):
 
 def translate_name(st):
     if not os.path.exists(st):
-       st = os.path.realpath( "~/%s"%st )
+       st = os.path.expanduser( "~/%s"%st )
     if not os.path.exists(st):
         utils.newline_msg("ERR","database '%s' does not exist"%st)
         sys.exit(2)
