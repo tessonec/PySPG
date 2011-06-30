@@ -65,7 +65,7 @@ class PickledData:
                     "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
                     "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
                    ).fetchone()
-        print res
+   #     print res
         if res == None:
           return None
 
@@ -91,7 +91,7 @@ class PickledData:
         fa = cursor.execute("PRAGMA table_info(results)")
         self.output_column = [ i[1] for i in fa ]
         self.output_column = self.output_column[1:]
-        utils.newline_msg("PRT","{%s} %s -- %s,%s -- %s"%( self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output) )
+       # utils.newline_msg("PRT","{%s} %s -- %s,%s -- %s"%( self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output) )
 
         if self.return_code == 0:
              all_d = [self.current_run_id]

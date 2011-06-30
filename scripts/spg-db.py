@@ -203,7 +203,7 @@ def clean_db(i_arg,params,options):
 
 def remove_db(i_arg,params,parser):
     i_arg, db_name = translate_name(i_arg)
-    connection = sql.connect("%s/running.sqlite"%VAR_PATH)
+    connection = sql.connect("%s/spg_pool.sqlite"%VAR_PATH)
     cursor = connection.cursor()
     cursor.execute( "DELETE FROM dbs WHERE full_name = ?",(os.path.realpath(db_name),) )
 

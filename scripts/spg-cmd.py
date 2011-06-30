@@ -8,7 +8,7 @@ from spg.pool import ProcessPool
 
 
 # import sqlite3 as sql
-#from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE
 import sys, os, os.path
 import optparse
 import sqlite3 as sql
@@ -192,7 +192,18 @@ def get_stats(cmd, name, params):
        sys.exit(1)
 
 
-dict_functions = { "db":process_db, "queue": process_queue, "stat": get_stats }
+
+def clean(cmd, name, params):
+   if cmd == "var":
+       proc = Popen("rm -f %s/run/*"%VAR_PATH, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
+       proc.wait()
+       proc = Popen("rm -f %s/queued/*"%VAR_PATH, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
+       proc.wait()
+       
+     
+
+
+dict_functions = { "db":process_db, "queue": process_queue, "stat": get_stats, 'clean': clean }
 
 def execute_command( arguments ):
 #    if len( arguments ) <3 :
@@ -200,7 +211,6 @@ def execute_command( arguments ):
     name = None
     params = {}
     
-
     if len(arguments) == 0:
         return 
     full_command = arguments[0]
@@ -223,7 +233,7 @@ if __name__ == "__main__":
     ##################################################################################################
     #### :::~ (begin) DB connection 
     
-    db_master = sql.connect("%s/running.sqlite"%VAR_PATH)
+    db_master = sql.connect("%s/spg_pool.sqlite"%VAR_PATH)
     cur_master = db_master.cursor()
     
     #:::~ status can be either 
@@ -259,6 +269,7 @@ if __name__ == "__main__":
                                       "   db    [add|remove|set*|start|stop|clean|clean-all|reset] DB_NAME {params} \n"
                                       "        params :: weight=WEIGHT[1] queue=STR[any] \n"
                                       "   stat  [queue|db] \n"
+                                      "   clean  [var] \n"
                                       "VERBs with * indicate that accept params"
                                   )
 
