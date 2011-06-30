@@ -52,7 +52,7 @@ class ProcessPool:
         self.last_finished_processes = 0
 
         self.queues = {}
-        self.db_master = sql.connect("%s/running.sqlite"%VAR_PATH)
+        self.db_master = sql.connect("%s/spg_pool.sqlite"%VAR_PATH)
         self.cur_master = self.db_master.cursor()
 
         self.update_queue_info()

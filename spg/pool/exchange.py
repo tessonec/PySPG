@@ -45,12 +45,11 @@ class DataExchanger:
     def __get_registered_dbs(self): # These are the dbs that are registered and running
         self.dbs = {} 
         ParameterDB.normalising = 0.
-        res = self.cur_master.execute("SELECT id, full_name, path, db_name, weight, queue FROM dbs WHERE status = 'R'")
-        for (id, full_name, path, db_name, weight, queue) in res:
-            self.dbs[full_name] = ParameterDB(full_name, path, db_name,id, weight, queue)
-
-
-    
+        res = self.cur_master.execute("SELECT id, full_name, weight, queue FROM dbs WHERE status = 'R'")
+        for (id, full_name, weight, queue) in res:
+            new_db = ParameterDB(full_name, id, weight, queue)
+            self.dbs[full_name] = new_db
+   
 
     def generate_new_process(self):
         db_fits = False
@@ -67,7 +66,7 @@ class DataExchanger:
             res = self.dbs[ curr_db ].queue
             if res == 'any' or res in res.split(","):
                db_fits = True
-     
+        print "CURR_DB",curr_db
         return  self.dbs[ curr_db ]
 
 
@@ -85,12 +84,10 @@ class DataExchanger:
             self.cur_master.execute("UPDATE infiles SET last = ? WHERE id = 1",(self.current_counter ,))
             self.db_master.commit()
             in_name = "in_%.10d"%self.current_counter
-            pd = PickledData(in_name)
-            pd.full_name = sel_db.full_name
-            ret = pd.load_next_from_db( )
+            pd = PickledData(in_name, sel_db.full_name)
+            ret = pd.load_next_from_db( sel_db.connection, sel_db.cursor )
             if ret == None:
                 continue
-
             pd.dump(src = "queued")
 
 
@@ -100,17 +97,16 @@ class DataExchanger:
         for i_d in os.listdir("%s/run"%(VAR_PATH) ):
             pd = PickledData(i_d)
             pd.load(src = 'run')
-            pd.dump_in_db()
-    
+            a_db =self.dbs[pd.full_db_name]
+            pd.dump_in_db( a_db.connection, a_db.cursor  )
 
 
     def synchronise_master(self):
         for i in self.dbs:
-            conn = sql.connect( self.dbs[i].full_name )
-            cursor = conn.cursor()
-            cursor.execute("SELECT status, COUNT(*) FROM run_status GROUP BY status")
+            icursor = self.dbs[i].cursor
+            icursor.execute("SELECT status, COUNT(*) FROM run_status GROUP BY status")
             done, not_run, running,error = 0,0,0,0
-            for (k,v) in cursor:
+            for (k,v) in icursor:
                 if k == "D":
                   done = v
                 elif k == "N":
@@ -119,10 +115,9 @@ class DataExchanger:
                   running = v
                 elif k == "E":
                   error = v
-            (no_combinations,) = cursor.execute("SELECT COUNT(*) FROM run_status ").fetchone()
-            (total_values_set,) = cursor.execute("SELECT COUNT(*) FROM values_set ").fetchone()
-           
-            
+            (no_combinations,) = icursor.execute("SELECT COUNT(*) FROM run_status ").fetchone()
+            (total_values_set,) = icursor.execute("SELECT COUNT(*) FROM values_set ").fetchone()
+
             self.cur_master.execute("UPDATE dbs SET total_values_set = ? , total_combinations = ?, done_combinations = ?, running_combinations = ?, error_combinations = ? WHERE full_name = ? ",(total_values_set, no_combinations, done, running, error,  self.dbs[i].full_name ))
             if not_run == 0:
                 self.cur_master.execute("UPDATE dbs SET status = ? WHERE full_name = ? ",('D',self.dbs[i].full_name))

@@ -136,7 +136,7 @@ def check_consistency(exec_file, miparser):
   
   if exec_file[:4] == "ctx-":  exec_file = exec_file[4:]
 
-  exec_file=exec_file[:exec_file.rfind(".") ]
+  exec_file, ext = os.path.splitext(exec_file)
 
   possible_lines = backendize("%s/spg-conf/%s.ct"%(CONFIG_DIR,exec_file))
 
@@ -204,7 +204,7 @@ def contents_in_output(exec_file):
    possible_keys = set(["type","label","help","scale","repeat"])
    if exec_file[:4] == "ctx-":  exec_file = exec_file[4:]
    ret = []
-   exec_file=exec_file[:exec_file.rfind(".") ]
+   exec_file,ext=os.path.splitext(exec_file)
 
    cfgFile = "%s/spg-conf/%s.stdout"%(CONFIG_DIR,exec_file)
    for line in open(cfgFile):

@@ -34,8 +34,8 @@ if __name__ == "__main__":
       else:
           db_name = i_arg
       full_name = os.path.realpath(db_name)
-      path = full_name[:full_name.rfind("/")]
-      executor = ParameterExecutor( full_name ,  path, db_name )
+#      path, out = os.path.split(full_name)
+      executor = ParameterExecutor( full_name )
       
       executor.generate_tree( options.directory_vars )
 

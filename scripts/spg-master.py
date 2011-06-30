@@ -31,10 +31,10 @@ if __name__ == "__main__":
        inline_msg("INF", "process pool......................",indent = 2)
        pp = ProcessPool()
 #       newline_msg("INF", "pp.update_worker_info()")
-       pp.update_worker_info()
-       for i_j in pp.queues:
+#       pp.update_worker_info()
+#       for i_j in pp.queues:
           #newline_msg("INF", "%s - queue.normalise_processes()"%pp.queues[i_j].name)
-          pp.queues[i_j].normalise_processes()
+#          pp.queues[i_j].normalise_processes()
        
 #       pp.update_worker_info()
 #       newline_msg("INF", "initialise_infiles()")
@@ -49,6 +49,6 @@ if __name__ == "__main__":
        pex.synchronise_master()
 
        inline_msg("INF", "sleep %s.........................."%options.sleep,indent = 2)
-       del pp
-       del pex
+  #     del pp
+  #     del pex
        time.sleep(options.sleep)
