@@ -218,7 +218,8 @@ def translate_name(st):
         sys.exit(2)
     print ">", full_name
     path, st = os.path.split(full_name)
-    os.chdir(path)
+    if path:
+      os.chdir(path)
     if ".sqlite" in st:
       par_name = st.replace("results","").replace(".sqlite","")
       par_name = "parameters%s.dat"%par_name
