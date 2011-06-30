@@ -216,7 +216,7 @@ def translate_name(st):
     if not os.path.exists(full_name):
         utils.newline_msg("ERR","database '%s' does not exist"%st)
         sys.exit(2)
-    print full_name
+    print ">", full_name
     path, st = os.path.split(full_name)
     os.chdir(path)
     if ".sqlite" in st:
