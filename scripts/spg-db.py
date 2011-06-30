@@ -210,12 +210,14 @@ def remove_db(i_arg,params,parser):
     connection.commit()
 
 def translate_name(st):
-    if not os.path.exists(st):
-       st = os.path.expanduser( "~/%s"%st )
-    if not os.path.exists(st):
+    full_name = st
+    if not os.path.exists(full_name):
+       full_name = os.path.expanduser( "~/%s"%st )
+    if not os.path.exists(full_name):
         utils.newline_msg("ERR","database '%s' does not exist"%st)
         sys.exit(2)
-       
+    path, st = os.path.split(full_name)
+    os.chdir(path)
     if ".sqlite" in st:
       par_name = st.replace("results","").replace(".sqlite","")
       par_name = "parameters%s.dat"%par_name
