@@ -18,6 +18,11 @@ import time
 from spg.pool import ProcessPool, DataExchanger
 from spg.utils import newline_msg, inline_msg
 
+
+pp = ProcessPool()
+pp.update_worker_info()
+pex = DataExchanger( pp.db_master, pp.cur_master )
+
 if __name__ == "__main__":
     parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 ")
     parser.add_option("--sleep", type="int", action='store', dest="sleep",
@@ -26,20 +31,17 @@ if __name__ == "__main__":
     options, args = parser.parse_args()
 
     while True:
-       newline_msg("INF", "awaken @%s......................."%time.ctime())
+       newline_msg("INF", "awaken @%s.........................."%time.ctime())
        
-       inline_msg("INF", "process pool......................",indent = 2)
-       pp = ProcessPool()
-#       newline_msg("INF", "pp.update_worker_info()")
-#       pp.update_worker_info()
-#       for i_j in pp.queues:
-          #newline_msg("INF", "%s - queue.normalise_processes()"%pp.queues[i_j].name)
-#          pp.queues[i_j].normalise_processes()
-       
-#       pp.update_worker_info()
-#       newline_msg("INF", "initialise_infiles()")
+       inline_msg("INF", "process pool.........................",indent = 2)
+       pp.update_worker_info()
+       for i_j in pp.queues:
+          newline_msg("INF", "%s - queue.normalise_processes()"%pp.queues[i_j].name)
+          pp.queues[i_j].normalise_processes()
+
+       pex.update_dbs()
+
        inline_msg("INF", "populate/harvest data.......................",indent = 2)
-       pex = DataExchanger( pp.db_master, pp.cur_master )
 #       newline_msg("INF", "initialise_infiles()")
        pex.initialise_infiles()
 #       newline_msg("INF", "harvesting_data()")
@@ -48,7 +50,5 @@ if __name__ == "__main__":
        inline_msg("INF", "syncing..................................", indent = 2)
        pex.synchronise_master()
 
-       inline_msg("INF", "sleep %s.........................."%options.sleep,indent = 2)
-  #     del pp
-  #     del pex
+       inline_msg("INF", "sleep %s............................."%options.sleep,indent = 2)
        time.sleep(options.sleep)

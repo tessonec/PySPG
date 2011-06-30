@@ -16,7 +16,7 @@ TIMEOUT = 120
 ################################################################################
 ################################################################################
 
-class PickledData:
+class DataAtom:
     def __init__(self, fname, full_db_name = None):
         self.command = None
         
@@ -122,9 +122,9 @@ class PickledData:
 ################################################################################
 ################################################################################
 
-class PickledExecutor(PickledData):
+class DataAtomExecutor(DataAtom):
     def __init__(self, fname, full_db_name = None):
-        PickledData.__init__(self, fname, full_db_name )
+        DataAtom.__init__(self, fname, full_db_name )
 
     def create_tree(self):
         for k in self.values:

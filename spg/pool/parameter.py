@@ -37,10 +37,16 @@ class ParameterExtractor:
 #        sql_db.close()
 #        del sql_db
 
+    def close_db(self):
+        self.connection.commit()
+        self.connection.close()
+        del self.cursor
+        del self.connection
+
     def __iter__(self):
         return self
 
-
+    
     def next(self):
 #        sql_db = sql.connect(self.full_name, timeout = TIMEOUT)
 #        cur_db = sql_db.cursor()

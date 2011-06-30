@@ -4,7 +4,7 @@ from process import ProcessPool
 
 from exchange import DataExchanger
 
-from data import PickledData, PickledExecutor
+from data import DataAtom, DataAtomExecutor
 
 
 import os.path

@@ -10,7 +10,7 @@ Created on Tue Jun 28 08:10:30 2011
 
 from spg import utils, params
 from parameter import ParameterDB
-from data import PickledData
+from data import AtomData
 
 
 import os.path
@@ -31,7 +31,7 @@ class DataExchanger:
         self.cur_master = cur_master
         
         self.dbs = {} 
-        self.__get_registered_dbs()
+        self.update_dbs()
         
         self.current_counter = 0
         res = self.cur_master.execute("SELECT last FROM infiles WHERE id = 1").fetchone()
@@ -42,14 +42,29 @@ class DataExchanger:
         
 #        self.update_process_list()
 
-    def __get_registered_dbs(self): # These are the dbs that are registered and running
-        self.dbs = {} 
+    def update_dbs(self): # These are the dbs that are registered and running
+        #self.dbs = {} 
         ParameterDB.normalising = 0.
         res = self.cur_master.execute("SELECT id, full_name, weight, queue FROM dbs WHERE status = 'R'")
-        for (id, full_name, weight, queue) in res:
+        vec = [(id, full_name, weight, queue) for (id, full_name, weight, queue) in res]
+        
+        toberemoved_dbs = set( self.dbs.keys() ) - set([full_name for (id, full_name, weight, queue) in vec])
+        for i in toberemoved_dbs:
+          self.dbs[i].close_db()
+          del self.dbs[i]
+          
+        for (id, full_name, weight, queue) in toberemoved_dbs:
+            if full_name in self.dbs.keys():
+                self.dbs[full_name].id = id
+                self.dbs[full_name].weight = weight
+                self.dbs[full_name].queue = queue
+                
+                continue
+            utils.newline_msg("INF","new db registered... '%s'"%full_name)
             new_db = ParameterDB(full_name, id, weight, queue)
             self.dbs[full_name] = new_db
    
+
 
     def generate_new_process(self):
         db_fits = False
@@ -84,7 +99,7 @@ class DataExchanger:
             self.cur_master.execute("UPDATE infiles SET last = ? WHERE id = 1",(self.current_counter ,))
             self.db_master.commit()
             in_name = "in_%.10d"%self.current_counter
-            pd = PickledData(in_name, sel_db.full_name)
+            pd = AtomData(in_name, sel_db.full_name)
             ret = pd.load_next_from_db( sel_db.connection, sel_db.cursor )
             if ret == None:
                 continue
@@ -95,7 +110,7 @@ class DataExchanger:
     def harvest_data(self):
         self.last_finished_processes  = 0
         for i_d in os.listdir("%s/run"%(VAR_PATH) ):
-            pd = PickledData(i_d)
+            pd = AtomData(i_d)
             pd.load(src = 'run')
             a_db =self.dbs[pd.full_db_name]
             pd.dump_in_db( a_db.connection, a_db.cursor  )

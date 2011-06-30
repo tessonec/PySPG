@@ -4,7 +4,7 @@
 
 import spg.params as params
 import spg.utils as utils
-from spg.pool import PickledExecutor, VAR_PATH 
+from spg.pool import AtomDataExecutor, VAR_PATH 
 
 
 
@@ -31,7 +31,7 @@ if __name__ == "__main__":
           utils.newline_msg("WRN", "no newly pickled elements")
           time.sleep(EXE_TIMEOUT)
 
-        pex = PickledExecutor(next_file)
+        pex = AtomDataExecutor(next_file)
         pex.load()
 #        utils.newline_msg("INF","%s -- %s -> %s "%(pex.path, pex.full_db_name, pex.values))
 #       utils.newline_msg("INF","<<<<< %s - %s - %s "%(pex.in_name , pex.current_run_id, pex.current_valuesset_id))
