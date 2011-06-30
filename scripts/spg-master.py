@@ -36,7 +36,7 @@ if __name__ == "__main__":
        inline_msg("INF", "process pool.........................",indent = 2)
        pp.update_worker_info()
        for i_j in pp.queues:
-          newline_msg("INF", "%s - queue.normalise_processes()"%pp.queues[i_j].name)
+          inline_msg("INF", "%s - queue.normalise_processes()"%pp.queues[i_j].name,indent = 4)
           pp.queues[i_j].normalise_processes()
 
        pex.update_dbs()

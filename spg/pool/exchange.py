@@ -47,7 +47,7 @@ class DataExchanger:
         ParameterDB.normalising = 0.
         res = self.cur_master.execute("SELECT id, full_name, weight, queue FROM dbs WHERE status = 'R'")
         vec = [(id, full_name, weight, queue) for (id, full_name, weight, queue) in res]
-        
+        print self.dbs
         toberemoved_dbs = set( self.dbs.keys() ) - set([full_name for (id, full_name, weight, queue) in vec])
         for i in toberemoved_dbs:
           self.dbs[i].close_db()
