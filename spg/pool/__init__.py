@@ -4,7 +4,7 @@ from process import ProcessPool
 
 from exchange import DataExchanger
 
-from data import DataAtom, DataAtomExecutor
+from data import AtomData, AtomDataExecutor
 
 
 import os.path

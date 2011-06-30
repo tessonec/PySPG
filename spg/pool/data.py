@@ -16,7 +16,7 @@ TIMEOUT = 120
 ################################################################################
 ################################################################################
 
-class DataAtom:
+class AtomData:
     def __init__(self, fname, full_db_name = None):
         self.command = None
         
@@ -122,9 +122,9 @@ class DataAtom:
 ################################################################################
 ################################################################################
 
-class DataAtomExecutor(DataAtom):
+class AtomDataExecutor(AtomData):
     def __init__(self, fname, full_db_name = None):
-        DataAtom.__init__(self, fname, full_db_name )
+        AtomData.__init__(self, fname, full_db_name )
 
     def create_tree(self):
         for k in self.values:
