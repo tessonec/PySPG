@@ -190,7 +190,7 @@ def get_stats(cmd, name, params):
 
    elif cmd == "pool":
        ac_dic_q={}
-       for i_f in os.listdir("%s/queued/*"%VAR_PATH):
+       for i_f in os.listdir("%s/queued/"%VAR_PATH):
            ad = AtomData(i_f)
            ad.load("queued")
            if ad.full_db_name in ac_dic_q:
