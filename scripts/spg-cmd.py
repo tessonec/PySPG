@@ -4,7 +4,7 @@
 #import spg
 import spg.params as params
 import spg.utils as utils
-from spg.pool import ProcessPool
+from spg.pool import ProcessPool, AtomData
 
 
 # import sqlite3 as sql
