@@ -218,13 +218,12 @@ def get_stats(cmd, name, params):
 
 
 def clean(cmd, name, params):
-   if cmd == "var":
+   if cmd == "pool":
        proc = Popen("rm -f %s/run/*"%VAR_PATH, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
        proc.wait()
        proc = Popen("rm -f %s/queued/*"%VAR_PATH, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
        proc.wait()
-       
-     
+
 
 
 dict_functions = { "db":process_db, "queue": process_queue, "stat": get_stats, 'clean': clean }
@@ -241,7 +240,7 @@ def execute_command( arguments ):
     cmd = arguments[1] 
     if len(arguments) > 2 :
         name = arguments[2]
-    
+
     if len(arguments) > 3 :
         params = get_parameters( arguments[3] )
     else:
@@ -275,7 +274,6 @@ if __name__ == "__main__":
     cur_master.execute("CREATE TABLE IF NOT EXISTS queues "
                    "(id INTEGER PRIMARY KEY, name CHAR(64), max_jobs INTEGER, status CHAR(1))")
 
-
     cur_master.execute("CREATE TABLE IF NOT EXISTS running "
                    "(id INTEGER PRIMARY KEY, job_id CHAR(64), dbs_id INTEGER, params_id INTEGER)")
 
@@ -292,8 +290,8 @@ if __name__ == "__main__":
                                       "        params :: jobs=NJOBS\n"
                                       "   db    [add|remove|set*|start|stop|clean|clean-all|reset] DB_NAME {params} \n"
                                       "        params :: weight=WEIGHT[1] queue=STR[any] \n"
-                                      "   stat  [queue|db] \n"
-                                      "   clean  [var] \n"
+                                      "   stat  [queue|db|pool] \n"
+                                      "   clean  [pool] \n"
                                       "VERBs with * indicate that accept params"
                                   )
 

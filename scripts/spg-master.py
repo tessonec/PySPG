@@ -13,7 +13,7 @@ import optparse
 #   en este ultimo caso, limpiar la DB central
   #print cmd
   
-import time
+import time, sys
 
 from spg.pool import ProcessPool, DataExchanger
 from spg.utils import newline_msg, inline_msg
@@ -27,6 +27,14 @@ if __name__ == "__main__":
     parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 ")
     parser.add_option("--sleep", type="int", action='store', dest="sleep",
                             default = 120 , help = "waiting time before refresh" )
+    parser.add_option("--skip-queue", action='store_false', dest="skip_queue",
+                            help = "do not process queues" )
+    parser.add_option("--skip-harvest", action='store_false', dest="skip_harvest",
+                            help = "do not harvest data" )
+    parser.add_option("--skip-init", action='store_false', dest="skip_init",
+                            help = "do not initialise files" )
+    parser.add_option("--skip-sync", action='store_false', dest="skip_sync",
+                            help = "do not sync dbs" )
 
     options, args = parser.parse_args()
 
@@ -34,6 +42,7 @@ if __name__ == "__main__":
        newline_msg("INF", "awaken @%s.........................."%time.ctime())
        
        inline_msg("INF", "process pool.........................",indent = 2)
+       
        pp.update_worker_info()
        for i_j in pp.queues:
           inline_msg("INF", "%s - queue.normalise_processes()"%pp.queues[i_j].name,indent = 4)
@@ -51,4 +60,6 @@ if __name__ == "__main__":
        pex.synchronise_master()
 
        inline_msg("INF", "sleep %s............................."%options.sleep,indent = 2)
+       if options.sleep < 0:
+           sys.exit(0)
        time.sleep(options.sleep)
