@@ -188,10 +188,29 @@ def get_stats(cmd, name, params):
 ###     running_combinations INTEGER, error_combinations INTEGER, 
 ###     weight FLOAT)
 
-   elif cmd == "process":
-       res = pp.cur_master.execute("SELECT dbs.full_name, dbs.weight, COUNT(*), queue FROM dbs, running WHERE dbs.id = running.dbs_id GROUP BY running.dbs_id ")
-       for fn, w, c, q in res:
-           print "db: '%s' -- weight=%f -- running proc: %d -- queueable in: '%s'"%(fn,w,c,q)
+   elif cmd == "pool":
+       ac_dic_q={}
+       for i_f in os.listdir("%s/queued/*"%VAR_PATH):
+           ad = AtomData(i_f)
+           ad.load("queued")
+           if ad.full_db_name in ac_dic_q:
+               ac_dic_q[ad.full_db_name] = 1
+           else:  
+               ac_dic_q[ad.full_db_name] = +1
+
+       ac_dic_r = {}
+       for i_f in os.listdir("%s/run/*"%VAR_PATH):
+           ad = AtomData(i_f)
+           ad.load("run")
+           if ad.full_db_name in ac_dic_q:
+               ac_dic_r[ad.full_db_name] = 1
+           else:  
+               ac_dic_r[ad.full_db_name] = +1
+
+       for i_db in sorted(ac_dic_q):
+           print "db: '%s' -- QUEUED= %d, RUN=%d"%(i_db, ac_dic_q.setdefault(i_db,0), ac_dic_r.setdefault(i_db,0) )
+
+
    else:
        utils.newline_msg("SYN", "command '%s' not understood"%cmd )
        sys.exit(1)
@@ -249,7 +268,7 @@ if __name__ == "__main__":
                    "(id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), db_name CHAR(256), status CHAR(1), total_values_set INTEGER, "
                    " total_combinations INTEGER, done_combinations INTEGER, running_combinations INTEGER, error_combinations INTEGER, "
                    " weight FLOAT, queue CHAR(64))")
-    
+
     #:::~ status can be either 
     #:::~    'S': stopped
     #:::~    'R': running
