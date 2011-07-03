@@ -199,7 +199,7 @@ def get_stats(cmd, name, params):
                ac_dic_q[ad.full_db_name] = +1
 
        ac_dic_r = {}
-       for i_f in os.listdir("%s/run/*"%VAR_PATH):
+       for i_f in os.listdir("%s/run/"%VAR_PATH):
            ad = AtomData(i_f)
            ad.load("run")
            if ad.full_db_name in ac_dic_q:
