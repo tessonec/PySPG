@@ -51,9 +51,10 @@ if __name__ == "__main__":
 
        pex.update_dbs()
 
-       inline_msg("INF", "populate/harvest data.......................",indent = 2)
-#       newline_msg("INF", "initialise_infiles()")
+       newline_msg("INF", "populate/harvest data.......................",indent = 2)
+       print options.process_init
        if options.process_init:
+  #       newline_msg("INF", "initialise_infiles()")
          pex.initialise_infiles()
 #       newline_msg("INF", "harvesting_data()")
        if options.process_harvest:
