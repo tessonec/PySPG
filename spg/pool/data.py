@@ -112,6 +112,10 @@ class AtomData:
              #:::~    'D': successfully run (done)
              #:::~    'E': run but with non-zero error code
              cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
+             
+             flog = open(self.full_db_name.replace("sqlite","log"), "aw") 
+             print >> flog, "{%s} %s: ret=%s -- %s,%s -- %s"%( self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output)
+             flog.close()
              #self.connection.commit()
         connection.commit()
         #conn.close()
