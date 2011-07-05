@@ -60,7 +60,7 @@ if __name__ == "__main__":
          pex.harvest_data()
 
        if not options.skip_sync:
-         inline_msg("INF", "syncing....(s:%d - h:%d)..................."%(pex.seeded_atoms, pex.harvested_atoms), indent = 2)
+         inline_msg("INF", "syncing..........(s:%d - h:%d)..................."%(pex.seeded_atoms, pex.harvested_atoms), indent = 2)
          pex.synchronise_master()
 
        inline_msg("INF", "sleep %s"%options.sleep,indent = 2)
