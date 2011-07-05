@@ -94,7 +94,7 @@ class DataExchanger:
 
         for i in range(to_run_processes):
             sel_db = self.generate_new_process(  )
-            utils.newline_msg("INF", "  >> %s/%s"%(sel_db.path,sel_db.db_name) )
+#            utils.newline_msg("INF", "  >> %s/%s"%(sel_db.path,sel_db.db_name) )
         #    sel_db.next()
             
             (self.current_counter, ) = self.cur_master.execute("SELECT last FROM infiles WHERE id = 1").fetchone()
