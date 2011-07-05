@@ -6,6 +6,7 @@ import os.path
 import pickle 
 from subprocess import Popen, PIPE
 import sqlite3 as sql
+import time
 
 VAR_PATH = os.path.abspath(params.CONFIG_DIR+"/../var/spg")
 BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
@@ -92,7 +93,7 @@ class AtomData:
         fa = cursor.execute("PRAGMA table_info(results)")
         self.output_column = [ i[1] for i in fa ]
         self.output_column = self.output_column[1:]
-        utils.newline_msg("PRT","{%s} %s -- %s,%s -- %s"%( self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output) )
+#        utils.newline_msg("PRT","{%s} %s -- %s,%s -- %s"%( self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output) )
 #        print self.return_code 
         if self.return_code == 0:
              all_d = [self.current_run_id]
@@ -115,6 +116,10 @@ class AtomData:
              
              flog = open(self.full_db_name.replace("sqlite","log"), "aw") 
              print >> flog, "{%s} %s: ret=%s -- %s,%s -- %s"%( self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output)
+             try:
+                print >> flog, self.stderr
+             except:
+                print >> flog, "NO_STDERR" 
              flog.close()
              #self.connection.commit()
         connection.commit()
@@ -153,11 +158,19 @@ class AtomDataExecutor(AtomData):
 
         cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
         proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
-        proc.wait()
+   #     poll = proc.poll()
+  #      while poll is None:
+ #           time.sleep(1)
+     #       utils.newline_msg( "SLP", "%s -- %s -- %s"%(cmd,self.path,poll))
+            
+#            poll = proc.poll()
+        
 #        print self.command,  self.path, self.db_name,  configuration_filename  , self.values, <$$$$$$$
 #        print self.current_run_id, self.current_variables_id, self.entities, configuration_filename
-        self.return_code = proc.returncode
+        self.return_code = proc.wait()
+    #    print self.return_code 
         self.output = [i.strip() for i in proc.stdout.readline().split()]
+        self.stderr = "\n".join([i.strip() for i in proc.stderr.readline().split()])
 #        self.return_code = 0
 #        self.output = ""
-        os.remove(configuration_filename)
+#        os.remove(configuration_filename)
