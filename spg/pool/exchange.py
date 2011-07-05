@@ -89,11 +89,11 @@ class DataExchanger:
 
 
     def initialise_infiles(self):
-        to_run_processes =  self.waiting_processes - len(os.listdir("%s/queued"%(VAR_PATH) ) ) 
+        self.seeded_atoms =  self.waiting_processes - len(os.listdir("%s/queued"%(VAR_PATH) ) ) 
   #      utils.newline_msg("INF", "initialise_infiles - %d"%to_run_processes )
 #        print "inti"
 
-        for i in range(to_run_processes):
+        for i in range(self.seeded_atoms):
             sel_db = self.generate_new_process(  )
 #            utils.newline_msg("INF", "  >> %s/%s"%(sel_db.path,sel_db.db_name) )
         #    sel_db.next()
@@ -112,7 +112,7 @@ class DataExchanger:
 
 
     def harvest_data(self):
-        self.last_finished_processes  = 0
+        self.harvested_atoms  = len(os.listdir("%s/run"%(VAR_PATH) ))
         for i_d in os.listdir("%s/run"%(VAR_PATH) ):
             pd = AtomData(i_d)
             pd.load(src = 'run')
