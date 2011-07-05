@@ -92,8 +92,8 @@ class AtomData:
         fa = cursor.execute("PRAGMA table_info(results)")
         self.output_column = [ i[1] for i in fa ]
         self.output_column = self.output_column[1:]
-       # utils.newline_msg("PRT","{%s} %s -- %s,%s -- %s"%( self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output) )
-
+        utils.newline_msg("PRT","{%s} %s -- %s,%s -- %s"%( self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output) )
+#        print self.return_code 
         if self.return_code == 0:
              all_d = [self.current_run_id]
              all_d.extend( self.output )
