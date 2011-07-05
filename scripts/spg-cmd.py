@@ -210,7 +210,7 @@ def get_stats(cmd, name, params):
        for i_f in os.listdir("%s/queued/"%VAR_PATH):
            ad = AtomData(i_f)
            ad.load("queued")
-           if (not ad.full_db_name in ac_dic_q):
+           if not (ad.full_db_name in ac_dic_q):
                ac_dic_q[ad.full_db_name] = 1
            else:  
                ac_dic_q[ad.full_db_name] = +1
