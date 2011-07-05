@@ -209,20 +209,20 @@ def get_stats(cmd, name, params):
        ac_dic_q={}
        for i_f in os.listdir("%s/queued/"%VAR_PATH):
            ad = AtomData(i_f)
-           ad.load("queued")
+           ad.load("queued", no_rm = True)
            if not (ad.full_db_name in ac_dic_q):
                ac_dic_q[ad.full_db_name] = 1
            else:  
-               ac_dic_q[ad.full_db_name] = +1
+               ac_dic_q[ad.full_db_name] += 1
 
        ac_dic_r = {}
        for i_f in os.listdir("%s/run/"%VAR_PATH):
            ad = AtomData(i_f)
-           ad.load("run")
+           ad.load("run", no_rm = True)
            if not (ad.full_db_name in ac_dic_r):
                ac_dic_r[ad.full_db_name] = 1
            else:  
-               ac_dic_r[ad.full_db_name] = +1
+               ac_dic_r[ad.full_db_name] += 1
 
        for i_db in sorted(ac_dic_q):
            print "db: '%s' -- QUEUED= %d, RUN=%d"%(i_db, ac_dic_q.setdefault(i_db,0), ac_dic_r.setdefault(i_db,0) )

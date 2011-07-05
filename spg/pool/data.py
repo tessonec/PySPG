@@ -33,7 +33,7 @@ class AtomData:
         self.current_valuesset_id = None
 
 
-    def load(self, src = 'queued'):
+    def load(self, src = 'queued', no_rm = False):
         full_inname = "%s/%s/%s"%(VAR_PATH,src,self.in_name) 
         vals = pickle.load( open(full_inname)  )
         self.__dict__ = vals.__dict__
@@ -42,6 +42,7 @@ class AtomData:
 #          self.db_name = self.full_name[self.full_name.rfind("/")+1:]
 #        except:
 #          pass
+        if no_rm: return
         os.remove( full_inname )
 
     def dump(self,src = 'run'):

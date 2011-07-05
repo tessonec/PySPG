@@ -69,8 +69,9 @@ class DataExchanger:
 
 
     def generate_new_process(self):
-        db_fits = False
-        while not db_fits :
+   #     db_fits = False
+ #       print ParameterDB.normalising 
+  #      while not db_fits :
             rnd = ParameterDB.normalising * random.random()
             ls_dbs = sorted( self.dbs.keys() )
             curr_db = ls_dbs.pop()
@@ -80,11 +81,11 @@ class DataExchanger:
                 curr_db = ls_dbs.pop()
                 ac += self.dbs[ curr_db ].weight
             
-            res = self.dbs[ curr_db ].queue
-            if res == 'any' or res in res.split(","):
-               db_fits = True
+#            res = self.dbs[ curr_db ].queue
+#            if res == 'any' or res in res.split(","):
+#               db_fits = True
   #      print "CURR_DB",curr_db
-        return  self.dbs[ curr_db ]
+            return  self.dbs[ curr_db ]
 
 
     def initialise_infiles(self):
