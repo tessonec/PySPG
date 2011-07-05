@@ -63,7 +63,7 @@ if __name__ == "__main__":
          inline_msg("INF", "syncing....(s:%d - h:%d)..................."%(pex.seeded_atoms, pex.harvested_atoms), indent = 2)
          pex.synchronise_master()
 
-       inline_msg("INF", "sleep %s............................."%options.sleep,indent = 2)
+       inline_msg("INF", "sleep %s"%options.sleep,indent = 2)
        if options.sleep < 0:
            sys.exit(0)
        time.sleep(options.sleep)
