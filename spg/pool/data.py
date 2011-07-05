@@ -105,7 +105,14 @@ class AtomData:
              cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
 #             except:
 #                 cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
-                 
+             flog = open(self.full_db_name.replace("sqlite","log"), "aw") 
+             print >> flog, "{%s} %s: ret=%s -- %s,%s -- %s"%( self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output)
+             try:
+                print >> flog, self.stderr
+             except:
+                print >> flog, "NO_STDERR" 
+             flog.close()
+                  
         else:
              #:::~ status can be either 
              #:::~    'N': not run
@@ -173,4 +180,4 @@ class AtomDataExecutor(AtomData):
         self.stderr = "\n".join([i.strip() for i in proc.stderr.readline().split()])
 #        self.return_code = 0
 #        self.output = ""
-#        os.remove(configuration_filename)
+        os.remove(configuration_filename)
