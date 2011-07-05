@@ -43,6 +43,36 @@ def get_parameters(arg):
 ######################################################################################################
 
 
+def write_db_stat_into_master(full_name, cur_master):
+       conn2 = sql.connect(full_name)
+       cur2 = conn2.cursor()
+       #:::~    'N': not run yet
+       #:::~    'R': running
+       #:::~    'D': successfully run (done)
+       #:::~    'E': run but with non-zero error code
+
+       (n_all, ) = cur2.execute("SELECT COUNT(*) FROM run_status ;").fetchone()
+       (total_sov, ) = cur2.execute("SELECT COUNT(*) FROM values_set ;").fetchone()
+       
+       cur2.execute('UPDATE run_status SET status = "N" WHERE status ="R"')
+       conn2.commit()
+       cur2.execute("SELECT status, COUNT(*) FROM run_status GROUP BY status")
+       done, not_run, running,error = 0,0,0,0
+       for (k,v) in cur2:
+                if k == "D":
+                  done = v
+                elif k == "N":
+                  not_run = v
+                elif k == "R":
+                  running = v
+                elif k == "E":
+                  error = v
+       conn2.close()
+       cur_master.execute("UPDATE dbs SET total_values_set = ? , total_combinations = ?, done_combinations = ?, running_combinations = ?, error_combinations = ? WHERE full_name = ? ",(n_all, total_sov, done, running, error, full_name ))
+       if not_run == 0:
+           cur_master.execute("UPDATE dbs SET status = ? WHERE full_name = ? ",('D',full_name))
+
+
 def process_queue(cmd, name, params):
    # queue [add|remove|set|stop] QUEUE_NAME {params} 
    # "(id INTEGER PRIMARY KEY, name CHAR(64), max_jobs INTEGER, status CHAR(1))")
@@ -125,22 +155,9 @@ def process_db(cmd, name, params):
        else:
           utils.newline_msg("PTH", "database '%s' does not exist"%name)
           sys.exit(2)
-          
-       conn2 = sql.connect(full_name)
-       cur2 = conn2.cursor()
-       #:::~    'N': not run yet
-       #:::~    'R': running
-       #:::~    'D': successfully run (done)
-       #:::~    'E': run but with non-zero error code
+       write_db_stat_into_master(full_name, cur_master)
+       db_master.commit()
 
-       d_status = {"E":0,"R":0,"D":0}
-       (n_all, ) = cur2.execute("SELECT COUNT(*) FROM run_status ;").fetchone()
-       (total_sov, ) = cur2.execute("SELECT COUNT(*) FROM values_set ;").fetchone()
-       
-       cur2.execute("SELECT status, COUNT(*) FROM run_status GROUP BY status;")
-       for k,v in cur2:
-           d_status[k] = v
-       cur_master.execute( "INSERT INTO dbs (full_name, path, db_name, status, total_values_set, total_combinations, done_combinations, running_combinations, error_combinations,weight,queue) VALUES (?,?,?,?,?,?,?,?,?,?,?)",(full_name, path, db_name , 'R', total_sov, n_all, d_status['D'],d_status['R'],d_status['E'], weight, queue) )
    elif not db_id:
        utils.newline_msg("SKP", "db '%s' is not registered"%full_name )
        sys.exit(2)
@@ -224,6 +241,10 @@ def clean(cmd, name, params):
        proc = Popen("rm -f %s/queued/*"%VAR_PATH, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
        proc.wait()
 
+       res = db_master.execute("SELECT full_name FROM dbs")
+       for (full_name, ) in res:
+         write_db_stat_into_master(full_name, cur_master)
+       db_master.commit()
 
 
 dict_functions = { "db":process_db, "queue": process_queue, "stat": get_stats, 'clean': clean }
