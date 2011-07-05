@@ -39,7 +39,7 @@ if __name__ == "__main__":
     options, args = parser.parse_args()
 
     while True:
-       newline_msg("INF", "awaken @%s.........................."%time.ctime())
+       inline_msg("INF", "awaken @%s.........................."%time.ctime())
        
        inline_msg("INF", "process pool.........................",indent = 2)
        
