@@ -27,13 +27,13 @@ if __name__ == "__main__":
     parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 ")
     parser.add_option("--sleep", type="int", action='store', dest="sleep",
                             default = 120 , help = "waiting time before refresh" )
-    parser.add_option("--skip-queue", action='store_false', dest="process_queue",
+    parser.add_option("--skip-queue", action='store_true', dest="skip_queue",
                             help = "do not process queues" )
-    parser.add_option("--skip-harvest", action='store_false', dest="process_harvest",
+    parser.add_option("--skip-harvest", action='store_true', dest="skip_harvest",
                             help = "do not harvest data" )
-    parser.add_option("--skip-init", action='store_false', dest="process_init",
+    parser.add_option("--skip-init", action='store_true', dest="skip_init",
                             help = "do not initialise files" )
-    parser.add_option("--skip-sync", action='store_false', dest="process_sync",
+    parser.add_option("--skip-sync", action='store_true', dest="skip_sync",
                             help = "do not sync dbs" )
 
     options, args = parser.parse_args()
@@ -44,7 +44,7 @@ if __name__ == "__main__":
        inline_msg("INF", "process pool.........................",indent = 2)
        
        pp.update_worker_info()
-       if options.process_queue:
+       if not options.skip_queue :
           for i_j in pp.queues:
               inline_msg("INF", "%s - queue.normalise_processes()"%pp.queues[i_j].name,indent = 4)
               pp.queues[i_j].normalise_processes()
@@ -52,15 +52,14 @@ if __name__ == "__main__":
        pex.update_dbs()
 
        newline_msg("INF", "populate/harvest data.......................",indent = 2)
-       print options.process_init
-       if options.process_init:
+       if not options.skip_init:
   #       newline_msg("INF", "initialise_infiles()")
          pex.initialise_infiles()
 #       newline_msg("INF", "harvesting_data()")
-       if options.process_harvest:
+       if not options.skip_harvest:
          pex.harvest_data()
 
-       if options.process_sync:
+       if not options.skip_sync:
          inline_msg("INF", "syncing..................................", indent = 2)
          pex.synchronise_master()
 

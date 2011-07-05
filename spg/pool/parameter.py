@@ -114,6 +114,11 @@ class ParameterDB(ParameterExtractor):
        self.id = id
        self.queue = 'any'
        ParameterDB.normalising += weight
+       
+    def update_weight(self,weight):
+       self.weight = weight
+       ParameterDB.normalising += weight
+
 
 
 ################################################################################

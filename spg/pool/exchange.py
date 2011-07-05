@@ -47,22 +47,24 @@ class DataExchanger:
         ParameterDB.normalising = 0.
         res = self.cur_master.execute("SELECT id, full_name, weight, queue FROM dbs WHERE status = 'R'")
         vec = [(id, full_name, weight, queue) for (id, full_name, weight, queue) in res]
-   #     print self.dbs
+    #    print self.dbs
         toberemoved_dbs = set( self.dbs.keys() ) - set([full_name for (id, full_name, weight, queue) in vec])
         for i in toberemoved_dbs:
           self.dbs[i].close_db()
           del self.dbs[i]
-          
+    #    print self.dbs
+        
         for (id, full_name, weight, queue) in vec:
             if full_name in self.dbs.keys():
                 self.dbs[full_name].id = id
-                self.dbs[full_name].weight = weight
+                self.dbs[full_name].update_weight(weight)
                 self.dbs[full_name].queue = queue
-                
+#                print full_name, self.dbs[full_name].weight
                 continue
             utils.newline_msg("INF","new db registered... '%s'"%full_name)
             new_db = ParameterDB(full_name, id, weight, queue)
             self.dbs[full_name] = new_db
+    #    print self.dbs
    
 
 
@@ -88,11 +90,11 @@ class DataExchanger:
     def initialise_infiles(self):
         to_run_processes =  self.waiting_processes - len(os.listdir("%s/queued"%(VAR_PATH) ) ) 
   #      utils.newline_msg("INF", "initialise_infiles - %d"%to_run_processes )
-        print "inti"
+#        print "inti"
 
         for i in range(to_run_processes):
             sel_db = self.generate_new_process(  )
-            utils.newline_msg("INF", "  >> %s"%sel_db.db_name )
+            utils.newline_msg("INF", "  >> %s/%s"%(sel_db.path,sel_db.db_name) )
         #    sel_db.next()
             
             (self.current_counter, ) = self.cur_master.execute("SELECT last FROM infiles WHERE id = 1").fetchone()
