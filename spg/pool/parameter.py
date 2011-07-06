@@ -151,9 +151,10 @@ class ParameterSetExecutor(ParameterSet):
 ################################################################################
 ################################################################################
 
-class DBQuery(ParameterSet):
+class ResultsDBQuery(ParameterSet):
     def __init__(self, full_name = ""):
        ParameterSet.__init__(self, full_name)
     
     
-    
+    def get_results(col_name):
+        
