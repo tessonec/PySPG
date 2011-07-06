@@ -11,7 +11,7 @@ BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
 TIMEOUT = 120
 
 
-class ParameterExtractor:
+class ParameterSet:
     def __init__(self, full_name = ""):
         self.full_name = full_name
         self.path, self.db_name = os.path.split(full_name)
@@ -29,13 +29,13 @@ class ParameterExtractor:
         #:::~ get the names of the columns
         sel = self.cursor.execute("SELECT name FROM entities ORDER BY id")
         self.entities = [ i[0] for i in sel ]
+        #:::~ get the names of the columns
+        sel = self.cursor.execute("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
+        self.variables = [ i[0] for i in sel ]
         #:::~ get the names of the outputs
         fa = self.cursor.execute("PRAGMA table_info(results)")
         self.output_column = [ i[1] for i in fa ]
         self.output_column = self.output_column[1:]
-#        del cur_db
-#        sql_db.close()
-#        del sql_db
 
     def close_db(self):
         self.connection.commit()
@@ -48,9 +48,6 @@ class ParameterExtractor:
 
     
     def next(self):
-#        sql_db = sql.connect(self.full_name, timeout = TIMEOUT)
-#        cur_db = sql_db.cursor()
-    #   print self.db_name
         res = self.cursor.execute(
                     "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
                     "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
@@ -66,38 +63,18 @@ class ParameterExtractor:
         for i in range( len(self.entities) ):
             self.values[ self.entities[i] ] = res[i+2]
 
-#        sql_db.close()
-#        del sql_db
         return self.values
 
-#    def store_pickleddata_in_db(self, pd):
-# #       conn = sql.connect("%s/%s"%(self.db_name))
-# #       cursor = conn.cursor()
-#
-#        #:::~ get the names of the outputs
-#        fa = self.cursor.execute("PRAGMA table_info(results)")
-#        self.output_column = [ i[1] for i in fa ]
-#        self.output_column = self.output_column[1:]
-#
-#        if self.return_code == 0:
-#             self.cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
-#             all_d = [self.current_variables_id]
-#             all_d.extend( pd.output )
-#             cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
-#             self.cursor.execute( cc )
-#        else:
-#             #:::~ status can be either 
-#             #:::~    'N': not run
-#             #:::~    'R': running
-#             #:::~    'D': successfully run (done)
-#             #:::~    'E': run but with non-zero error code
-#             self.cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%pd.id )
-#             #self.connection.commit()
-#        connection.commit()
-##        conn.close()
-##        del cursor
-##        del conn
-#
+    def create_trees(self):
+        ret = self.cursor.execute("SELECT * FROM entities WHERE name LIKE 'store_%'").fetchone()
+        return ret is not None
+
+
+    def generate_tree(self, dir_vars = None):
+        if dir_vars:
+           self.directory_vars = dir_vars.split(",")
+        else:
+           self.directory_vars  = self.variables
 
 
 ################################################################################
@@ -105,28 +82,27 @@ class ParameterExtractor:
 
 
 
-class ParameterDB(ParameterExtractor):
+class WeightedParameterSet(ParameterSet):
     normalising = 0.
     def __init__(self, full_name = "", id=-1, weight=1.,queue = 'any'):
-       ParameterExtractor.__init__(self, full_name)
+       ParameterSet.__init__(self, full_name)
        self.weight = weight
-       #self.current_run_id = current_run_id 
        self.id = id
        self.queue = 'any'
-       ParameterDB.normalising += weight
+       WeightedParameterSet.normalising += weight
        
     def update_weight(self,weight):
        self.weight = weight
-       ParameterDB.normalising += weight
+       WeightedParameterSet.normalising += weight
 
 
 
 ################################################################################
 ################################################################################
 
-class ParameterExecutor(ParameterExtractor):
+class ParameterSetExecutor(ParameterSet):
     def __init__(self, full_name = ""):
-        ParameterExtractor.__init__(self, full_name)
+        ParameterSet.__init__(self, full_name)
         os.chdir(self.path)
            
     def launch_process(self):
@@ -150,9 +126,6 @@ class ParameterExecutor(ParameterExtractor):
         os.remove(configuration_filename)
         if self.directory_vars:
             os.chdir(pwd)
-        
- #       sql_db = sql.connect(self.db_name, timeout = TIMEOUT)
- #       cur_db = sql_db.cursor()
         if ret_code == 0:
            self.cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
            all_d = [self.current_variables_id]
@@ -168,31 +141,19 @@ class ParameterExecutor(ParameterExtractor):
            self.cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
         
         self.connection.commit()
-#        sql_db.close()
-#        del sql_db
 
 
-    def create_trees(self):
- #       sql_db = sql.connect(self.db_name, timeout = TIMEOUT)
-        ret = self.cursor.execute("SELECT * FROM entities WHERE name LIKE 'store_%'").fetchone()
-#        sql_db.close()
- #       del sql_db
-        return ret is not None
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
 
-
-    def generate_tree(self, dir_vars = None):
-#        sql_db = sql.connect(self.db_name, timeout = TIMEOUT)
-        if dir_vars:
-           self.directory_vars = dir_vars.split(",")
-        else:
-           res = self.cursor.execute("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
-           self.directory_vars  = [ i[0] for i in res ]
-#        sql_db.close()
-#        del sql_db
-################################################################################
-################################################################################
-################################################################################
-################################################################################
-################################################################################
-################################################################################
-################################################################################
+class DBQuery(ParameterSet):
+    def __init__(self, full_name = ""):
+       ParameterSet.__init__(self, full_name)
+    
+    
+    

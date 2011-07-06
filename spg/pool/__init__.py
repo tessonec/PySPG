@@ -1,4 +1,4 @@
-from parameter import ParameterExtractor, ParameterDB, ParameterExecutor
+from parameter import ParameterSet, WeightedParameterSet, ParameterSetExecutor
 
 from process import ProcessPool
 

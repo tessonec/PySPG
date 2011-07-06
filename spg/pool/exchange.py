@@ -9,7 +9,7 @@ Created on Tue Jun 28 08:10:30 2011
 
 
 from spg import utils, params
-from parameter import ParameterDB
+from parameter import WeightedParameterSet
 from data import AtomData
 
 
@@ -44,7 +44,7 @@ class DataExchanger:
 
     def update_dbs(self): # These are the dbs that are registered and running
         #self.dbs = {} 
-        ParameterDB.normalising = 0.
+        WeightedParameterSet.normalising = 0.
         res = self.cur_master.execute("SELECT id, full_name, weight, queue FROM dbs WHERE status = 'R'")
         vec = [(id, full_name, weight, queue) for (id, full_name, weight, queue) in res]
     #    print self.dbs
@@ -62,7 +62,7 @@ class DataExchanger:
 #                print full_name, self.dbs[full_name].weight
                 continue
             utils.newline_msg("INF","new db registered... '%s'"%full_name)
-            new_db = ParameterDB(full_name, id, weight, queue)
+            new_db = WeightedParameterSet(full_name, id, weight, queue)
             self.dbs[full_name] = new_db
     #    print self.dbs
    
@@ -72,7 +72,7 @@ class DataExchanger:
    #     db_fits = False
  #       print ParameterDB.normalising 
   #      while not db_fits :
-            rnd = ParameterDB.normalising * random.random()
+            rnd = WeightedParameterSet.normalising * random.random()
             ls_dbs = sorted( self.dbs.keys() )
             curr_db = ls_dbs.pop()
             ac = self.dbs[ curr_db ].weight
