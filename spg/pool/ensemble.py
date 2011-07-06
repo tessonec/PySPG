@@ -11,7 +11,7 @@ BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
 TIMEOUT = 120
 
 
-class ParameterSet:
+class ParameterEnsemble:
     def __init__(self, full_name = ""):
         self.full_name = full_name
         self.path, self.db_name = os.path.split(full_name)
@@ -82,27 +82,27 @@ class ParameterSet:
 
 
 
-class WeightedParameterSet(ParameterSet):
+class WeightedParameterEnsemble(ParameterEnsemble):
     normalising = 0.
     def __init__(self, full_name = "", id=-1, weight=1.,queue = 'any'):
-       ParameterSet.__init__(self, full_name)
+       ParameterEnsemble.__init__(self, full_name)
        self.weight = weight
        self.id = id
        self.queue = 'any'
-       WeightedParameterSet.normalising += weight
+       WeightedParameterEnsemble.normalising += weight
        
     def update_weight(self,weight):
        self.weight = weight
-       WeightedParameterSet.normalising += weight
+       WeightedParameterEnsemble.normalising += weight
 
 
 
 ################################################################################
 ################################################################################
 
-class ParameterSetExecutor(ParameterSet):
+class ParameterEnsembleExecutor(ParameterEnsemble):
     def __init__(self, full_name = ""):
-        ParameterSet.__init__(self, full_name)
+        ParameterEnsemble.__init__(self, full_name)
         os.chdir(self.path)
            
     def launch_process(self):
@@ -151,9 +151,9 @@ class ParameterSetExecutor(ParameterSet):
 ################################################################################
 ################################################################################
 
-class ResultsDBQuery(ParameterSet):
+class ResultsDBQuery(ParameterEnsemble):
     def __init__(self, full_name = ""):
-       ParameterSet.__init__(self, full_name)
+       ParameterEnsemble.__init__(self, full_name)
     
     
     def get_results(col_name):

@@ -1,10 +1,10 @@
-from parameter import ParameterSet, WeightedParameterSet, ParameterSetExecutor
+from parameter import ParameterEnsemble, WeightedParameterEnsemble, ParameterEnsembleExecutor
 
 from process import ProcessPool
 
 from exchange import DataExchanger
 
-from data import AtomData, AtomDataExecutor
+from data import ParameterAtom, ParameterAtomExecutor
 
 
 import os.path

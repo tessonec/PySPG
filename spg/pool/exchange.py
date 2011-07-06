@@ -9,8 +9,8 @@ Created on Tue Jun 28 08:10:30 2011
 
 
 from spg import utils, params
-from parameter import WeightedParameterSet
-from data import AtomData
+from parameter import WeightedParameterEnsemble
+from data import ParameterAtom
 
 
 import os.path
@@ -44,7 +44,7 @@ class DataExchanger:
 
     def update_dbs(self): # These are the dbs that are registered and running
         #self.dbs = {} 
-        WeightedParameterSet.normalising = 0.
+        WeightedParameterEnsemble.normalising = 0.
         res = self.cur_master.execute("SELECT id, full_name, weight, queue FROM dbs WHERE status = 'R'")
         vec = [(id, full_name, weight, queue) for (id, full_name, weight, queue) in res]
     #    print self.dbs
@@ -62,7 +62,7 @@ class DataExchanger:
 #                print full_name, self.dbs[full_name].weight
                 continue
             utils.newline_msg("INF","new db registered... '%s'"%full_name)
-            new_db = WeightedParameterSet(full_name, id, weight, queue)
+            new_db = WeightedParameterEnsemble(full_name, id, weight, queue)
             self.dbs[full_name] = new_db
     #    print self.dbs
    
@@ -72,7 +72,7 @@ class DataExchanger:
    #     db_fits = False
  #       print ParameterDB.normalising 
   #      while not db_fits :
-            rnd = WeightedParameterSet.normalising * random.random()
+            rnd = WeightedParameterEnsemble.normalising * random.random()
             ls_dbs = sorted( self.dbs.keys() )
             curr_db = ls_dbs.pop()
             ac = self.dbs[ curr_db ].weight
@@ -103,7 +103,7 @@ class DataExchanger:
             self.cur_master.execute("UPDATE infiles SET last = ? WHERE id = 1",(self.current_counter ,))
             self.db_master.commit()
             in_name = "in_%.10d"%self.current_counter
-            pd = AtomData(in_name, sel_db.full_name)
+            pd = ParameterAtom(in_name, sel_db.full_name)
             ret = pd.load_next_from_db( sel_db.connection, sel_db.cursor )
             if ret == None:
                 continue
@@ -114,7 +114,7 @@ class DataExchanger:
     def harvest_data(self):
         self.harvested_atoms  = len(os.listdir("%s/run"%(VAR_PATH) ))
         for i_d in os.listdir("%s/run"%(VAR_PATH) ):
-            pd = AtomData(i_d)
+            pd = ParameterAtom(i_d)
             pd.load(src = 'run')
             a_db =self.dbs[pd.full_db_name]
             pd.dump_in_db( a_db.connection, a_db.cursor  )
