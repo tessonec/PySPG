@@ -162,7 +162,7 @@ class ParameterSetExecutor(ParameterSet):
 class ResultsDBQuery(ParameterSet):
     def __init__(self, full_name = ""):
        ParameterSet.__init__(self, full_name)
-    
+       self.coalesce = []
     
     def result_table(self, col_name, table_vars = None):
         if not table_vars:
@@ -198,9 +198,22 @@ class ResultsDBQuery(ParameterSet):
         return n.array( [ map(float,i) for i in self.cursor ] )
 
 
-        
-
-
+    def __iter__(self):
+      if len(self.coalesce) == 0:  
+        self.coalesce = self.variables
+      query = "SELECT DISTINCT %s FROM values_set "%(",".join([v for v in self.coalesce] ))
+      self.cursor.execute(query)
+      pairs = [ i for i in self.cursor ]
+      for i in pairs:
+          d = {}
+          for j in range( len( self.coalesce ) ):
+              d[self.coalesce[j] ] = float( i[j] )
+          yield d
+    
+  #     if self.not_in_table_vars:
+ #        yield self.full_result_table()
+         
+#         raise StopIteration
 
 
 
@@ -209,9 +222,10 @@ if __name__ == "__main__":
     db_name = os.path.abspath( sys.argv[1] )
     
     rq = ResultsDBQuery(db_name)
-
-    r1 = rq.result_table("ordprm_kuramoto")
-    n.savetxt("ordprm_kuramoto",r1)
+    for i in rq:
+        print i
+  #  r1 = rq.result_table("ordprm_kuramoto")
+  #  n.savetxt("ordprm_kuramoto",r1)
     
-    r2 = rq.full_result_table()
-    n.savetxt("output.dat",r2) 
+  #  r2 = rq.full_result_table()
+  #  n.savetxt("output.dat",r2) 
