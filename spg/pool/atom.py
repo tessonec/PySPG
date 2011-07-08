@@ -1,4 +1,4 @@
-from spg import utils, params
+from spg import utils
 
 
 
@@ -6,10 +6,8 @@ import os.path
 import pickle 
 from subprocess import Popen, PIPE
 import sqlite3 as sql
-import time
 
-VAR_PATH = os.path.abspath(params.CONFIG_DIR+"/../var/spg")
-BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
+from spg.pool import BINARY_PATH, VAR_PATH
 TIMEOUT = 120
 
 

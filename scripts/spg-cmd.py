@@ -4,7 +4,7 @@
 #import spg
 import spg.params as params
 import spg.utils as utils
-from spg.pool import ProcessPool, AtomData
+from spg.pool import ProcessPool, ParameterAtom
 
 
 # import sqlite3 as sql
@@ -208,7 +208,7 @@ def get_stats(cmd, name, params):
    elif cmd == "pool":
        ac_dic_q={}
        for i_f in os.listdir("%s/queued/"%VAR_PATH):
-           ad = AtomData(i_f)
+           ad = ParameterAtom(i_f)
            ad.load("queued", no_rm = True)
            if not (ad.full_db_name in ac_dic_q):
                ac_dic_q[ad.full_db_name] = 1
@@ -217,7 +217,7 @@ def get_stats(cmd, name, params):
 
        ac_dic_r = {}
        for i_f in os.listdir("%s/run/"%VAR_PATH):
-           ad = AtomData(i_f)
+           ad = ParameterAtom(i_f)
            ad.load("run", no_rm = True)
            if not (ad.full_db_name in ac_dic_r):
                ac_dic_r[ad.full_db_name] = 1

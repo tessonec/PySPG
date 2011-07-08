@@ -1,5 +1,10 @@
+#!/usr/bin/python
+
 from spg import utils, params
 
+
+import numpy as n
+import math as m
 
 
 import os.path, os, sys
@@ -9,6 +14,7 @@ import sqlite3 as sql
 VAR_PATH = os.path.abspath(params.CONFIG_DIR+"/../var/spg")
 BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
 TIMEOUT = 120
+
 
 
 class ParameterSet:
@@ -158,7 +164,7 @@ class ResultsDBQuery(ParameterSet):
        ParameterSet.__init__(self, full_name)
     
     
-    def get_results(self, col_name, table_vars = None):
+    def result_table(self, col_name, table_vars = None):
         if not table_vars:
           table_vars = list(self.variables)
           
@@ -168,20 +174,44 @@ class ResultsDBQuery(ParameterSet):
                     table_vars.remove(iv)
                 except: pass
         
-        query = "SELECT %s,AVG(r.%s), FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(",".join(["v.%s"%v for v in table_vars]), col_name)
-#        print query
+        query = "SELECT %s,AVG(r.%s) FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(",".join(["v.%s"%v for v in table_vars]), col_name)
+        
         self.cursor.execute(query)
-        for i in self.cursor:
-            print i
+        
+        return n.array( [ map(float,i) for i in self.cursor ] )
+
+    def full_result_table(self, table_vars = None):
+        if not table_vars:
+          table_vars = list(self.variables)
+          
+        if self.directory_vars:
+            for iv in self.directory_vars:
+                try:
+                    table_vars.remove(iv)
+                except: pass
+        
+        query = "SELECT %s,%s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(",".join(["v.%s"%v for v in table_vars]), ",".join(["r.%s"%v for v in self.output_column]))
+  #      print self.output_column
+  #      print query
+        self.cursor.execute(query)
+        
+        return n.array( [ map(float,i) for i in self.cursor ] )
+
+
+        
 
 
 
 
 
 if __name__ == "__main__":
+#    print params.CONFIG_DIR
     db_name = os.path.abspath( sys.argv[1] )
     
     rq = ResultsDBQuery(db_name)
-    rq.get_results("ordprm_kuramoto")
+
+    r1 = rq.result_table("ordprm_kuramoto")
+    n.savetxt("ordprm_kuramoto",r1)
     
-    
+    r2 = rq.full_result_table()
+    n.savetxt("output.dat",r2) 

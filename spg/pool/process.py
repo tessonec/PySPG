@@ -1,13 +1,9 @@
-from spg import  params
 
-
-
-import os.path
 from subprocess import Popen, PIPE
 import sqlite3 as sql
+from spg.pool import BINARY_PATH, VAR_PATH
 
-VAR_PATH = os.path.abspath(params.CONFIG_DIR+"/../var/spg")
-BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
+
 TIMEOUT = 120
 
 class Queue:

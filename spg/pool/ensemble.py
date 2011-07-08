@@ -6,9 +6,9 @@ import os.path, os, sys
 from subprocess import Popen, PIPE
 import sqlite3 as sql
 
-VAR_PATH = os.path.abspath(params.CONFIG_DIR+"/../var/spg")
-BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
-TIMEOUT = 120
+
+from spg.pool import BINARY_PATH, VAR_PATH
+#TIMEOUT = 120
 
 
 class ParameterEnsemble:

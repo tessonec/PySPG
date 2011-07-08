@@ -8,7 +8,7 @@ Created on Tue Jun 28 08:10:30 2011
 ###################################################################################################
 
 
-from spg import utils, params
+from spg import utils
 from parameter import WeightedParameterEnsemble
 from data import ParameterAtom
 
@@ -17,8 +17,8 @@ import os.path
 import random
 import sqlite3 as sql
 
-VAR_PATH = os.path.abspath(params.CONFIG_DIR+"/../var/spg")
-BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
+
+from spg.pool import VAR_PATH
 TIMEOUT = 120
 
 
