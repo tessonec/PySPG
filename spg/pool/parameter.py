@@ -11,7 +11,7 @@ BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
 TIMEOUT = 120
 
 
-class ParameterEnsemble:
+class ParameterSet:
     def __init__(self, full_name = ""):
         self.full_name = full_name
         self.path, self.db_name = os.path.split(full_name)
@@ -84,27 +84,27 @@ class ParameterEnsemble:
 
 
 
-class WeightedParameterEnsemble(ParameterEnsemble):
+class WeightedParameterSet(ParameterSet):
     normalising = 0.
     def __init__(self, full_name = "", id=-1, weight=1.,queue = 'any'):
-       ParameterEnsemble.__init__(self, full_name)
+       ParameterSet.__init__(self, full_name)
        self.weight = weight
        self.id = id
        self.queue = 'any'
-       WeightedParameterEnsemble.normalising += weight
+       WeightedParameterSet.normalising += weight
        
     def update_weight(self,weight):
        self.weight = weight
-       WeightedParameterEnsemble.normalising += weight
+       WeightedParameterSet.normalising += weight
 
 
 
 ################################################################################
 ################################################################################
 
-class ParameterEnsembleExecutor(ParameterEnsemble):
+class ParameterSetExecutor(ParameterSet):
     def __init__(self, full_name = ""):
-        ParameterEnsemble.__init__(self, full_name)
+        ParameterSet.__init__(self, full_name)
         os.chdir(self.path)
            
     def launch_process(self):
@@ -153,9 +153,9 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 ################################################################################
 ################################################################################
 
-class ResultsDBQuery(ParameterEnsemble):
+class ResultsDBQuery(ParameterSet):
     def __init__(self, full_name = ""):
-       ParameterEnsemble.__init__(self, full_name)
+       ParameterSet.__init__(self, full_name)
     
     
     def get_results(self, col_name, table_vars = None):
@@ -168,7 +168,7 @@ class ResultsDBQuery(ParameterEnsemble):
                     table_vars.remove(iv)
                 except: pass
         
-        query = "SELECT %s,AVG(r.%s) FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(",".join(["v.%s"%v for v in table_vars]), col_name)
+        query = "SELECT %s,AVG(r.%s), FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(",".join(["v.%s"%v for v in table_vars]), col_name)
 #        print query
         self.cursor.execute(query)
         for i in self.cursor:
