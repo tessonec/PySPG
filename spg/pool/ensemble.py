@@ -1,4 +1,4 @@
-from spg import utils, params
+from spg import utils
 
 
 
@@ -10,7 +10,7 @@ import numpy as n
 import math as m
 
 
-from spg.pool import BINARY_PATH, VAR_PATH, TIMEOUT
+from spg import BINARY_PATH, VAR_PATH, TIMEOUT
 #TIMEOUT = 120
 
 
@@ -170,7 +170,6 @@ class ResultsDBQuery(ParameterEnsemble):
                 try:
                     table_vars.remove(iv)
                 except: pass
-        
         query = "SELECT %s,AVG(r.%s) FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(",".join(["v.%s"%v for v in table_vars]), col_name)
         
         self.cursor.execute(query)
@@ -179,17 +178,48 @@ class ResultsDBQuery(ParameterEnsemble):
 
     def full_result_table(self, table_vars = None):
         if not table_vars:
-          table_vars = list(self.variables)
+          table_vars = self.variables[:]
           
-        if self.directory_vars:
-            for iv in self.directory_vars:
+        for iv in self.coalesce:
                 try:
                     table_vars.remove(iv)
                 except: pass
         
         query = "SELECT %s,%s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(",".join(["v.%s"%v for v in table_vars]), ",".join(["r.%s"%v for v in self.output_column]))
-  #      print self.output_column
-  #      print query
+        self.cursor.execute(query)
+        
+        return n.array( [ map(float,i) for i in self.cursor ] )
+
+
+    def full_result_table_restricted(self, table_vars = None, restrict_to_values = {}):
+        if not table_vars:
+          table_vars = self.variables[:]
+          
+        for iv in self.coalesce:
+             try:
+                table_vars.remove(iv)
+             except: pass
+        
+        var_cols = ""
+        if len(table_vars) == 1:
+            var_cols = "v.%s, "%table_vars[0]
+        if len(table_vars) > 1:
+            var_cols = ", %s"%",".join(["v.%s"%v for v in table_vars])
+        
+#        print var_cols
+        out_cols = ""
+        if len(self.output_column) == 2:
+            out_cols = "r.%s, "%self.output_column[2]
+        if len(self.output_column) > 2:
+            out_cols = " %s"%",".join(["r.%s"%v for v in self.output_column[1:]])
+      #  print out_cols
+
+        restrict_cols = " AND ".join(["v.%s = '%s'"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
+        if len(restrict_cols ) > 0:
+          restrict_cols = "AND %s"%restrict_cols 
+#        print restrict_cols
+        query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s GROUP BY r.values_set_id"%(var_cols, out_cols, restrict_cols)
+        print query
         self.cursor.execute(query)
         
         return n.array( [ map(float,i) for i in self.cursor ] )
@@ -206,20 +236,14 @@ class ResultsDBQuery(ParameterEnsemble):
           for j in range( len( self.coalesce ) ):
               d[self.coalesce[j] ] = float( i[j] )
           yield d
-    
-  #     if self.not_in_table_vars:
- #        yield self.full_result_table()
-         
-#         raise StopIteration
+          
 
 
-
-
-
-if __name__ == "__main__":
-    db_name = os.path.abspath( sys.argv[1] )
-    
-    rq = ResultsDBQuery(db_name)
-    rq.get_results("ordprm_kuramoto")
-    
+#
+#if __name__ == "__main__":
+#    db_name = os.path.abspath( sys.argv[1] )
+#    
+#    rq = ResultsDBQuery(db_name)
+#    rq.get_results("ordprm_kuramoto")
+#    
     

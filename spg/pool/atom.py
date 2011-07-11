@@ -7,8 +7,7 @@ import pickle
 from subprocess import Popen, PIPE
 import sqlite3 as sql
 
-from spg.pool import BINARY_PATH, VAR_PATH
-TIMEOUT = 120
+from spg import BINARY_PATH, VAR_PATH, TIMEOUT
 
 
 ################################################################################

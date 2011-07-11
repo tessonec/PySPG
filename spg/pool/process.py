@@ -1,10 +1,8 @@
 
 from subprocess import Popen, PIPE
 import sqlite3 as sql
-from spg.pool import BINARY_PATH, VAR_PATH
+from spg import BINARY_PATH, VAR_PATH
 
-
-TIMEOUT = 120
 
 class Queue:
     def __init__(self, name, max_jobs):

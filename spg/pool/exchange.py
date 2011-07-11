@@ -9,8 +9,8 @@ Created on Tue Jun 28 08:10:30 2011
 
 
 from spg import utils
-from parameter import WeightedParameterEnsemble
-from data import ParameterAtom
+from ensemble import WeightedParameterEnsemble
+from atom import ParameterAtom
 
 
 import os.path
@@ -18,8 +18,7 @@ import random
 import sqlite3 as sql
 
 
-from spg.pool import VAR_PATH
-TIMEOUT = 120
+from spg import VAR_PATH, TIMEOUT
 
 
 
