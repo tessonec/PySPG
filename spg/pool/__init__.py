@@ -1,4 +1,4 @@
-from ensemble import ParameterEnsemble, WeightedParameterEnsemble, ParameterEnsembleExecutor
+from ensemble import ParameterEnsemble, WeightedParameterEnsemble, ParameterEnsembleExecutor, ResultsDBQuery
 
 from process import ProcessPool
 

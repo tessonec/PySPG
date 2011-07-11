@@ -6,7 +6,7 @@ Created on Mon Jul 11 11:37:27 2011
 @author: Claudio Tessone - <tessonec@ethz.ch>
 """
 
-from spg.pool.parameter import ResultsDBQuery
+from spg.pool import ResultsDBQuery
 import os.path, sys
 
 
@@ -29,7 +29,6 @@ def parse_command_line():
 #     parser.add_option("--filter","--insert", type="string", action='store', dest="insert",
 #                        help = "Inserts the given iterator before the first variable. The second argument is usually enclosed between quotes")
 
-     
      return  parser.parse_args()
 
 
