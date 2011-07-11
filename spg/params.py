@@ -9,7 +9,11 @@ from math import *
 
 import utils
 
-CONFIG_DIR = os.path.expanduser("~/opt/etc")
+ROOT_DIR = os.path.expanduser("~/opt")
+CONFIG_DIR = os.path.expanduser(ROOT_DIR+"/etc")
+VAR_PATH = os.path.abspath(ROOT_DIR+"/var/spg")
+BINARY_PATH = os.path.abspath(ROOT_DIR+"/bin")
+
 
 
 def parameter_guess(string):
@@ -67,19 +71,6 @@ def generate_string(values, var_list, separator = "-", joining_string = "_"):
 
 
 
-#d = {'x':pi,'y_3':1}
-
-#v = string_evaluator("exp({x}+{y_3})",d)
-#print get_variables("exp({x}+{y_3})",d)
-##st='/home/tessonec/running/alpha_max_20312_3424-0.5_size-100/beta-324.3242_gamma--90.2E-4.234_fjs-1E-4.dat'
-
-#print st
-#print parameterGuess(st)
-
-
-
-
-
 
 
 def backendize(infile):
@@ -97,20 +88,13 @@ def backendize(infile):
         except:
             newline_msg("ERR", "while unfolding line: '%s'"%(line) )
             sys.exit()
-#      try:
         new_stuff = [
                 i.replace("%ARG%",var_name).replace("%ARG1%",var_name)
                 for i in open( "%s/ctt/%s.be"%(CONFIG_DIR ,backend), "r" )
               ]
-#      except:
-#        sys.stderr.write("[ctt - ERROR] when loading backend '%s' and variable '%s'\n"%(backend,var_name) )
-#        sys.exit()
-#      print new_stuff
         output.extend (new_stuff)
-#        ls_output.append( (backend, var_name)  )
     else:
         output.append(line)
-#  utils.newline_msg( "INF", "%s --> %s"%(ls_output,output) )
   ret = {}
   for l in output:
       l = [ i.strip() for i in l.split(":")]
@@ -140,22 +124,17 @@ def check_consistency(exec_file, miparser):
 
   possible_lines = backendize("%s/spg-conf/%s.ct"%(CONFIG_DIR,exec_file))
 
-#  print miparser.items(), possible_lines.keys()
   assert len(set(miparser.items() ) - set( possible_lines.keys() ) ) == 0 , "not all the variables are recognised: offending vars: %s"%(set( miparser.items() ) -set( possible_lines.keys() )  )
 
 
   for el in miparser.data:
       
       it = copy.copy( el )
-#      print it.name, " ", 
       family, var_type, default = possible_lines[it.name]
       values = [ i for i in it ]
       if len(values) == 0:
           values = it.data
-#      print it.name, values
       for val in values:
-#          print it.name, val, family, var_type, default
-          # print val, default
           if family == "flag" : 
               utils.newline_msg("VAL", "flag can not contain a value")
           elif family == "choice" and str(val) not in default: 
@@ -225,3 +204,20 @@ def contents_in_output(exec_file):
        ret.append((name,values))    
        
    return ret 
+   
+
+
+
+
+#d = {'x':pi,'y_3':1}
+
+#v = string_evaluator("exp({x}+{y_3})",d)
+#print get_variables("exp({x}+{y_3})",d)
+##st='/home/tessonec/running/alpha_max_20312_3424-0.5_size-100/beta-324.3242_gamma--90.2E-4.234_fjs-1E-4.dat'
+
+#print st
+#print parameterGuess(st)
+
+
+
+

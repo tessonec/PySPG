@@ -217,15 +217,7 @@ class ResultsDBQuery(ParameterSet):
 
 
 
-if __name__ == "__main__":
-#    print params.CONFIG_DIR
-    db_name = os.path.abspath( sys.argv[1] )
-    
-    rq = ResultsDBQuery(db_name)
-    for i in rq:
-        print i
-  #  r1 = rq.result_table("ordprm_kuramoto")
-  #  n.savetxt("ordprm_kuramoto",r1)
-    
-  #  r2 = rq.full_result_table()
-  #  n.savetxt("output.dat",r2) 
+
+
+
+
