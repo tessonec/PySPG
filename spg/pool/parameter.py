@@ -13,7 +13,7 @@ import sqlite3 as sql
 
 VAR_PATH = os.path.abspath(params.CONFIG_DIR+"/../var/spg")
 BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
-TIMEOUT = 120
+
 
 
 

@@ -6,8 +6,11 @@ import os.path, os, sys
 from subprocess import Popen, PIPE
 import sqlite3 as sql
 
+import numpy as n
+import math as m
 
-from spg.pool import BINARY_PATH, VAR_PATH
+
+from spg.pool import BINARY_PATH, VAR_PATH, TIMEOUT
 #TIMEOUT = 120
 
 
@@ -156,9 +159,9 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 class ResultsDBQuery(ParameterEnsemble):
     def __init__(self, full_name = ""):
        ParameterEnsemble.__init__(self, full_name)
+       self.coalesce = []
     
-    
-    def get_results(self, col_name, table_vars = None):
+    def result_table(self, col_name, table_vars = None):
         if not table_vars:
           table_vars = list(self.variables)
           
@@ -169,10 +172,45 @@ class ResultsDBQuery(ParameterEnsemble):
                 except: pass
         
         query = "SELECT %s,AVG(r.%s) FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(",".join(["v.%s"%v for v in table_vars]), col_name)
-#        print query
+        
         self.cursor.execute(query)
-        for i in self.cursor:
-            print i
+        
+        return n.array( [ map(float,i) for i in self.cursor ] )
+
+    def full_result_table(self, table_vars = None):
+        if not table_vars:
+          table_vars = list(self.variables)
+          
+        if self.directory_vars:
+            for iv in self.directory_vars:
+                try:
+                    table_vars.remove(iv)
+                except: pass
+        
+        query = "SELECT %s,%s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(",".join(["v.%s"%v for v in table_vars]), ",".join(["r.%s"%v for v in self.output_column]))
+  #      print self.output_column
+  #      print query
+        self.cursor.execute(query)
+        
+        return n.array( [ map(float,i) for i in self.cursor ] )
+
+
+    def __iter__(self):
+      if len(self.coalesce) == 0:  
+        self.coalesce = self.variables
+      query = "SELECT DISTINCT %s FROM values_set "%(",".join([v for v in self.coalesce] ))
+      self.cursor.execute(query)
+      pairs = [ i for i in self.cursor ]
+      for i in pairs:
+          d = {}
+          for j in range( len( self.coalesce ) ):
+              d[self.coalesce[j] ] = float( i[j] )
+          yield d
+    
+  #     if self.not_in_table_vars:
+ #        yield self.full_result_table()
+         
+#         raise StopIteration
 
 
 

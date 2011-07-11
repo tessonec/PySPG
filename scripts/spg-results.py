@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jul 11 11:37:27 2011
@@ -5,7 +6,7 @@ Created on Mon Jul 11 11:37:27 2011
 @author: Claudio Tessone - <tessonec@ethz.ch>
 """
 
-from spg.parameter import ResultsDBQuery
+from spg.pool.parameter import ResultsDBQuery
 import os.path, sys
 
 
