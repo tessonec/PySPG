@@ -1,6 +1,6 @@
 
-version_number = '2.9.2'
-release_date = 'May 18 2011'
+version_number = '2.9.8'
+release_date = 'Jul 11 2011'
 
 from iterator import *
 from parser   import *
