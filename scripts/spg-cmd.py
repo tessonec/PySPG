@@ -68,8 +68,13 @@ def write_db_stat_into_master(full_name, cur_master):
                 elif k == "E":
                   error = v
        conn2.close()
-       cur_master.execute("UPDATE dbs SET total_values_set = ? , total_combinations = ?, done_combinations = ?, running_combinations = ?, error_combinations = ? WHERE full_name = ? ",(n_all, total_sov, done, running, error, full_name ))
-       if not_run == 0:
+       res = cur_master.execute("SELECT * FROM dbs WHERE full_name = ?",(full_name,)).fetchone()
+#       print res
+       if res == None:
+         cur_master.execute("INSERT INTO dbs (full_name,total_values_set, total_combinations, done_combinations, running_combinations, error_combinations, status) VALUES (?,?,?,?,?,?,?)",(full_name,n_all, total_sov, done, running, error, "S"  ))
+       else:
+         cur_master.execute("UPDATE dbs SET total_values_set = ? , total_combinations = ?, done_combinations = ?, running_combinations = ?, error_combinations = ? WHERE full_name = ? ",(n_all, total_sov, done, running, error, full_name ))
+         if not_run == 0:
            cur_master.execute("UPDATE dbs SET status = ? WHERE full_name = ? ",('D',full_name))
 
 
