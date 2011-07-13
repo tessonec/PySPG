@@ -95,13 +95,13 @@ class ParameterAtom:
         if self.return_code == 0:
              all_d = [self.current_run_id]
              all_d.extend( self.output )
-             cc = 'INSERT INTO results (%s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
+             cc = 'INSERT INTO results (%s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join(["'%s'"%str(i) for i in all_d]) )
 #             print cc, self.current_run_id 
-#             try:
-             cursor.execute( cc )
-             cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
-#             except:
-#                 cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
+             try:
+               cursor.execute( cc )
+               cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
+             except:
+               cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
              flog = open(self.full_db_name.replace("sqlite","log"), "aw") 
              print >> flog, "{%s} %s: ret=%s -- %s,%s -- %s"%( self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output)
              try:

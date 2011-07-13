@@ -4,7 +4,8 @@
 
 import spg.params as params
 import spg.utils as utils
-from spg.pool import ParameterAtomExecutor, VAR_PATH 
+from spg.pool import ParameterAtomExecutor
+from spg import VAR_PATH 
 
 
 
