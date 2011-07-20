@@ -228,11 +228,16 @@ class ResultsDBQuery(ParameterEnsemble):
     def __iter__(self):
       if len(self.coalesce) == 0:  
         self.coalesce = self.variables
-      query = "SELECT DISTINCT %s FROM values_set "%(",".join([v for v in self.coalesce] ))
+      if len(self.coalesce) > 1:
+        query = "SELECT DISTINCT %s FROM values_set "%(",".join([v for v in self.coalesce] ))
+      else:
+        query = "SELECT DISTINCT %s FROM values_set "%(" ".join([v for v in self.coalesce] ))
       self.cursor.execute(query)
       pairs = [ i for i in self.cursor ]
+      print query, pairs
       for i in pairs:
           d = {}
+          
           for j in range( len( self.coalesce ) ):
               d[self.coalesce[j] ] = float( i[j] )
           yield d
