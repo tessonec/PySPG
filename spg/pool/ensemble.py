@@ -253,7 +253,7 @@ class ResultsDBQuery(ParameterEnsemble):
         if len(restrict_cols ) > 0:
           restrict_cols = "AND %s"%restrict_cols 
 #        print restrict_cols
-        query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s GROUP BY %s"%(var_cols, out_cols, restrict_cols, var_cols)
+        query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s GROUP BY %s"%(var_cols, out_cols, restrict_cols, var_cols.strip(", "))
         print query
         self.cursor.execute(query)
         
