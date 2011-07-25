@@ -248,8 +248,8 @@ class ResultsDBQuery(ParameterEnsemble):
         if len(self.output_column) > 2:
             out_cols = " %s"%",".join(["r.%s"%v for v in self.output_column[1:]])
       #  print out_cols
-        group_by = " , ".join(["v.%s "%(v) for v in restrict_to_values.keys()])
-        restrict_cols = " AND ".join(["v.%s = '%s'"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
+#        group_by = " , ".join(["v.%s "%(v) for v in restrict_to_values.keys()])
+        restrict_cols = " AND ".join(["v.%s = %s"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
         if len(restrict_cols ) > 0:
           restrict_cols = "AND %s"%restrict_cols 
 #        print restrict_cols
@@ -278,7 +278,7 @@ class ResultsDBQuery(ParameterEnsemble):
           d = {}
           
           for j in range( len( self.coalesce ) ):
-              d[self.coalesce[j] ] = float( i[j] )
+              d[self.coalesce[j] ] = i[j] 
           yield d
           
 
