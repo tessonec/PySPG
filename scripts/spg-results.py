@@ -34,7 +34,10 @@ def parse_command_line():
                         help = "whether to expand dirs instead of appending names to the output name")
 
      parser.add_option("--by-val", action='store_true', dest="by_val",
-                        help = "whether to coalesce tableby var -useful if repeated-")
+                        help = "whether to coalesce table by var -useful if repeated-")
+
+     parser.add_option("--raw", action='store_true', dest="raw_data",
+                        help = "whether to store all the data-points")
 
 #     parser.add_option("--filter","--insert", type="string", action='store', dest="insert",
 #                        help = "Inserts the given iterator before the first variable. The second argument is usually enclosed between quotes")
@@ -58,10 +61,7 @@ if __name__ == "__main__":
 #       print rq.coalesce
        for i in rq:
     #      print i
-          if not opts.by_val:
-            data = rq.full_result_table_restricted(restrict_to_values = i)
-          else:
-            data = rq.full_result_table_restricted_byval(restrict_to_values = i)
+          data = rq.full_result_table_restricted(restrict_to_values = i, raw_data = opts.raw_data, restrict_by_val = opts.by_val)
           
           if not opts.expand_dirs:
               gen_s = generate_string(i, rq.coalesce )
