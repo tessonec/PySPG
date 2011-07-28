@@ -278,7 +278,11 @@ class ResultsDBQuery(ParameterEnsemble):
           d = {}
           
           for j in range( len( self.coalesce ) ):
-              d[self.coalesce[j] ] = i[j] 
+              try:
+                v = float( i[j] ) # if it is a number is does not get surrounded by quotes
+                d[self.coalesce[j] ] = i[j]
+              except:
+                d[self.coalesce[j] ] = "'%s'"%i[j]
           yield d
           
 
