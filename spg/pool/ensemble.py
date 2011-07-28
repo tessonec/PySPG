@@ -173,8 +173,8 @@ class ResultsDBQuery(ParameterEnsemble):
 
     
     def get_table_from_query(self, query):
-        self.cursor.execute(query)
         print query
+        self.cursor.execute(query)
         return n.array( [ map(float,i) for i in self.cursor ] )
         
     
@@ -217,10 +217,15 @@ class ResultsDBQuery(ParameterEnsemble):
         if not raw_data :
           if len(output_column ) == 1:
             out_cols = "AVG(r.%s) "%output_column[0]
-          elif len(self.output_column) > 1:
+          elif len(output_column) > 1:
             out_cols = " %s"%",".join(["AVG(r.%s)"%v for v in output_column])
-
-        query = "SELECT %s,%s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id "%(var_cols, out_cols)
+        else:
+          if len(output_column ) == 1:
+            out_cols = "r.%s "%output_column[0]
+          elif len(output_column) > 1:
+            out_cols = " %s"%",".join(["r.%s"%v for v in output_column])
+#        print out_cols
+        query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id "%(var_cols, out_cols)
         if restrict_to_values:
           restrict_cols = " AND ".join(["v.%s = %s"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
           if restrict_cols :
