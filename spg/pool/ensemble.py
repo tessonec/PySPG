@@ -208,7 +208,6 @@ class ResultsDBQuery(ParameterEnsemble):
         if len(table_vars) > 1:
             var_cols = ", %s"%",".join(["v.%s"%v for v in table_vars])
         
-#        print self.output_column
         if not output_column:
           output_column = self.output_column[:]
           if "values_set_id" in output_column: 
@@ -216,10 +215,10 @@ class ResultsDBQuery(ParameterEnsemble):
 
         out_cols = ""
         if not raw_data :
-           if len(output_column ) == 1:
-                out_cols = "AVG(r.%s) "%output_column[0]
-           elif len(self.output_column) > 1:
-                out_cols = " %s"%",".join(["AVG(r.%s)"%v for v in output_column])
+          if len(output_column ) == 1:
+            out_cols = "AVG(r.%s) "%output_column[0]
+          elif len(self.output_column) > 1:
+            out_cols = " %s"%",".join(["AVG(r.%s)"%v for v in output_column])
 
         query = "SELECT %s,%s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id "%(var_cols, out_cols)
         if restrict_to_values:
@@ -233,7 +232,7 @@ class ResultsDBQuery(ParameterEnsemble):
           else:  
             query = "%s %s GROUP BY r.values_set_id"%(query, restrict_cols)
 
-        
+        return self.get_table_from_query(query)        
 #        if len(restrict_to_values) == 0:
 #            query = "SELECT %s,%s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(var_cols, out_cols)
 #          else:
@@ -248,7 +247,6 @@ class ResultsDBQuery(ParameterEnsemble):
 #            query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s "%(var_cols, out_cols, restrict_cols)
 #          else:  
 #            query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s GROUP BY r.values_set_id"%(var_cols, out_cols, restrict_cols)
-        return self.get_table_from_query(query)        
 
 
 
