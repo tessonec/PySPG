@@ -66,7 +66,7 @@ def generate_string(values, var_list, separator = "-", joining_string = "_"):
       joining_string::: is the string between consecutive key,value pairs
       separator     ::: is the string separating the key, value pair
     """
-    of = joining_string.join([ "%s%s%s"%(k,separator,values[k]) for k in var_list ] ) 
+    of = joining_string.join([ "%s%s%s"%(k,separator,values[k].replace("'","").replace('"',"")) for k in var_list ] ) 
 
     return of
 

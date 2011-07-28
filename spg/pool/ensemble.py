@@ -169,7 +169,7 @@ class ResultsDBQuery(ParameterEnsemble):
               try:
                 v = float( dict_to_clean[i] ) # if it is a number is does not get surrounded by quotes
               except:
-                dict_to_clean[i ] = "'%s'"%dict_to_clean[i ][i]
+                dict_to_clean[i ] = "'%s'"%dict_to_clean[i ]
 
     
     def get_table_from_query(self, query):
@@ -292,9 +292,9 @@ class ResultsDBQuery(ParameterEnsemble):
           d = {}
           
           for j in range( len( self.coalesce ) ):
-#              try:
-                v = float( i[j] ) # if it is a number is does not get surrounded by quotes
-#                d[self.coalesce[j] ] = i[j]
+ #             try:
+ #               v = float( i[j] ) # if it is a number is does not get surrounded by quotes
+                d[self.coalesce[j] ] = i[j]
 #              except:
 #                d[self.coalesce[j] ] = "'%s'"%i[j]
           yield d
