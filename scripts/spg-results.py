@@ -61,7 +61,7 @@ if __name__ == "__main__":
 #       print rq.coalesce
        for i in rq:
     #      print i
-          data = rq.full_result_table_restricted(restrict_to_values = i, raw_data = opts.raw_data, restrict_by_val = opts.by_val)
+          data = rq.result_table(restrict_to_values = i, raw_data = opts.raw_data, restrict_by_val = opts.by_val)
           
           if not opts.expand_dirs:
               gen_s = generate_string(i, rq.coalesce )

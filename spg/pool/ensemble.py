@@ -178,41 +178,29 @@ class ResultsDBQuery(ParameterEnsemble):
         return n.array( [ map(float,i) for i in self.cursor ] )
         
     
-    def result_table(self, col_name, table_vars = None):
-        if not table_vars:
-          table_vars = list(self.variables)
-          
-        if self.directory_vars:
-            for iv in self.directory_vars:
-                try:
-                    table_vars.remove(iv)
-                except: pass
-        query = "SELECT %s,AVG(r.%s) FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(",".join(["v.%s"%v for v in table_vars]), col_name)
-        return self.get_table_from_query(query)        
-
-    def full_result_table(self, table_vars = None):
-        if not table_vars:
-          table_vars = self.variables[:]
-          
-        for iv in self.coalesce:
-                try:
-                    table_vars.remove(iv)
-                except: pass
-        
-        query = "SELECT %s,%s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(",".join(["v.%s"%v for v in table_vars]), ",".join(["r.%s"%v for v in self.output_column]))
-        return self.get_table_from_query(query)        
+#    def column_result_table(self, col_name, table_vars = None):
+#        if not table_vars:
+#          table_vars = list(self.variables)
+#          
+#        if self.directory_vars:
+#            for iv in self.directory_vars:
+#                try:
+#                    table_vars.remove(iv)
+#                except: pass
+#        query = "SELECT %s,AVG(r.%s) FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(",".join(["v.%s"%v for v in table_vars]), col_name)
+#        return self.get_table_from_query(query)        
 
 
-    def full_result_table_restricted(self, table_vars = None, restrict_to_values = {}, raw_data = False, restrict_by_val = False):
+
+    def result_table(self, table_vars = None, restrict_to_values = {}, raw_data = False, restrict_by_val = False, output_column = []):
         if not table_vars:
           table_vars = self.variables[:]
 
         self.clean_dict(restrict_to_values)
 
         for iv in self.coalesce:
-             try:
-                table_vars.remove(iv)
-             except: pass
+          if iv in table_vars:
+            table_vars.remove(iv)
         
         var_cols = ""
         if len(table_vars) == 1:
@@ -220,27 +208,46 @@ class ResultsDBQuery(ParameterEnsemble):
         if len(table_vars) > 1:
             var_cols = ", %s"%",".join(["v.%s"%v for v in table_vars])
         
+#        print self.output_column
+        if not output_column:
+          output_column = self.output_column[:]
+          if "values_set_id" in output_column: 
+            output_column.remove("values_set_id")
+
         out_cols = ""
         if not raw_data :
-          if len(self.output_column) == 2:
-            out_cols = "AVG(r.%s) "%self.output_column[1]
-          if len(self.output_column) > 2:
-            out_cols = " %s"%",".join(["AVG(r.%s)"%v for v in self.output_column[1:]])
-        else:
-          if len(self.output_column) == 2:
-            out_cols = "r.%s "%self.output_column[1]
-          if len(self.output_column) > 2:
-            out_cols = " %s"%",".join(["r.%s"%v for v in self.output_column[1:]])
+           if len(output_column ) == 1:
+                out_cols = "AVG(r.%s) "%output_column[0]
+           elif len(self.output_column) > 1:
+                out_cols = " %s"%",".join(["AVG(r.%s)"%v for v in output_column])
+
+        query = "SELECT %s,%s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id "%(var_cols, out_cols)
+        if restrict_to_values:
+          restrict_cols = " AND ".join(["v.%s = %s"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
+          if restrict_cols :
+            restrict_cols = "AND %s"%restrict_cols 
+          query = "%s  %s "%(query, restrict_cols)
+        if not raw_data:
+          if restrict_by_val:  
+            query = "%s  GROUP BY %s"%(query, var_cols.strip(", "))
+          else:  
+            query = "%s %s GROUP BY r.values_set_id"%(query, restrict_cols)
+
         
-        restrict_cols = " AND ".join(["v.%s = %s"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
-        if len(restrict_cols ) > 0:
-          restrict_cols = "AND %s"%restrict_cols 
-        if not raw_data :
-          query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s GROUP BY %s"%(var_cols, out_cols, restrict_cols, var_cols.strip(", "))
-        elif restrict_by_val :
-          query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s "%(var_cols, out_cols, restrict_cols)
-        else:  
-          query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s GROUP BY r.values_set_id"%(var_cols, out_cols, restrict_cols)
+#        if len(restrict_to_values) == 0:
+#            query = "SELECT %s,%s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(var_cols, out_cols)
+#          else:
+#            query = "SELECT %s,%s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id "%(var_cols, out_cols)
+#        else:          
+#          restrict_cols = " AND ".join(["v.%s = %s"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
+#          if len(restrict_cols ) > 0:
+#            restrict_cols = "AND %s"%restrict_cols 
+#          if not raw_data :
+#            query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s GROUP BY %s"%(var_cols, out_cols, restrict_cols, var_cols.strip(", "))
+#          elif restrict_by_val :
+#            query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s "%(var_cols, out_cols, restrict_cols)
+#          else:  
+#            query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s GROUP BY r.values_set_id"%(var_cols, out_cols, restrict_cols)
         return self.get_table_from_query(query)        
 
 
