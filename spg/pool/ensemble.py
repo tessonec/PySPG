@@ -162,6 +162,22 @@ class ResultsDBQuery(ParameterEnsemble):
        ParameterEnsemble.__init__(self, full_name)
        self.coalesce = []
     
+    def clean_dict(self,dict_to_clean):
+    # adds quotes to strings
+      
+       for i in dict_to_clean:  
+              try:
+                v = float( dict_to_clean[i] ) # if it is a number is does not get surrounded by quotes
+              except:
+                dict_to_clean[i ] = "'%s'"%dict_to_clean[i ][i]
+
+    
+    def get_table_from_query(self, query):
+        self.cursor.execute(query)
+        print query
+        return n.array( [ map(float,i) for i in self.cursor ] )
+        
+    
     def result_table(self, col_name, table_vars = None):
         if not table_vars:
           table_vars = list(self.variables)
@@ -172,10 +188,7 @@ class ResultsDBQuery(ParameterEnsemble):
                     table_vars.remove(iv)
                 except: pass
         query = "SELECT %s,AVG(r.%s) FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(",".join(["v.%s"%v for v in table_vars]), col_name)
-        
-        self.cursor.execute(query)
-        
-        return n.array( [ map(float,i) for i in self.cursor ] )
+        return self.get_table_from_query(query)        
 
     def full_result_table(self, table_vars = None):
         if not table_vars:
@@ -187,9 +200,7 @@ class ResultsDBQuery(ParameterEnsemble):
                 except: pass
         
         query = "SELECT %s,%s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(",".join(["v.%s"%v for v in table_vars]), ",".join(["r.%s"%v for v in self.output_column]))
-        self.cursor.execute(query)
-        
-        return n.array( [ map(float,i) for i in self.cursor ] )
+        return self.get_table_from_query(query)        
 
 
     def full_result_table_restricted(self, table_vars = None, restrict_to_values = {}):
@@ -221,15 +232,15 @@ class ResultsDBQuery(ParameterEnsemble):
 #        print restrict_cols
         query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s GROUP BY r.values_set_id"%(var_cols, out_cols, restrict_cols)
  #       print query
-        self.cursor.execute(query)
-        
-        return n.array( [ map(float,i) for i in self.cursor ] )
+        return self.get_table_from_query(query)        
 
 
-    def full_result_table_restricted_byval(self, table_vars = None, restrict_to_values = {}):
+    def full_result_table_restricted_byval(self, table_vars = None, restrict_to_values = {}, raw_data = False):
         if not table_vars:
           table_vars = self.variables[:]
-          
+
+        self.clean_dict(restrict_to_values)
+
         for iv in self.coalesce:
              try:
                 table_vars.remove(iv)
@@ -241,23 +252,26 @@ class ResultsDBQuery(ParameterEnsemble):
         if len(table_vars) > 1:
             var_cols = ", %s"%",".join(["v.%s"%v for v in table_vars])
         
-#        print var_cols
         out_cols = ""
-        if len(self.output_column) == 2:
-            out_cols = "r.%s, "%self.output_column[2]
-        if len(self.output_column) > 2:
+        if not raw_data :
+          if len(self.output_column) == 2:
+            out_cols = "AVG(r.%s) "%self.output_column[1]
+          if len(self.output_column) > 2:
+            out_cols = " %s"%",".join(["AVG(r.%s)"%v for v in self.output_column[1:]])
+        else:
+          if len(self.output_column) == 2:
+            out_cols = "r.%s "%self.output_column[1]
+          if len(self.output_column) > 2:
             out_cols = " %s"%",".join(["r.%s"%v for v in self.output_column[1:]])
-      #  print out_cols
-#        group_by = " , ".join(["v.%s "%(v) for v in restrict_to_values.keys()])
+        
         restrict_cols = " AND ".join(["v.%s = %s"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
         if len(restrict_cols ) > 0:
           restrict_cols = "AND %s"%restrict_cols 
-#        print restrict_cols
-        query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s GROUP BY %s"%(var_cols, out_cols, restrict_cols, var_cols.strip(", "))
-        print query
-        self.cursor.execute(query)
-        
-        return n.array( [ map(float,i) for i in self.cursor ] )
+        if not raw_data :
+          query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s GROUP BY %s"%(var_cols, out_cols, restrict_cols, var_cols.strip(", "))
+        else :
+          query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s "%(var_cols, out_cols, restrict_cols)
+        return self.get_table_from_query(query)        
 
 
 
@@ -278,11 +292,11 @@ class ResultsDBQuery(ParameterEnsemble):
           d = {}
           
           for j in range( len( self.coalesce ) ):
-              try:
+#              try:
                 v = float( i[j] ) # if it is a number is does not get surrounded by quotes
-                d[self.coalesce[j] ] = i[j]
-              except:
-                d[self.coalesce[j] ] = "'%s'"%i[j]
+#                d[self.coalesce[j] ] = i[j]
+#              except:
+#                d[self.coalesce[j] ] = "'%s'"%i[j]
           yield d
           
 
