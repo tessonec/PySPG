@@ -169,7 +169,7 @@ class ResultsDBQuery(ParameterEnsemble):
               try:
                 v = float( dict_to_clean[i] ) # if it is a number is does not get surrounded by quotes
               except:
-                dict_to_clean[i ] = "'%s'"%dict_to_clean[i ]
+                dict_to_clean[i ] = "'%s'"%( dict_to_clean[i ].replace("'","").replace('"',"") )
 
     
     def table_from_query(self, query):

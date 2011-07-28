@@ -69,10 +69,10 @@ if __name__ == "__main__":
               data = rq.result_table(restrict_to_values = i, raw_data = opts.raw_data, restrict_by_val = opts.by_val, output_column = [column] )
               if not opts.expand_dirs:
                  gen_s = generate_string(i, rq.coalesce )
-                 output_fname = "%s__%s__%s.dat"%(column,opts.prefix, gen_s )
+                 output_fname = "%s_%s-%s.dat"%(opts.prefix, column,gen_s )
               else:
                  gen_s = generate_string(i, rq.coalesce, joining_string = "/" )
-                 output_fname = "%s/%s__%s.dat"%(gen_s, column, opts.prefix  )
+                 output_fname = "%s/%s-%s.dat"%(gen_s, opts.prefix  , column)
               d,f = os.path.split(output_fname)
               if d != "" and not os.path.exists(d):
                 os.makedirs(d)
