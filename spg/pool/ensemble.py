@@ -172,7 +172,7 @@ class ResultsDBQuery(ParameterEnsemble):
                 dict_to_clean[i ] = "'%s'"%dict_to_clean[i ]
 
     
-    def get_table_from_query(self, query):
+    def table_from_query(self, query):
         print query
         self.cursor.execute(query)
         return n.array( [ map(float,i) for i in self.cursor ] )
@@ -237,7 +237,7 @@ class ResultsDBQuery(ParameterEnsemble):
           else:  
             query = "%s %s GROUP BY r.values_set_id"%(query, restrict_cols)
 
-        return self.get_table_from_query(query)        
+        return self.table_from_query(query)        
 #        if len(restrict_to_values) == 0:
 #            query = "SELECT %s,%s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(var_cols, out_cols)
 #          else:

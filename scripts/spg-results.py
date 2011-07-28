@@ -39,6 +39,9 @@ def parse_command_line():
      parser.add_option("--raw", action='store_true', dest="raw_data",
                         help = "whether to store all the data-points")
 
+     parser.add_option("--split-cols", action='store_true', dest="split_columns",
+                        help = "splits outputs column-wise")
+
 #     parser.add_option("--filter","--insert", type="string", action='store', dest="insert",
 #                        help = "Inserts the given iterator before the first variable. The second argument is usually enclosed between quotes")
 
@@ -53,27 +56,42 @@ if __name__ == "__main__":
        db_name = os.path.abspath( iarg )
     
        rq = ResultsDBQuery(db_name)
+       output_cols = rq.output_column[1:]
+       
        
        if opts.coalesce is not None:
           rq.coalesce = opts.coalesce.split(",")
        elif opts.table_depth is not None:
           rq.coalesce = rq.variables[:-opts.table_depth]
-#       print rq.coalesce
        for i in rq:
-    #      print i
-          data = rq.result_table(restrict_to_values = i, raw_data = opts.raw_data, restrict_by_val = opts.by_val)
+         if opts.split_columns:
+           for column in output_cols:
+              data = rq.result_table(restrict_to_values = i, raw_data = opts.raw_data, restrict_by_val = opts.by_val, output_column = [column] )
+              if not opts.expand_dirs:
+                 gen_s = generate_string(i, rq.coalesce )
+                 output_fname = "%s__%s__%s.dat"%(column,opts.prefix, gen_s )
+              else:
+                 gen_s = generate_string(i, rq.coalesce, joining_string = "/" )
+                 output_fname = "%s/%s__%s.dat"%(gen_s, column, opts.prefix  )
+              d,f = os.path.split(output_fname)
+              if d != "" and not os.path.exists(d):
+                os.makedirs(d)
+              n.savetxt( output_fname, data)
+         else:
+           data = rq.result_table(restrict_to_values = i, raw_data = opts.raw_data, restrict_by_val = opts.by_val)
           
-          if not opts.expand_dirs:
+           if not opts.expand_dirs:
               gen_s = generate_string(i, rq.coalesce )
               output_fname = "%s-%s.dat"%(opts.prefix, gen_s )
-          else:
+           else:
               gen_s = generate_string(i, rq.coalesce, joining_string = "/" )
               
               output_fname = "%s/%s.dat"%(gen_s, opts.prefix  )
-          d,f = os.path.split(output_fname)
-          if d != "" and not os.path.exists(d):
+           d,f = os.path.split(output_fname)
+           if d != "" and not os.path.exists(d):
               os.makedirs(d)
-          n.savetxt( output_fname, data)
+           n.savetxt( output_fname, data)
+             
   #  r1 = rq.result_table("ordprm_kuramoto")
   #  n.savetxt("ordprm_kuramoto",r1)
     
