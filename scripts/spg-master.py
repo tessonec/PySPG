@@ -37,10 +37,9 @@ if __name__ == "__main__":
 
     options, args = parser.parse_args()
     pp = ProcessPool()
-    pp.waiting_processes = options.populate
     pp.update_worker_info()
     pex = DataExchanger( pp.db_master, pp.cur_master )
-
+    pex.waiting_processes = options.populate
     while True:
        inline_msg("INF", "awaken @%s.........................."%time.ctime())
        
