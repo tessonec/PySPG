@@ -32,13 +32,13 @@ if __name__ == "__main__":
      while True:
         try:
           next_file = min ( os.listdir("%s/queued"%(VAR_PATH) ) )
+          pex = ParameterAtomExecutor(next_file)
+          pex.load()
           
         except ValueError:
           utils.newline_msg("WRN", "no newly pickled elements")
           time.sleep(options.sleep)
 
-        pex = ParameterAtomExecutor(next_file)
-        pex.load()
 #        utils.newline_msg("INF","%s -- %s -> %s "%(pex.path, pex.full_db_name, pex.values))
 #       utils.newline_msg("INF","<<<<< %s - %s - %s "%(pex.in_name , pex.current_run_id, pex.current_valuesset_id))
         pex.launch_process("%s.dat"%next_file)
