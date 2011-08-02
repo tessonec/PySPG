@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import optparse
 
 
 import spg.params as params
@@ -23,14 +24,18 @@ EXE_TIMEOUT = 60*10 # in seconds
 
 
 if __name__ == "__main__":
+     parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 ")
+     parser.add_option("--sleep", type="int", action='store', dest="sleep",
+                            default = 120 , help = "waiting time in case of a lack of new parameters" )
 
+     options, args = parser.parse_args()
      while True:
         try:
           next_file = min ( os.listdir("%s/queued"%(VAR_PATH) ) )
           
         except ValueError:
           utils.newline_msg("WRN", "no newly pickled elements")
-          time.sleep(EXE_TIMEOUT)
+          time.sleep(options.sleep)
 
         pex = ParameterAtomExecutor(next_file)
         pex.load()
