@@ -173,7 +173,7 @@ class ResultsDBQuery(ParameterEnsemble):
 
     
     def table_from_query(self, query):
-        print query
+#        print query
         self.cursor.execute(query)
         return n.array( [ map(float,i) for i in self.cursor ] )
         
@@ -237,7 +237,7 @@ class ResultsDBQuery(ParameterEnsemble):
           if restrict_by_val:  
             query = "%s  GROUP BY %s"%(query, var_cols.strip(", "))
           else:  
-            query = "%s %s GROUP BY r.values_set_id"%(query, restrict_cols)
+            query = "%s %s GROUP BY rs.values_set_id"%(query, restrict_cols)
 
         return self.table_from_query(query)        
 #        if len(restrict_to_values) == 0:
