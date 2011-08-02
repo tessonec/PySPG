@@ -225,7 +225,9 @@ class ResultsDBQuery(ParameterEnsemble):
           elif len(output_column) > 1:
             out_cols = " %s"%",".join(["r.%s"%v for v in output_column])
 #        print out_cols
-        query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id "%(var_cols, out_cols)
+          
+#        query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id "%(var_cols, out_cols)
+        query = "SELECT %s %s FROM results AS r, values_set AS v , run_status AS rs WHERE rs.values_set_id = v.id AND rs.id = r.values_set_id "%(var_cols, out_cols)
         if restrict_to_values:
           restrict_cols = " AND ".join(["v.%s = %s"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
           if restrict_cols :
