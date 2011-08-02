@@ -38,15 +38,15 @@ if __name__ == "__main__":
         except ValueError:
           utils.newline_msg("WRN", "no newly pickled elements")
           time.sleep(options.sleep)
-
+          continue
         except OSError:
           utils.newline_msg("WRN", "file already taken")
           time.sleep(options.sleep)
-
+          continue
         except IOError:
           utils.newline_msg("WRN", "file already taken")
           time.sleep(options.sleep)
-
+          continue
 #        utils.newline_msg("INF","%s -- %s -> %s "%(pex.path, pex.full_db_name, pex.values))
 #       utils.newline_msg("INF","<<<<< %s - %s - %s "%(pex.in_name , pex.current_run_id, pex.current_valuesset_id))
         pex.launch_process("%s.dat"%next_file)
