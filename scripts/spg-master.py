@@ -19,14 +19,13 @@ from spg.pool import ProcessPool, DataExchanger
 from spg.utils import newline_msg, inline_msg
 
 
-pp = ProcessPool()
-pp.update_worker_info()
-pex = DataExchanger( pp.db_master, pp.cur_master )
 
 if __name__ == "__main__":
     parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 ")
     parser.add_option("--sleep", type="int", action='store', dest="sleep",
                             default = 120 , help = "waiting time before refresh" )
+    parser.add_option("--populate", type="int", action='store', dest="populate",
+                            default = 50 , help = "how many processes to populate" )
     parser.add_option("--skip-queue", action='store_true', dest="skip_queue",
                             help = "do not process queues" )
     parser.add_option("--skip-harvest", action='store_true', dest="skip_harvest",
@@ -37,6 +36,10 @@ if __name__ == "__main__":
                             help = "do not sync dbs" )
 
     options, args = parser.parse_args()
+    pp = ProcessPool()
+    pp.waiting_processes = options.populate
+    pp.update_worker_info()
+    pex = DataExchanger( pp.db_master, pp.cur_master )
 
     while True:
        inline_msg("INF", "awaken @%s.........................."%time.ctime())
