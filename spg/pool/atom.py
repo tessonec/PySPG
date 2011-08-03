@@ -93,7 +93,7 @@ class ParameterAtom:
 #        utils.newline_msg("PRT","{%s} %s -- %s,%s -- %s"%( self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output) )
 #        print self.return_code 
         if self.return_code == 0:
-             all_d = [self.current_run_id]
+             all_d = [self.current_valuesset_id]
              all_d.extend( self.output )
              cc = 'INSERT INTO results (%s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join(["'%s'"%str(i) for i in all_d]) )
 #             print cc, self.current_run_id 

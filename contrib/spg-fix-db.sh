@@ -1,7 +1,6 @@
 #!/bin/bash
 
 
-
 echo "begin; " > cmd.sql
 echo "create temp table temp_table as select * from results; " >> cmd.sql
 echo "drop table results; " >> cmd.sql

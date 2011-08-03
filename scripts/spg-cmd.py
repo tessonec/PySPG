@@ -196,7 +196,7 @@ def get_stats(cmd, name, params):
            print "queue: '%s' -- running jobs: %d -- maximum: %s"%(q, len(pp.queues[q].processes), pp.queues[q].jobs)
    # "(id INTEGER PRIMARY KEY, name CHAR(64), max_jobs INTEGER, status CHAR(1))")
    elif cmd == "db":
-       res = pp.cur_master.execute("SELECT full_name, status, total_combinations, done_combinations, "
+       res = pp.cur_master.execute("SELECT full_name, status, total_values_set, done_combinations, "
                         "running_combinations, error_combinations FROM dbs")
 #       print res
        for full_name, status, total, done, running, error in res:
