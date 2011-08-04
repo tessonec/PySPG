@@ -173,7 +173,7 @@ class ResultsDBQuery(ParameterEnsemble):
 
     
     def table_from_query(self, query):
-#        print query
+     #   print query
         self.cursor.execute(query)
         return n.array( [ map(float,i) for i in self.cursor ] )
         
@@ -201,13 +201,13 @@ class ResultsDBQuery(ParameterEnsemble):
         for iv in self.coalesce:
           if iv in table_vars:
             table_vars.remove(iv)
-        
+
         var_cols = ""
         if len(table_vars) == 1:
             var_cols = "v.%s, "%table_vars[0]
         if len(table_vars) > 1:
-            var_cols = ", %s"%",".join(["v.%s"%v for v in table_vars])
-        
+            var_cols = "%s, "%",".join(["v.%s"%v for v in table_vars])
+      #  print table_vars, var_cols        
         if not output_column:
           output_column = self.output_column[:]
           if "values_set_id" in output_column: 
@@ -226,8 +226,10 @@ class ResultsDBQuery(ParameterEnsemble):
             out_cols = " %s"%",".join(["r.%s"%v for v in output_column])
 #        print out_cols
           
-#        query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id "%(var_cols, out_cols)
-        query = "SELECT %s %s FROM results AS r, values_set AS v , run_status AS rs WHERE rs.values_set_id = v.id AND rs.id = r.values_set_id "%(var_cols, out_cols)
+        query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id "%(var_cols, out_cols)
+        #print query
+        #:::~ This command was needed only because of a mistake in the id stores in the results table
+ #       query = "SELECT %s %s FROM results AS r, values_set AS v , run_status AS rs WHERE rs.values_set_id = v.id AND rs.id = r.values_set_id "%(var_cols, out_cols)
         if restrict_to_values:
           restrict_cols = " AND ".join(["v.%s = %s"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
           if restrict_cols :
