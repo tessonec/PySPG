@@ -1,10 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/python2.6
 
+import cmd
 
-#import spg.params as params
 import spg.utils as utils
 from spg.db import DBBuilder
-
+from  spg.params import VAR_PATH
 
 import sqlite3 as sql
 import sys, optparse
@@ -12,124 +12,126 @@ import os, os.path
 
 
 
-
-
-def init_db(i_arg,params,options):
-      i_arg, db_name = translate_name(i_arg)
-      parser = DBBuilder( stream = open(i_arg), db_name=db_name , timeout = options.timeout )
-      repeat = 1
-      if 'repeat' in params:
-         repeat = params['repeat']
-      sql_retries = 1
-      if 'sql_retries' in params:
-         sql_retries = params['sql_retries']
-      if 'executable' in params:
-          parser.command = repeat = params['executable']
-      parser.init_db(retry = sql_retries)
-      parser.fill_status(repeat = int(repeat))
-
-
-def clean_all_db(i_arg,params,options):
-          i_arg, db_name = translate_name(i_arg)
-          parser = DBBuilder( stream = open(i_arg), db_name=db_name , timeout = options.timeout )
-
-          parser.clean_all_status()
-
-
-def clean_db(i_arg,params,options):
-      i_arg, db_name = translate_name(i_arg)
-      parser = DBBuilder( stream = open(i_arg), db_name=db_name , timeout = options.timeout )
-
-      parser.clean_status()
-
-
-
-def remove_db(i_arg,params,parser):
-    i_arg, db_name = translate_name(i_arg)
-    connection = sql.connect("%s/spg_pool.sqlite"%utils.VAR_PATH)
-    cursor = connection.cursor()
-    cursor.execute( "DELETE FROM dbs WHERE full_name = ?",(os.path.realpath(db_name),) )
-
-    connection.commit()
-
 def translate_name(st):
+    """translates the parameters filename and the  database name 
+       into the other and viceversa (returns a duple: param, db)"""
     full_name = st
     if not os.path.exists(full_name):
-       full_name = os.path.expanduser( "~/%s"%st )
+        full_name = os.path.expanduser( "~/%s"%st )
     if not os.path.exists(full_name):
         utils.newline_msg("ERR","database '%s' does not exist"%st)
         sys.exit(2)
-  #  print ">", full_name
+    #  print ">", full_name
     path, st = os.path.split(full_name)
     if path:
-      os.chdir(path)
+        os.chdir(path)
     if ".sqlite" in st:
-      par_name = st.replace("results","").replace(".sqlite","")
-      par_name = "parameters%s.dat"%par_name
-      return par_name, st
+        par_name = st.replace("results","").replace(".sqlite","")
+        par_name = "parameters%s.dat"%par_name
+        return par_name, st
     else:
-      db_name = st.replace("parameters","").replace(".dat","")
-      db_name = "results%s.sqlite"%db_name
-      return st,db_name
+        db_name = st.replace("parameters","").replace(".dat","")
+        db_name = "results%s.sqlite"%db_name
+        return st,db_name
         
 
 
-def get_parameters(arg):
-    ret = {}
+
+
+class DBCommandParser(cmd.Cmd):
+    """DB command handler"""
+   
+ 
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+        self.prompt = "( spg-db ) "
+        self.possible_keys = ['weight', 'repeat', 'executable' , 'sql_retries']
+        self.values = {'repeat': 1, 'sql_retries': 1, 'timeout' : 60, 'weight': 1}
+
+        self.doc_header = "default values: %s"%(self.values )
+        
+    def do_init(self, c):
+        """init PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
+        Generates a new database out of a single database"""
+        c = c.split()
+        i_arg = c[0]
+        if len(c) >1: self.do_set( ":".join( c[1:] ) )
+
+        i_arg, db_name = translate_name(i_arg)
+        parser = DBBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
+        if 'executable' in self.values.keys():
+            parser.command = self.values['executable']
+        parser.init_db(retry = self.values['sql_retries'])
+        parser.fill_status(repeat = int(self.values['repeat']) )
+        
     
-    for i in arg.split(":"):
-        [k,v] = i.split("=")
-        ret[k] = v
+    def do_clean(self, c):
+        """clean PARAMETERS_NAME|DB_NAME
+        cleans the database. It accepts several of them"""
+        for i_arg in c.split():
+            i_arg, db_name = translate_name(i_arg)
+            parser = DBBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
+            parser.clean_status()
 
-    return ret
 
-
-
-dict_functions = { "init":init_db, "clean": clean_db, "clean-all": clean_all_db , "remove": remove_db}
-
-def execute_command( arguments , options):
-#    if len( arguments ) <3 :
-#        return
-    params = {}
+    def do_clean_all(self, c):
+        """clean_all PARAMETERS_NAME|DB_NAME
+        cleans completely the database. It accepts several of them"""
+        for i_arg in c.split():
+            i_arg, db_name = translate_name(i_arg)
+            parser = DBBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
+            parser.clean_all_status()
     
-    full_command = arguments[0]
+    def do_add(self, c):
+        """add PARAMETERS_NAME|DB_NAME
+        adds the database to the registered ones"""
+#        for i_arg in c.split():
 
-    i_arg, db_name = translate_name( arguments[1] ) 
-    if len(arguments) > 2 :
-        params = get_parameters( arguments[2] )
+    
+    def do_remove(self, c):
+        """remove PARAMETERS_NAME|DB_NAME
+        removes the database from the registered ones. It accepts many dbs"""
+        for i_arg in c.split():
+            i_arg, db_name = translate_name(i_arg)
+            connection = sql.connect("%s/spg_pool.sqlite"%VAR_PATH)
+            cursor = connection.cursor()
+            cursor.execute( "DELETE FROM dbs WHERE full_name = ?",(os.path.realpath(db_name),) )
+
+            connection.commit()
+    
+    def do_set(self, c):
+        """sets a VAR1=VALUE1[:VAR2=VALUE2]
+        removes the database to the registered ones"""
+        ret = utils.parse_to_dict(c, allowed_keys=self.possible_keys)
+        for k in ret:
+            self.values[k] = ret[k]
+            print "%s = %s" %(k,ret[k])
+        self.doc_header = "default values: %s"%(self.values )
+                
+    def default(self, line):
+        return True        
+    
+    def do_EOF(self, line):
+        return True
+
+#    def do_EOF(self, line):
+#        return True
+    
+
+
+
+if __name__ == '__main__':
+    cmd_line = DBCommandParser()
+    if len(sys.argv) == 1:
+        cmd_line.cmdloop()
     else:
-        params = {}
-
-    f = dict_functions[ full_command ] 
-
-#      print db_name
-
-    f(i_arg, params, options)
-
-
-
-
-
-
-if __name__ == "__main__":
-  
-
-
-    
-    parser = optparse.OptionParser(usage = "usage: %prog [options] CMD VERB NAME {params}\n"
-                                      "commands NAME {params}: \n"
-                                      "   init PARAMETERS_NAME|DB_NAME \n"
-                                      "        params :: executable=EXE_NAME , repeat=REPEAT, sql_retries=1\n"
-                                      "   clean-all PARAMETERS_NAME|DB_NAME \n"
-                                      "   clean PARAMETERS_NAME|DB_NAME \n"
-                                      "   remove PARAMETERS_NAME|DB_NAME \n"
-                                  )
-    
-    parser.add_option("--timeout", type="int", action='store', dest="timeout",
-                            default = 5 , help = "timeout for database connection" )
-    
-    options, args = parser.parse_args()
-
-    execute_command(args, options)
-
+        cmd_line.onecmd(" ".join(sys.argv[1:]))
+        
+#       "usage: %prog [options] CMD VERB NAME {params}\n"
+#       "commands NAME {params}: \n"
+#       "   init PARAMETERS_NAME|DB_NAME \n"
+#       "        params :: executable=EXE_NAME , repeat=REPEAT, sql_retries=1\n"
+#       "   clean-all PARAMETERS_NAME|DB_NAME \n"
+#       "   clean PARAMETERS_NAME|DB_NAME \n"
+#       "   remove PARAMETERS_NAME|DB_NAME \n"
 
