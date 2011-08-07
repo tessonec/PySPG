@@ -1,10 +1,14 @@
+import os.path
 
-version_number = '2.9.8'
-release_date = 'Jul 11 2011'
+version_number = '2.9.9'
+release_date = '09 Ago 2011'
 
-from iterator import *
-from parser   import *
+from base.iterator import *
+from base.parser   import *
 
-from params import ROOT_DIR, CONFIG_DIR, VAR_PATH, BINARY_PATH, TIMEOUT
+ROOT_DIR = os.path.expanduser("~/opt")
+CONFIG_DIR = os.path.expanduser(ROOT_DIR+"/etc")
+VAR_PATH = os.path.abspath(ROOT_DIR+"/var/spg")
+BINARY_PATH = os.path.abspath(ROOT_DIR+"/bin")
 
-
+TIMEOUT = 120

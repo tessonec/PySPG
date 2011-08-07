@@ -9,8 +9,8 @@ Created on Tue Jun 28 08:10:30 2011
 
 
 from spg import utils
-from ensemble import WeightedParameterEnsemble
-from atom import ParameterAtom
+from parameter.ensemble import WeightedParameterEnsemble
+from parameter.atom import ParameterAtom
 
 
 import os.path
@@ -23,7 +23,7 @@ from spg import VAR_PATH, TIMEOUT
 
 
 class DataExchanger:
-    waiting_processes = 100
+#    waiting_processes = 100
     
     def __init__(self, db_master, cur_master):
         self.db_master = db_master

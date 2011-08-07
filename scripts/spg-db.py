@@ -3,8 +3,8 @@
 import cmd
 
 import spg.utils as utils
-from spg.db import DBBuilder
-from  spg.params import VAR_PATH
+from spg.parameter.db import DBBuilder
+from spg import VAR_PATH
 
 import sqlite3 as sql
 import sys, optparse

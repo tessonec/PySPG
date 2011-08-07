@@ -1,16 +1,13 @@
 #!/usr/bin/python
 
-import optparse
 
-
-import spg.params as params
+from spg.parameter import ParameterAtomExecutor
 import spg.utils as utils
-from spg.pool import ParameterAtomExecutor
 from spg import VAR_PATH 
 
 
 
-
+import optparse
 import os, time
     
 EXE_TIMEOUT = 60*10 # in seconds

@@ -6,8 +6,8 @@ Created on Mon Jul 11 11:37:27 2011
 @author: Claudio Tessone - <tessonec@ethz.ch>
 """
 
-from spg.pool import ResultsDBQuery
-from spg.params import generate_string
+from spg.parameter import ResultsDBQuery
+from spg.utils import generate_string
 
 import os.path, os
 

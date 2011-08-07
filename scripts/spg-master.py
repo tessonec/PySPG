@@ -5,7 +5,13 @@ Created on Wed Jun  8 16:20:26 2011
 
 @author: -
 """
-import optparse
+
+
+
+from spg.pool import ProcessPool, DataExchanger
+from spg.utils import newline_msg, inline_msg
+
+
 # logica del programa
 #   leer la cantidad de procesos a ejecutar de la DB central
 #   si este numero es menor (para alguna cola) que el que esta corriendo. lanzar los que faltan
@@ -14,9 +20,7 @@ import optparse
   #print cmd
   
 import time, sys
-
-from spg.pool import ProcessPool, DataExchanger
-from spg.utils import newline_msg, inline_msg
+import optparse
 
 
 

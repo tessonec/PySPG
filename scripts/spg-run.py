@@ -1,14 +1,13 @@
 #!/usr/bin/python
 
 
-from spg.pool import ParameterExecutor
-import spg.params as params
+from spg.parameter import ParameterExecutor
+from spg import BINARY_PATH
 
 
 import os, os.path
 import optparse
 
-BINARY_PATH = os.path.abspath(params.CONFIG_DIR+"/../bin")
 
 if __name__ == "__main__":
 
