@@ -173,7 +173,7 @@ class ResultsDBQuery(ParameterEnsemble):
 
     
     def table_from_query(self, query):
-     #   print query
+    #    print query
         self.cursor.execute(query)
         return n.array( [ map(float,i) for i in self.cursor ] )
         
@@ -207,7 +207,7 @@ class ResultsDBQuery(ParameterEnsemble):
             var_cols = "v.%s, "%table_vars[0]
         if len(table_vars) > 1:
             var_cols = "%s, "%",".join(["v.%s"%v for v in table_vars])
-      #  print table_vars, var_cols        
+     #   print table_vars, var_cols        
         if not output_column:
           output_column = self.output_column[:]
           if "values_set_id" in output_column: 
@@ -235,9 +235,10 @@ class ResultsDBQuery(ParameterEnsemble):
           if restrict_cols :
             restrict_cols = "AND %s"%restrict_cols 
           query = "%s  %s "%(query, restrict_cols)
-        if not raw_data:
+        if not raw_data :
           if restrict_by_val:  
-            query = "%s  GROUP BY %s"%(query, var_cols.strip(", "))
+             if var_cols:
+              query = "%s  GROUP BY %s"%(query, var_cols.strip(", "))
           else:  
             query = "%s %s GROUP BY rs.values_set_id"%(query, restrict_cols)
 
