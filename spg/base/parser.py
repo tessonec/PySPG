@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""Parses the parameters.dat into something meaningful"""
+
 ###########################################################################
 # :::~ Copyright (C) 2003-2011 by Claudio J. Tessone <tessonec@ethz.ch> 
 # 
@@ -30,7 +32,7 @@ class Execute(iterator.IterConstant):
     """ name: the label to be assigned to this iterator
       data: the set of values can be assigned to this iterator
     """
-    iterator.IterConstant__init__("",)
+    iterator.IterConstant.__init__("",)
 
     self.command = cl
     
@@ -147,14 +149,14 @@ class MultIteratorParserExt(MultIteratorParser):
 
 
 
-
-if __name__ == '__main__':
-    pp = MultIteratorParser()
-    pp.fetch(['+D 0. 10 1',' *r 2 16 2','**e 2 32 2', ':HELLO', '.bar 6 4 3','# this is a comment'])
-#    pp.fetch(['+D 0. 10 1',' *r 2 16 8'])
-    print pp.items()
-    print pp.output_conf()
-#    for i in pp:
-#        print i
+#
+#if __name__ == '__main__':
+#    pp = MultIteratorParser()
+#    pp.fetch(['+D 0. 10 1',' *r 2 16 2','**e 2 32 2', ':HELLO', '.bar 6 4 3','# this is a comment'])
+##    pp.fetch(['+D 0. 10 1',' *r 2 16 8'])
+#    print pp.items()
+#    print pp.output_conf()
+##    for i in pp:
+##        print i
 
 

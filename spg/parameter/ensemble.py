@@ -1,4 +1,5 @@
 from spg import utils
+from spg import BINARY_PATH, VAR_PATH, TIMEOUT
 
 
 
@@ -10,7 +11,6 @@ import numpy as n
 import math as m
 
 
-from spg import BINARY_PATH, VAR_PATH, TIMEOUT
 #TIMEOUT = 120
 
 
@@ -114,14 +114,14 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
     def launch_process(self):
         pwd = os.path.abspath(".")
         if self.directory_vars or self.create_trees():
-            dir = utils.replace_list(self.directory_vars, self.values, separator = "/")
+            dir = utils.generate_string(self.values,self.directory_vars, joining_string = "/")
             if not os.path.exists(dir): os.makedirs(dir)
             os.chdir(dir)
         configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
         fconf = open(configuration_filename,"w")
         
         for k in self.values.keys():
-            print >> fconf, k, utils.replace_string(self.values[k], self.values) 
+            print >> fconf, k, utils.replace_in_string(self.values[k], self.values) 
         fconf.close()
         
         cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )

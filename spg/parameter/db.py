@@ -3,23 +3,26 @@
 Created on Mon Jul 11 11:23:41 2011
 
 @author: Claudio Tessone <tessonec@ethz.ch>
+
+Implementation of the paramaters.dat in the form of a database
 """
 
 import utils
-import params
-import parser 
-import iterator
+import base.checks as checks
+from base import MultIteratorParser   
+from base.iterator import *
 
 import sys
 import sqlite3 as sql
 
-class DBBuilder(parser.MultIteratorParser):
+class DBBuilder(MultIteratorParser):
+    """Generates a DB file with the representation of the parameters"""
     def __init__(self, stream=None, db_name = "results.sqlite", timeout = 5):
-        parser.MultIteratorParser.__init__(self, stream)
-        if not params.check_consistency(self.command, self):
+        MultIteratorParser.__init__(self, stream)
+        if not checks.consistency(self.command, self):
             utils.newline_msg("ERR","data not consistent.")
             sys.exit(1)
-        self.stdout_contents = params.contents_in_output(self.command)
+        self.stdout_contents = checks.contents_in_output(self.command)
                 
         self.connection =  sql.connect(db_name, timeout = timeout)
         self.cursor = self.connection.cursor()
@@ -49,7 +52,7 @@ class DBBuilder(parser.MultIteratorParser):
         n_items = self.cursor.fetchone()
         if n_items[0] == 0: # table has not been filled
             for i in self.data:
-                varies = 1 if (i.__class__ != iterator.IterConstant) else 0
+                varies = 1 if (i.__class__ != IterConstant) else 0
                 self.cursor.execute( "INSERT INTO entities (name, varies) VALUES (?,?)",(i.name,  varies) )
         else:
             self.cursor.execute( "SELECT name FROM entities ")
@@ -78,7 +81,7 @@ class DBBuilder(parser.MultIteratorParser):
             commited = True
               
         if not commited:
-              utils.newline_msg("ERR", "database didn't unlock, exiting")
+            utils.newline_msg("ERR", "database didn't unlock, exiting")
           
         self.number_of_columns = 0
         for ic, iv in self.stdout_contents:
@@ -99,9 +102,9 @@ class DBBuilder(parser.MultIteratorParser):
     def fill_status(self, repeat = 1):
 
 
-       for i_repeat in range(repeat):
+        for i_repeat in range(repeat):
 
-           for i_id in self.possible_varying_ids:
+            for i_id in self.possible_varying_ids:
                 #:::~ status can be either 
                 #:::~    'N': not run
                 #:::~    'R': running
@@ -109,16 +112,18 @@ class DBBuilder(parser.MultIteratorParser):
                 #:::~    'E': run but with non-zero error code
                 self.cursor.execute( "INSERT INTO run_status ( values_set_id, status ) VALUES (%s,'N')"%(i_id) )
 
-       self.connection.commit()
+        self.connection.commit()
 
 
     def clean_status(self):
-       self.cursor.execute('UPDATE run_status SET status = "N" WHERE status ="R"')
-       self.connection.commit()
+        """Sets the run_status to None of all the run processes"""
+        self.cursor.execute('UPDATE run_status SET status = "N" WHERE status ="R"')
+        self.connection.commit()
 
     def clean_all_status(self):
-       self.cursor.execute('UPDATE run_status SET status = "N" ')
-       self.connection.commit()
+        """Sets the run_status to None of all the processes"""
+        self.cursor.execute('UPDATE run_status SET status = "N" ')
+        self.connection.commit()
 
 
 #===============================================================================

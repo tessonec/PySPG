@@ -1,129 +1,128 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import sys, re
+import sys
 import os.path
 import copy
-from math import *
+#from math import *
 
 
-import utils
-
-ROOT_DIR = os.path.expanduser("~/opt")
-CONFIG_DIR = os.path.expanduser(ROOT_DIR+"/etc")
-VAR_PATH = os.path.abspath(ROOT_DIR+"/var/spg")
-BINARY_PATH = os.path.abspath(ROOT_DIR+"/bin")
-
-TIMEOUT = 120
+from spg import utils
+from spg import CONFIG_DIR
 
 
-def parameter_guess(string):
-    #fp = string # os.path.abspath(string)
-    regexp = re.compile(r'([a-zA-Z]\w+)-([-+]?\d*\.?\d*){1,1}([Ee][+-]?\d+)?')
-    # regular expression explanation
-    # r'([a-zA-Z]\w+)' matches variable name: 
-    #     :::~ begins with a letter, any combination of letters, numbers and undezrscores
-    # r'-' matches separator: minus sign
-    # r'([-+]?\d*\.?\d*){1,1}'
-    #     :::~ decimal part
-    # r'([Ee][+-]?\d+)?'
-    #     :::~ exponent
-    ret = {}
-    for var, dec, exp in regexp.findall(string):
-        if "" not in [var,dec]:
+#
+#
+#def parameters_from_string(string):
+#    #fp = string # os.path.abspath(string)
+#    regexp = re.compile(r'([a-zA-Z]\w+)-([-+]?\d*\.?\d*){1,1}([Ee][+-]?\d+)?')
+#    # regular expression explanation
+#    # r'([a-zA-Z]\w+)' matches variable name: 
+#    #     :::~ begins with a letter, any combination of letters, numbers and undezrscores
+#    # r'-' matches separator: minus sign
+#    # r'([-+]?\d*\.?\d*){1,1}'
+#    #     :::~ decimal part
+#    # r'([Ee][+-]?\d+)?'
+#    #     :::~ exponent
+#    ret = {}
+#    for var, dec, exp in regexp.findall(string):
+#        if "" not in [var,dec]:
+#            try:
+#                ret[var] = int(dec+exp)
+#            except:
+#                ret[var] = float(dec+exp)
+#    return ret
+
+
+#def string_evaluator(string,val_dict):
+#    #fp = string # os.path.abspath(string)
+#    rx = re.compile(r'\{([a-zA-Z]\w*)\}')
+#    # regular expression explanation
+#    # r'\{(\w)\}' matches variable name: 
+#
+#    #vars = set()
+#    st_out = string
+#    for i_var in rx.findall(string):
+#        #vars.add(i)
+#        st_out = re.sub( r'\{%s\}'%i_var, str(val_dict[i_var]), st_out )
+#        #print st_out
+#    return eval(st_out)
+#
+#def get_variables(string):
+#    #fp = string # os.path.abspath(string)
+#    rx = re.compile(r'\{([a-zA-Z]\w*)\}')
+#    # regular expression explanation
+#    # r'\{(\w)\}' matches variable name: 
+#
+#    return rx.findall(string)
+
+
+#def generate_string(values, var_list, separator = "-", joining_string = "_"):
+#    """
+#      joining_string::: is the string between consecutive key,value pairs
+#      separator     ::: is the string separating the key, value pair
+#    """
+#    of = joining_string.join([ "%s%s%s"%(k,separator,values[k].replace("'","").replace('"',"")) for k in var_list ] ) 
+#
+#    return of
+
+
+
+
+
+def import_backends(infile):
+
+    """ Imports the backends used in a base.ct file """  
+    output = []
+    #  ls_output = []
+    for line in open(infile):
+        if line.strip()[0] == "@":
+            vec = line.strip()[1:].split()
             try:
-                ret[var] = int(dec+exp)
+                backend = vec[0]
+                try:
+                    var_name = vec[1]
+                except:
+                    var_name = ""
             except:
-                ret[var] = float(dec+exp)
+                utils.newline_msg("ERR", "while unfolding line: '%s'" % (line))
+                sys.exit()
+            new_stuff = [
+                    i.replace("%ARG%", var_name).replace("%ARG1%", var_name)
+                    for i in open("%s/ctt/%s.be" % (CONFIG_DIR , backend), "r")
+                  ]
+            output.extend (new_stuff)
+        else:
+            output.append(line)
+    ret = {}
+    for l in output:
+        l = [ i.strip() for i in l.split(":")]
+        family = l[0]
+        if family == "flag":
+            var_type = None
+            var_name = l[1]
+            default = False
+        else:
+            var_type = l[1]
+            var_name = l[2]
+            default = l[3]
+            if family == "choice":
+                default = [ i.strip('"') for i in  default.split(",") ]
+        ret[ var_name ] = (family, var_type, default)
+    
     return ret
 
 
-def string_evaluator(string,val_dict):
-    #fp = string # os.path.abspath(string)
-    rx = re.compile(r'\{([a-zA-Z]\w*)\}')
-    # regular expression explanation
-    # r'\{(\w)\}' matches variable name: 
 
-    #vars = set()
-    st_out = string
-    for i_var in rx.findall(string):
-        #vars.add(i)
-        st_out = re.sub( r'\{%s\}'%i_var, str(val_dict[i_var]), st_out )
-        #print st_out
-    return eval(st_out)
-
-def get_variables(string):
-    #fp = string # os.path.abspath(string)
-    rx = re.compile(r'\{([a-zA-Z]\w*)\}')
-    # regular expression explanation
-    # r'\{(\w)\}' matches variable name: 
-
-    return rx.findall(string)
-
-
-def generate_string(values, var_list, separator = "-", joining_string = "_"):
-    """
-      joining_string::: is the string between consecutive key,value pairs
-      separator     ::: is the string separating the key, value pair
-    """
-    of = joining_string.join([ "%s%s%s"%(k,separator,values[k].replace("'","").replace('"',"")) for k in var_list ] ) 
-
-    return of
-
-
-
-
-
-def backendize(infile):
-  output = []
-#  ls_output = []
-  for line in open(infile):
-    if line.strip()[0] == "@":
-        vec = line.strip()[1:].split()
-        try:
-            backend = vec[0]
-            try:
-                var_name = vec[1]
-            except:
-                var_name = ""
-        except:
-            newline_msg("ERR", "while unfolding line: '%s'"%(line) )
-            sys.exit()
-        new_stuff = [
-                i.replace("%ARG%",var_name).replace("%ARG1%",var_name)
-                for i in open( "%s/ctt/%s.be"%(CONFIG_DIR ,backend), "r" )
-              ]
-        output.extend (new_stuff)
-    else:
-        output.append(line)
-  ret = {}
-  for l in output:
-      l = [ i.strip() for i in l.split(":")]
-      family = l[0]
-      if family == "flag":
-          var_type = None
-          var_name = l[1]
-          default = False
-      else:
-          var_type = l[1]
-          var_name = l[2]
-          default = l[3]
-          if family == "choice":
-              default = [ i.strip('"') for i in  default.split(",") ]
-      ret[ var_name ] = ( family, var_type, default )
-
-  return ret
-
-
-
-def check_consistency(exec_file, miparser):
+def consistency(exec_file, miparser):
+  """ Checks the consistency of a parameters.dat file """  
   consistent_param=True
   
   if exec_file[:4] == "ctx-":  exec_file = exec_file[4:]
 
   exec_file, ext = os.path.splitext(exec_file)
 
-  possible_lines = backendize("%s/spg-conf/%s.ct"%(CONFIG_DIR,exec_file))
+  possible_lines = import_backends("%s/spg-conf/%s.ct"%(CONFIG_DIR,exec_file))
 
   assert len(set(miparser.items() ) - set( possible_lines.keys() ) ) == 0 , "not all the variables are recognised: offending vars: %s"%(set( miparser.items() ) -set( possible_lines.keys() )  )
 

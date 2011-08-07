@@ -1,4 +1,5 @@
 from spg import utils
+from spg import BINARY_PATH, VAR_PATH, TIMEOUT
 
 
 
@@ -7,7 +8,6 @@ import pickle
 from subprocess import Popen, PIPE
 import sqlite3 as sql
 
-from spg import BINARY_PATH, VAR_PATH, TIMEOUT
 
 
 ################################################################################
@@ -149,7 +149,7 @@ class ParameterAtomExecutor(ParameterAtom):
         os.chdir(self.path)
 
         if self.create_tree():
-            dir_n = utils.replace_list(self.entities, self.values, separator = "/")
+            dir_n = utils.generate_string(self.values, self.entities, joining_string = "/")
             if not os.path.exists(dir_n): 
                 os.makedirs(dir_n)
             os.chdir(dir_n)
@@ -157,7 +157,7 @@ class ParameterAtomExecutor(ParameterAtom):
   #      configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
         fconf = open(configuration_filename,"w")
         for k in self.values.keys():
-            print >> fconf, k, utils.replace_string(self.values[k], self.values) 
+            print >> fconf, k, utils.replace_in_string(self.values[k], self.values) 
         fconf.close()
 
         cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
