@@ -8,9 +8,10 @@ Implementation of the paramaters.dat in the form of a database
 """
 
 import utils
-import base.checks as checks
-from base import MultIteratorParser   
-from base.iterator import *
+import utils.checks
+
+from base import MultIteratorParser, IterConstant
+#from base.iterator import *
 
 import sys
 import sqlite3 as sql
@@ -19,10 +20,10 @@ class DBBuilder(MultIteratorParser):
     """Generates a DB file with the representation of the parameters"""
     def __init__(self, stream=None, db_name = "results.sqlite", timeout = 5):
         MultIteratorParser.__init__(self, stream)
-        if not checks.consistency(self.command, self):
+        if not utils.checks.consistency(self.command, self):
             utils.newline_msg("ERR","data not consistent.")
             sys.exit(1)
-        self.stdout_contents = checks.contents_in_output(self.command)
+        self.stdout_contents = utils.checks.contents_in_output(self.command)
                 
         self.connection =  sql.connect(db_name, timeout = timeout)
         self.cursor = self.connection.cursor()
