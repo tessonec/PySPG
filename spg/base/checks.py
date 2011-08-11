@@ -10,8 +10,6 @@ import copy
 from spg import utils
 from spg import CONFIG_DIR
 
-
-#
 #
 #def parameters_from_string(string):
 #    #fp = string # os.path.abspath(string)

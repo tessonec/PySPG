@@ -7,10 +7,10 @@ Created on Mon Jul 11 11:23:41 2011
 Implementation of the paramaters.dat in the form of a database
 """
 
-import utils
-import utils.checks
+import spg.utils as utils
+import spg.utils.check_params as check_params
 
-from base import MultIteratorParser, IterConstant
+from spg.base import MultIteratorParser, IterConstant
 #from base.iterator import *
 
 import sys
@@ -20,10 +20,10 @@ class DBBuilder(MultIteratorParser):
     """Generates a DB file with the representation of the parameters"""
     def __init__(self, stream=None, db_name = "results.sqlite", timeout = 5):
         MultIteratorParser.__init__(self, stream)
-        if not utils.checks.consistency(self.command, self):
+        if not check_params.consistency(self.command, self):
             utils.newline_msg("ERR","data not consistent.")
             sys.exit(1)
-        self.stdout_contents = utils.checks.contents_in_output(self.command)
+        self.stdout_contents = check_params.contents_in_output(self.command)
                 
         self.connection =  sql.connect(db_name, timeout = timeout)
         self.cursor = self.connection.cursor()
