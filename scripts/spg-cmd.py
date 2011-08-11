@@ -5,7 +5,7 @@
 import spg.params as params
 import spg.utils as utils
 from spg.pool import ProcessPool, ParameterAtom
-from spg import  CONFIG_DIR, TIMEOUT
+from spg import  CONFIG_DIR, TIMEOUT, VAR_PATH, BINARY_PATH
 
 # import sqlite3 as sql
 from subprocess import Popen, PIPE
@@ -14,8 +14,8 @@ import optparse
 import sqlite3 as sql
 
 
-VAR_PATH = os.path.abspath(CONFIG_DIR+"/../var/spg")
-BINARY_PATH = os.path.abspath(CONFIG_DIR+"/../bin")
+#VAR_PATH = os.path.abspath(CONFIG_DIR+"/../var/spg")
+#BINARY_PATH = os.path.abspath(CONFIG_DIR+"/../bin")
 
 
 ######################################################################################################

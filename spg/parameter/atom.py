@@ -20,7 +20,7 @@ class ParameterAtom:
         
         self.full_db_name = full_db_name 
         if self.full_db_name :
-           self.path, db_name = os.path.split(self.full_db_name)
+            self.path, db_name = os.path.split(self.full_db_name)
 
         self.in_name = fname
         self.values = {}
@@ -44,8 +44,8 @@ class ParameterAtom:
         os.remove( full_inname )
 
     def dump(self,src = 'run'):
-          full_name = "%s/%s/%s"%(VAR_PATH,src,self.in_name)
-          pickle.dump( self, open(full_name, "w" ) )
+        full_name = "%s/%s/%s"%(VAR_PATH,src,self.in_name)
+        pickle.dump( self, open(full_name, "w" ) )
 
 
     def load_next_from_db(self, connection=None, cursor=None):
@@ -64,9 +64,9 @@ class ParameterAtom:
                     "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
                     "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
                    ).fetchone()
-   #     print res
+#     print res
         if res == None:
-          return None
+            return None
 
         self.current_run_id  = res[0]
         self.current_valuesset_id= res[1]
@@ -93,39 +93,39 @@ class ParameterAtom:
 #        utils.newline_msg("PRT","{%s} %s -- %s,%s -- %s"%( self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output) )
 #        print self.return_code 
         if self.return_code == 0:
-             all_d = [self.current_valuesset_id]
-             all_d.extend( self.output )
-             cc = 'INSERT INTO results (%s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join(["'%s'"%str(i) for i in all_d]) )
+            all_d = [self.current_valuesset_id]
+            all_d.extend( self.output )
+            cc = 'INSERT INTO results (%s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join(["'%s'"%str(i) for i in all_d]) )
 #             print cc, self.current_run_id 
-             try:
-               cursor.execute( cc )
-               cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
-             except:
-               cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
-             flog = open(self.full_db_name.replace("sqlite","log"), "aw") 
-             print >> flog, "{%s} %s: ret=%s -- %s,%s -- %s"%( self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output)
-             try:
+            try:
+                cursor.execute( cc )
+                cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
+            except:
+                cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
+            flog = open(self.full_db_name.replace("sqlite","log"), "aw") 
+            print >> flog, "{%s} %s: ret=%s -- %s,%s -- %s"%( self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output)
+            try:
                 print >> flog, self.stderr
-             except:
+            except:
                 print >> flog, "NO_STDERR" 
-             flog.close()
+            flog.close()
                   
         else:
-             #:::~ status can be either 
-             #:::~    'N': not run
-             #:::~    'R': running
-             #:::~    'D': successfully run (done)
-             #:::~    'E': run but with non-zero error code
-             cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
+            #:::~ status can be either 
+            #:::~    'N': not run
+            #:::~    'R': running
+            #:::~    'D': successfully run (done)
+            #:::~    'E': run but with non-zero error code
+            cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
              
-             flog = open(self.full_db_name.replace("sqlite","log"), "aw") 
-             print >> flog, "{%s} %s: ret=%s -- %s,%s -- %s"%( self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output)
-             try:
+            flog = open(self.full_db_name.replace("sqlite","log"), "aw") 
+            print >> flog, "{%s} %s: ret=%s -- %s,%s -- %s"%( self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output)
+            try:
                 print >> flog, self.stderr
-             except:
+            except:
                 print >> flog, "NO_STDERR" 
-             flog.close()
-             #self.connection.commit()
+            flog.close()
+            #self.connection.commit()
         connection.commit()
         #conn.close()
         #del cursor
@@ -142,7 +142,7 @@ class ParameterAtomExecutor(ParameterAtom):
 
     def create_tree(self):
         for k in self.values:
-          if k.find("store_") != -1: return True
+            if k.find("store_") != -1: return True
         return False
 
     def launch_process(self, configuration_filename):
@@ -154,7 +154,7 @@ class ParameterAtomExecutor(ParameterAtom):
                 os.makedirs(dir_n)
             os.chdir(dir_n)
 
-  #      configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
+#      configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
         fconf = open(configuration_filename,"w")
         for k in self.values.keys():
             print >> fconf, k, utils.replace_in_string(self.values[k], self.values) 
@@ -162,10 +162,10 @@ class ParameterAtomExecutor(ParameterAtom):
 
         cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
         proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
-   #     poll = proc.poll()
-  #      while poll is None:
- #           time.sleep(1)
-     #       utils.newline_msg( "SLP", "%s -- %s -- %s"%(cmd,self.path,poll))
+#     poll = proc.poll()
+#      while poll is None:
+#           time.sleep(1)
+#       utils.newline_msg( "SLP", "%s -- %s -- %s"%(cmd,self.path,poll))
             
 #            poll = proc.poll()
         
