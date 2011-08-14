@@ -1,4 +1,4 @@
-from process import ProcessPool
+from torque import ProcessPool
 
 from exchange import DataExchanger
 

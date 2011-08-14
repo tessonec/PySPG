@@ -23,22 +23,50 @@ class ParameterEnsemble:
         self.directory_vars = None
         self.__init_db()
 
+
+    def query_db(self, query):
+        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
+        self.cursor = self.connection.cursor()
+
+        ret = [i for i in self.cursor.execute(query)]
+        
+        self.connection.commit()
+        self.connection.close()
+        
+        return ret
+
+
+    def query_db_fetchone(self, query):
+        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
+        self.cursor = self.connection.cursor()
+
+        ret = self.cursor.execute(query).fetchone()
+        
+        self.connection.commit()
+        self.connection.close()
+        
+        return ret
+
+
+
     def __init_db(self):
 
         self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
         self.cursor = self.connection.cursor()
         #:::~ Table with the name of the executable
-        (self.command, ) = self.cursor.execute( "SELECT name FROM executable " ).fetchone()
+#        (self.command, ) = self.cursor.execute( "SELECT name FROM executable " ).fetchone()
+        (self.command, ) = self.query_db_fetchone( "SELECT name FROM executable " )
         #:::~ get the names of the columns
-        sel = self.cursor.execute("SELECT name FROM entities ORDER BY id")
+        sel = self.query_db("SELECT name FROM entities ORDER BY id")
         self.entities = [ i[0] for i in sel ]
         #:::~ get the names of the columns
-        sel = self.cursor.execute("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
+        sel = self.cursor.query_db("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
         self.variables = [ i[0] for i in sel ]
         #:::~ get the names of the outputs
-        fa = self.cursor.execute("PRAGMA table_info(results)")
+        fa = self.cursor.query_db("PRAGMA table_info(results)")
         self.output_column = [ i[1] for i in fa ]
         self.output_column = self.output_column[1:]
+
 
     def close_db(self):
         self.connection.commit()
@@ -83,8 +111,121 @@ class ParameterEnsemble:
             self.directory_vars  = self.variables
 
 
+
+
+
+#
+#class ParameterEnsemble:
+#    def __init__(self, full_name = ""):
+#        self.full_name = full_name
+#        self.path, self.db_name = os.path.split(full_name)
+#
+#        self.values = {}
+#        self.directory_vars = None
+#        self.__init_db()
+#
+#        
+#    def query_db(self, query):
+#        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
+#        self.cursor = self.connection.cursor()
+#
+#        ret = [i for i in self.cursor.execute(query)]
+#        
+#        self.connection.commit()
+#        self.connection.close()
+#        
+#        return ret
+#
+#    def query_db_fetchone(self, query):
+#        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
+#        self.cursor = self.connection.cursor()
+#
+#        ret = self.cursor.execute(query).fetchone()
+#        
+#        self.connection.commit()
+#        self.connection.close()
+#        
+#        return ret
+#
+#
+#
+#    def __init_db(self):
+#
+#        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
+#        self.cursor = self.connection.cursor()
+#        #:::~ Table with the name of the executable
+#        (self.command, ) = self.cursor.execute( "SELECT name FROM executable " ).fetchone()
+#        #:::~ get the names of the columns
+#        sel = self.cursor.execute("SELECT name FROM entities ORDER BY id")
+#        self.entities = [ i[0] for i in sel ]
+#        #:::~ get the names of the columns
+#        sel = self.cursor.execute("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
+#        self.variables = [ i[0] for i in sel ]
+#        #:::~ get the names of the outputs
+#        fa = self.cursor.execute("PRAGMA table_info(results)")
+#        self.output_column = [ i[1] for i in fa ]
+#        self.output_column = self.output_column[1:]
+#
+#    def close_db(self):
+#        self.connection.commit()
+#        self.connection.close()
+#        del self.cursor
+#        del self.connection
+#
+#    def __iter__(self):
+#        return self
+#
+#
+#    def next(self):
+#        res = self.cursor.execute(
+#                    "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
+#                    "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
+#                   ).fetchone()
+#        if res == None:
+#            utils.newline_msg("WRN","db '%s' did not return any new data point"%self.full_name)
+#            return None
+#
+#        self.current_run_id  = res[0]
+#        self.current_valuesset_id = res[1]
+#        self.cursor.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
+#        self.connection.commit()
+#        for i in range( len(self.entities) ):
+#            self.values[ self.entities[i] ] = res[i+2]
+#
+#        return self.values
+#
+#    def create_trees(self):
+#        ret = self.cursor.execute("SELECT * FROM entities WHERE name LIKE 'store_%'").fetchone()
+#        return ret is not None
+#
+#
+#    def generate_tree(self, dir_vars = None):
+#        
+#        if type(dir_vars) == type(""):
+#            self.directory_vars = dir_vars.split(",")
+#        elif type(dir_vars) == type([]):
+#            self.directory_vars = dir_vars
+#        else:
+#            self.directory_vars  = self.variables
+
+
+
+
+
+
+
 ################################################################################
 ################################################################################
+
+
+
+
+
+
+
+
+
+
 
 
 
