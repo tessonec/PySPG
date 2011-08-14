@@ -64,7 +64,7 @@ class ParameterAtom:
                     "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
                     "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
                    ).fetchone()
-#     print res
+        #     print res
         if res == None:
             return None
 
@@ -94,16 +94,16 @@ class ParameterAtom:
 #        print self.return_code 
         if self.return_code == 0:
             all_d = [self.current_valuesset_id]
-            all_d.extend( self.output )
-            cc = 'INSERT INTO results (%s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join(["'%s'"%str(i) for i in all_d]) )
+            all_d.extend(self.output)
+            cc = 'INSERT INTO results (%s) VALUES (%s) ' % (", ".join(self.output_column) , ", ".join(["'%s'" % str(i) for i in all_d]))
 #             print cc, self.current_run_id 
             try:
-                cursor.execute( cc )
-                cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
+                cursor.execute(cc)
+                cursor.execute('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
             except:
-                cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
-            flog = open(self.full_db_name.replace("sqlite","log"), "aw") 
-            print >> flog, "{%s} %s: ret=%s -- %s,%s -- %s"%( self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output)
+                cursor.execute('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
+            flog = open(self.full_db_name.replace("sqlite", "log"), "aw") 
+            print >> flog, "{%s} %s: ret=%s -- %s,%s -- %s" % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output)
             try:
                 print >> flog, self.stderr
             except:
@@ -116,16 +116,17 @@ class ParameterAtom:
             #:::~    'R': running
             #:::~    'D': successfully run (done)
             #:::~    'E': run but with non-zero error code
-            cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
+            cursor.execute('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
              
-            flog = open(self.full_db_name.replace("sqlite","log"), "aw") 
-            print >> flog, "{%s} %s: ret=%s -- %s,%s -- %s"%( self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output)
+            flog = open(self.full_db_name.replace("sqlite", "log"), "aw") 
+            print >> flog, "{%s} %s: ret=%s -- %s,%s -- %s" % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output)
             try:
                 print >> flog, self.stderr
             except:
                 print >> flog, "NO_STDERR" 
             flog.close()
             #self.connection.commit()
+
         connection.commit()
         #conn.close()
         #del cursor

@@ -1,14 +1,15 @@
 from spg import utils
-from spg import BINARY_PATH, VAR_PATH, TIMEOUT
+from spg import BINARY_PATH, TIMEOUT
 
 
 
-import os.path, os, sys
+#import os.path, os, sys
+import os
 from subprocess import Popen, PIPE
 import sqlite3 as sql
 
 import numpy as n
-import math as m
+#import math as m
 
 
 #TIMEOUT = 120
@@ -50,9 +51,7 @@ class ParameterEnsemble:
 
 
     def __init_db(self):
-
-        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
-        self.cursor = self.connection.cursor()
+        self.__connect_db()
         #:::~ Table with the name of the executable
 #        (self.command, ) = self.cursor.execute( "SELECT name FROM executable " ).fetchone()
         (self.command, ) = self.query_db_fetchone( "SELECT name FROM executable " )
@@ -66,19 +65,41 @@ class ParameterEnsemble:
         fa = self.cursor.query_db("PRAGMA table_info(results)")
         self.output_column = [ i[1] for i in fa ]
         self.output_column = self.output_column[1:]
+        self.__close_db()
 
 
-    def close_db(self):
+    def __connect_db(self):
+        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
+        self.cursor = self.connection.cursor()
+
+
+    def __close_db(self):
         self.connection.commit()
         self.connection.close()
         del self.cursor
         del self.connection
+
+
+    def execute_query(self, query):
+        self.__connect_db()
+        ret = self.cursor.execute(query)
+        self.__close_db()
+        return ret 
+
+
+    def execute_query_fetchone(self, query):
+        self.__connect_db()
+        ret = self.cursor.execute(query).fetchone()
+        self.__close_db()
+        return ret 
+
 
     def __iter__(self):
         return self
 
 
     def next(self):
+        self.__connect_db()
         res = self.cursor.execute(
                     "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
                     "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
@@ -90,14 +111,17 @@ class ParameterEnsemble:
         self.current_run_id  = res[0]
         self.current_valuesset_id = res[1]
         self.cursor.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
-        self.connection.commit()
+        
+        self.__close_db()
         for i in range( len(self.entities) ):
             self.values[ self.entities[i] ] = res[i+2]
 
         return self.values
 
     def create_trees(self):
+        self.__connect_db()
         ret = self.cursor.execute("SELECT * FROM entities WHERE name LIKE 'store_%'").fetchone()
+        self.__close_db()
         return ret is not None
 
 
@@ -232,15 +256,15 @@ class ParameterEnsemble:
 class WeightedParameterEnsemble(ParameterEnsemble):
     normalising = 0.
     def __init__(self, full_name = "", id=-1, weight=1.,queue = 'any'):
-       ParameterEnsemble.__init__(self, full_name)
-       self.weight = weight
-       self.id = id
-       self.queue = 'any'
-       WeightedParameterEnsemble.normalising += weight
+        ParameterEnsemble.__init__(self, full_name)
+        self.weight = weight
+        self.id = id
+        self.queue = 'any'
+        WeightedParameterEnsemble.normalising += weight
        
     def update_weight(self,weight):
-       self.weight = weight
-       WeightedParameterEnsemble.normalising += weight
+        self.weight = weight
+        WeightedParameterEnsemble.normalising += weight
 
 
 
@@ -274,20 +298,25 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
         if self.directory_vars:
             os.chdir(pwd)
         if ret_code == 0:
-           self.cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
-           all_d = [self.current_variables_id]
-           all_d.extend( output )
-           cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
-           self.cursor.execute( cc )
+            self.__connect_db()
+            self.cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
+            all_d = [self.current_variables_id]
+            all_d.extend( output )
+            cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
+            self.cursor.execute( cc )
+            self.__close_db()
+
         else:
-           #:::~ status can be either 
-           #:::~    'N': not run
-           #:::~    'R': running
-           #:::~    'D': successfully run (done)
-           #:::~    'E': run but with non-zero error code
-           self.cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
+            #:::~ status can be either 
+            #:::~    'N': not run
+            #:::~    'R': running
+            #:::~    'D': successfully run (done)
+            #:::~    'E': run but with non-zero error code
+            self.__connect_db()
+            self.cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
+            self.__close_db()
         
-        self.connection.commit()
+#       self.connection.commit()
 
 
 ################################################################################
@@ -300,23 +329,26 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 
 class ResultsDBQuery(ParameterEnsemble):
     def __init__(self, full_name = ""):
-       ParameterEnsemble.__init__(self, full_name)
-       self.coalesce = []
+        ParameterEnsemble.__init__(self, full_name)
+        self.coalesce = []
     
     def clean_dict(self,dict_to_clean):
     # adds quotes to strings
       
-       for i in dict_to_clean:  
-              try:
-                v = float( dict_to_clean[i] ) # if it is a number is does not get surrounded by quotes
-              except:
+        for i in dict_to_clean:  
+            try:
+                float( dict_to_clean[i] ) # if it is a number is does not get surrounded by quotes
+            except:
                 dict_to_clean[i ] = "'%s'"%( dict_to_clean[i ].replace("'","").replace('"',"") )
 
     
     def table_from_query(self, query):
     #    print query
+        self.__connect_db()
         self.cursor.execute(query)
-        return n.array( [ map(float,i) for i in self.cursor ] )
+        ret = n.array( [ map(float,i) for i in self.cursor ] )
+        self.__close_db()
+        return ret
         
     
 #    def column_result_table(self, col_name, table_vars = None):
@@ -335,53 +367,53 @@ class ResultsDBQuery(ParameterEnsemble):
 
     def result_table(self, table_vars = None, restrict_to_values = {}, raw_data = False, restrict_by_val = False, output_column = []):
         if not table_vars:
-          table_vars = self.variables[:]
+            table_vars = self.variables[:]
 
         self.clean_dict(restrict_to_values)
 
         for iv in self.coalesce:
-          if iv in table_vars:
-            table_vars.remove(iv)
+            if iv in table_vars:
+                table_vars.remove(iv)
 
         var_cols = ""
         if len(table_vars) == 1:
             var_cols = "v.%s, "%table_vars[0]
         if len(table_vars) > 1:
             var_cols = "%s, "%",".join(["v.%s"%v for v in table_vars])
-     #   print table_vars, var_cols        
+#   print table_vars, var_cols        
         if not output_column:
-          output_column = self.output_column[:]
-          if "values_set_id" in output_column: 
-            output_column.remove("values_set_id")
+            output_column = self.output_column[:]
+            if "values_set_id" in output_column: 
+                output_column.remove("values_set_id")
 
         out_cols = ""
         if not raw_data :
-          if len(output_column ) == 1:
-            out_cols = "AVG(r.%s) "%output_column[0]
-          elif len(output_column) > 1:
-            out_cols = " %s"%",".join(["AVG(r.%s)"%v for v in output_column])
+            if len(output_column ) == 1:
+                out_cols = "AVG(r.%s) "%output_column[0]
+            elif len(output_column) > 1:
+                out_cols = " %s"%",".join(["AVG(r.%s)"%v for v in output_column])
         else:
-          if len(output_column ) == 1:
-            out_cols = "r.%s "%output_column[0]
-          elif len(output_column) > 1:
-            out_cols = " %s"%",".join(["r.%s"%v for v in output_column])
+            if len(output_column ) == 1:
+                out_cols = "r.%s "%output_column[0]
+            elif len(output_column) > 1:
+                out_cols = " %s"%",".join(["r.%s"%v for v in output_column])
 #        print out_cols
           
         query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id "%(var_cols, out_cols)
         #print query
         #:::~ This command was needed only because of a mistake in the id stores in the results table
- #       query = "SELECT %s %s FROM results AS r, values_set AS v , run_status AS rs WHERE rs.values_set_id = v.id AND rs.id = r.values_set_id "%(var_cols, out_cols)
+#       query = "SELECT %s %s FROM results AS r, values_set AS v , run_status AS rs WHERE rs.values_set_id = v.id AND rs.id = r.values_set_id "%(var_cols, out_cols)
         if restrict_to_values:
-          restrict_cols = " AND ".join(["v.%s = %s"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
-          if restrict_cols :
-            restrict_cols = "AND %s"%restrict_cols 
-          query = "%s  %s "%(query, restrict_cols)
-        if not raw_data :
-          if restrict_by_val:  
-             if var_cols:
-              query = "%s  GROUP BY %s"%(query, var_cols.strip(", "))
-          else:  
-            query = "%s %s GROUP BY rs.values_set_id"%(query, restrict_cols)
+            restrict_cols = " AND ".join(["v.%s = %s"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
+            if restrict_cols :
+                restrict_cols = "AND %s"%restrict_cols 
+            query = "%s  %s "%(query, restrict_cols)
+            if not raw_data :
+                if restrict_by_val:  
+                    if var_cols:
+                        query = "%s  GROUP BY %s"%(query, var_cols.strip(", "))
+                else:  
+                    query = "%s %s GROUP BY rs.values_set_id"%(query, restrict_cols)
 
         return self.table_from_query(query)        
 #        if len(restrict_to_values) == 0:
@@ -405,25 +437,27 @@ class ResultsDBQuery(ParameterEnsemble):
 
 
     def __iter__(self):
-      if len(self.coalesce) == 0:  
-        self.coalesce = self.variables
-      if len(self.coalesce) > 1:
-        query = "SELECT DISTINCT %s FROM values_set "%(",".join([v for v in self.coalesce] ))
-      else:
-        query = "SELECT DISTINCT %s FROM values_set "%(" ".join([v for v in self.coalesce] ))
-      self.cursor.execute(query)
-      pairs = [ i for i in self.cursor ]
+        self.__connect_db()
+        if len(self.coalesce) == 0:  
+            self.coalesce = self.variables
+        if len(self.coalesce) > 1:
+            query = "SELECT DISTINCT %s FROM values_set "%(",".join([v for v in self.coalesce] ))
+        else:
+            query = "SELECT DISTINCT %s FROM values_set "%(" ".join([v for v in self.coalesce] ))
+        self.cursor.execute(query)
+        pairs = [ i for i in self.cursor ]
+        self.__close_db()
 #      print query, pairs
-      for i in pairs:
-          d = {}
+        for i in pairs:
+            d = {}
           
-          for j in range( len( self.coalesce ) ):
- #             try:
- #               v = float( i[j] ) # if it is a number is does not get surrounded by quotes
+            for j in range( len( self.coalesce ) ):
+#             try:
+#               v = float( i[j] ) # if it is a number is does not get surrounded by quotes
                 d[self.coalesce[j] ] = i[j]
 #              except:
 #                d[self.coalesce[j] ] = "'%s'"%i[j]
-          yield d
+            yield d
           
 
 
