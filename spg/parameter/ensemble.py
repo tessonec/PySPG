@@ -20,8 +20,21 @@ class ParameterEnsemble:
         self.full_name = full_name
         self.path, self.db_name = os.path.split(full_name)
 
+
+
+
+
         self.values = {}
         self.directory_vars = None
+
+        
+        self.stat_processes_done = -1
+        self.stat_processes_not_run = -1
+        self.stat_processes_running = -1
+        self.stat_processes_error = -1
+        self.stat_values_set_with_rep = -1
+        self.stat_values_set = -1
+       
         self.__init_db()
 
 
@@ -99,20 +112,18 @@ class ParameterEnsemble:
 
 
     def next(self):
-        self.__connect_db()
-        res = self.cursor.execute(
+        res = self.execute_query_fetchone(
                     "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
                     "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
-                   ).fetchone()
+                   )
         if res == None:
             utils.newline_msg("WRN","db '%s' did not return any new data point"%self.full_name)
             return None
 
         self.current_run_id  = res[0]
         self.current_valuesset_id = res[1]
-        self.cursor.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
+        self.execute_query( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
         
-        self.__close_db()
         for i in range( len(self.entities) ):
             self.values[ self.entities[i] ] = res[i+2]
 
@@ -120,7 +131,7 @@ class ParameterEnsemble:
 
     def create_trees(self):
         self.__connect_db()
-        ret = self.cursor.execute("SELECT * FROM entities WHERE name LIKE 'store_%'").fetchone()
+        ret = self.execute_query_fetchone("SELECT * FROM entities WHERE name LIKE 'store_%'")
         self.__close_db()
         return ret is not None
 
@@ -134,10 +145,27 @@ class ParameterEnsemble:
         else:
             self.directory_vars  = self.variables
 
+    def update_status(self):
+        #:::~    'N': not run yet
+        #:::~    'R': running
+        #:::~    'D': successfully run (done)
+        #:::~    'E': run but with non-zero error code
 
-
-
-
+        (self.stat_values_set_with_rep , ) = self.execute_query_fetchone("SELECT COUNT(*) FROM run_status ;")
+        (self.stat_values_set, ) = self.execute_query_fetchone("SELECT COUNT(*) FROM values_set ;")
+        
+        ret = self.execute_query("SELECT status, COUNT(*) FROM run_status GROUP BY status")
+#        self.stat_done, self.stat_not_run, self.stat_running,self.stat_error = 0,0,0,0
+        for (k,v) in ret:
+            if k == "D":
+                self.stat_processes_done = v
+            elif k == "N":
+                self.stat_processes_not_run = v
+            elif k == "R":
+                self.stat_processes_running = v
+            elif k == "E":
+                self.stat_processes_error = v
+        
 #
 #class ParameterEnsemble:
 #    def __init__(self, full_name = ""):
@@ -298,13 +326,13 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
         if self.directory_vars:
             os.chdir(pwd)
         if ret_code == 0:
-            self.__connect_db()
-            self.cursor.execute( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
+            
+            self.execute_query( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
             all_d = [self.current_variables_id]
             all_d.extend( output )
             cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
-            self.cursor.execute( cc )
-            self.__close_db()
+            self.execute_query( cc )
+            
 
         else:
             #:::~ status can be either 
@@ -312,9 +340,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
             #:::~    'R': running
             #:::~    'D': successfully run (done)
             #:::~    'E': run but with non-zero error code
-            self.__connect_db()
-            self.cursor.execute( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
-            self.__close_db()
+            self.execute_query( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
         
 #       self.connection.commit()
 
@@ -339,13 +365,13 @@ class ResultsDBQuery(ParameterEnsemble):
             try:
                 float( dict_to_clean[i] ) # if it is a number is does not get surrounded by quotes
             except:
-                dict_to_clean[i ] = "'%s'"%( dict_to_clean[i ].replace("'","").replace('"',"") )
+                dict_to_clean[ i ] = "'%s'"%( dict_to_clean[i ].replace("'","").replace('"',"") )
 
     
     def table_from_query(self, query):
     #    print query
         self.__connect_db()
-        self.cursor.execute(query)
+        self.execute(query)
         ret = n.array( [ map(float,i) for i in self.cursor ] )
         self.__close_db()
         return ret

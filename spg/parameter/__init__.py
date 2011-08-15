@@ -1,5 +1,5 @@
 
-from db import DBBuilder
+from paramdb import ParamDBBuilder
 
 from atom import ParameterAtom, ParameterAtomExecutor
 

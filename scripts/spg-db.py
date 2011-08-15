@@ -3,7 +3,9 @@
 import cmd
 
 import spg.utils as utils
-from spg.parameter.db import DBBuilder
+from spg.parameter import ParamDBBuilder
+from spg.pool import MasterDB
+
 from spg import VAR_PATH
 
 import sqlite3 as sql
@@ -50,6 +52,9 @@ class DBCommandParser(cmd.Cmd):
 
         self.doc_header = "default values: %s"%(self.values )
         
+        self.master =  MasterDB()
+        
+        
     def do_init(self, c):
         """init PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
         Generates a new database out of a single database"""
@@ -58,7 +63,7 @@ class DBCommandParser(cmd.Cmd):
         if len(c) >1: self.do_set( ":".join( c[1:] ) )
 
         i_arg, db_name = translate_name(i_arg)
-        parser = DBBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
+        parser = ParamDBBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
         if 'executable' in self.values.keys():
             parser.command = self.values['executable']
         parser.init_db(retry = self.values['sql_retries'])
@@ -70,7 +75,7 @@ class DBCommandParser(cmd.Cmd):
         cleans the database. It accepts several of them"""
         for i_arg in c.split():
             i_arg, db_name = translate_name(i_arg)
-            parser = DBBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
+            parser = ParamDBBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
             parser.clean_status()
 
 
@@ -79,15 +84,21 @@ class DBCommandParser(cmd.Cmd):
         cleans completely the database. It accepts several of them"""
         for i_arg in c.split():
             i_arg, db_name = translate_name(i_arg)
-            parser = DBBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
+            parser = ParamDBBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
             parser.clean_all_status()
     
     def do_add(self, c):
         """add PARAMETERS_NAME|DB_NAME
         adds the database to the registered ones"""
 #        for i_arg in c.split():
-
-    
+        pass
+        
+    def do_ls(self, c):
+        """lists the databases already in the database"""
+        
+#        for i_arg in c.split():
+        
+        
     def do_remove(self, c):
         """remove PARAMETERS_NAME|DB_NAME
         removes the database from the registered ones. It accepts many dbs"""
