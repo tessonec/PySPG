@@ -38,48 +38,6 @@ class ParameterEnsemble:
         self.__init_db()
 
 
-    def query_db(self, query):
-        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
-        self.cursor = self.connection.cursor()
-
-        ret = [i for i in self.cursor.execute(query)]
-        
-        self.connection.commit()
-        self.connection.close()
-        
-        return ret
-
-
-    def query_db_fetchone(self, query):
-        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
-        self.cursor = self.connection.cursor()
-
-        ret = self.cursor.execute(query).fetchone()
-        
-        self.connection.commit()
-        self.connection.close()
-        
-        return ret
-
-
-
-    def __init_db(self):
-        self.__connect_db()
-        #:::~ Table with the name of the executable
-#        (self.command, ) = self.cursor.execute( "SELECT name FROM executable " ).fetchone()
-        (self.command, ) = self.query_db_fetchone( "SELECT name FROM executable " )
-        #:::~ get the names of the columns
-        sel = self.query_db("SELECT name FROM entities ORDER BY id")
-        self.entities = [ i[0] for i in sel ]
-        #:::~ get the names of the columns
-        sel = self.cursor.query_db("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
-        self.variables = [ i[0] for i in sel ]
-        #:::~ get the names of the outputs
-        fa = self.cursor.query_db("PRAGMA table_info(results)")
-        self.output_column = [ i[1] for i in fa ]
-        self.output_column = self.output_column[1:]
-        self.__close_db()
-
 
     def __connect_db(self):
         self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
@@ -93,9 +51,10 @@ class ParameterEnsemble:
         del self.connection
 
 
+
     def execute_query(self, query):
         self.__connect_db()
-        ret = self.cursor.execute(query)
+        ret = [i for i in self.cursor.execute(query)]
         self.__close_db()
         return ret 
 
@@ -105,6 +64,45 @@ class ParameterEnsemble:
         ret = self.cursor.execute(query).fetchone()
         self.__close_db()
         return ret 
+
+
+#    def query_db(self, query):
+#        self.__connect_db()
+#
+#        
+#        self.__close_db()
+#        
+#        return ret
+#
+#
+#    def query_db_fetchone(self, query):
+#        self.__connect_db()
+#
+#        ret = self.cursor.execute(query).fetchone()
+#        
+#        self.__close_db()
+#        
+#        return ret
+
+
+
+    def __init_db(self):
+        self.__connect_db()
+        #:::~ Table with the name of the executable
+#        (self.command, ) = self.cursor.execute( "SELECT name FROM executable " ).fetchone()
+        (self.command, ) = self.execute_query_fetchone( "SELECT name FROM executable " )
+        #:::~ get the names of the columns
+        sel = self.execute_query("SELECT name FROM entities ORDER BY id")
+        self.entities = [ i[0] for i in sel ]
+        #:::~ get the names of the columns
+        sel = self.execute_query("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
+        self.variables = [ i[0] for i in sel ]
+        #:::~ get the names of the outputs
+        fa = self.execute_query("PRAGMA table_info(results)")
+        self.output_column = [ i[1] for i in fa ]
+        self.output_column = self.output_column[1:]
+#        self.__close_db()
+
 
 
     def __iter__(self):

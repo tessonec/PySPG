@@ -6,7 +6,7 @@ import spg.utils as utils
 from spg.parameter import ParamDBBuilder
 from spg.pool import MasterDB
 
-from spg import VAR_PATH
+from spg import VAR_PATH, RUN_DIR
 
 import sqlite3 as sql
 import sys, optparse
@@ -52,7 +52,7 @@ class DBCommandParser(cmd.Cmd):
 
         self.doc_header = "default values: %s"%(self.values )
         
-        self.master =  MasterDB()
+        self.master_db =  MasterDB()
         
         
     def do_init(self, c):
@@ -95,8 +95,13 @@ class DBCommandParser(cmd.Cmd):
         
     def do_ls(self, c):
         """lists the databases already in the database"""
+        ret = [ self.master_db.result_dbs[i] for i in  self.master_db.result_dbs]
         
-#        for i_arg in c.split():
+        
+        
+        for i in sorted( ret , key = lambda x: x.full_name ):
+            #print "%5d: %s"%(i_id, i_name)
+            print "%5d: %s"%(i.id, os.path.relpath(i.full_name,RUN_DIR))
         
         
     def do_remove(self, c):

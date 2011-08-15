@@ -11,5 +11,6 @@ ROOT_DIR = os.path.expanduser("~/opt")
 CONFIG_DIR = os.path.expanduser(ROOT_DIR+"/etc")
 VAR_PATH = os.path.abspath(ROOT_DIR+"/var/spg")
 BINARY_PATH = os.path.abspath(ROOT_DIR+"/bin")
+RUN_DIR = os.path.expanduser("~/run")
 
 TIMEOUT = 120

@@ -5,7 +5,7 @@
 import spg.params as params
 import spg.utils as utils
 from spg.pool import ProcessPool, ParameterAtom
-from spg import  CONFIG_DIR, TIMEOUT, VAR_PATH, BINARY_PATH
+from spg import  CONFIG_DIR, TIMEOUT, VAR_PATH, BINARY_PATH, RUN_DIR
 
 # import sqlite3 as sql
 from subprocess import Popen, PIPE
@@ -202,7 +202,7 @@ def get_stats(cmd, name, params):
            frac_done = float(done)/float(total)
            frac_running = float(running)/float(total)
            frac_error = float(error)/float(total)
-           print "db: '%s' [%s] TOT: %d - D: %d (%.5f) - R: %d (%.5f) -- E: %d (%.5f)"%(os.path.relpath(full_name,"/home/tessonec"), status, total, done, frac_done, running, frac_running, error, frac_error) 
+           print "db: '%s' [%s] TOT: %d - D: %d (%.5f) - R: %d (%.5f) -- E: %d (%.5f)"%(os.path.relpath(full_name,RUN_DIR), status, total, done, frac_done, running, frac_running, error, frac_error) 
 ###    (id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), 
 ###     db_name CHAR(256), status CHAR(1), 
 ###     total_combinations INTEGER, done_combinations INTEGER, 

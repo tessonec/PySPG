@@ -59,7 +59,7 @@ class MasterDB:
     #    print self.dbs
         
         for (id, full_name, weight, queue) in vec:
-            if full_name in self.dbs.keys():
+            if full_name in self.result_dbs.keys():
                 self.result_dbs[full_name].id = id
                 self.result_dbs[full_name].queue = queue
 #                print full_name, self.dbs[full_name].weight
