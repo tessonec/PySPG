@@ -15,14 +15,15 @@ import numpy as n
 #TIMEOUT = 120
 
 
+
+
+
 class ParameterEnsemble:
-    def __init__(self, full_name = ""):
+    normalising = 0.
+    
+    def __init__(self, full_name = "", id=-1, weight=1., queue = 'any', init_db = True):
         self.full_name = full_name
         self.path, self.db_name = os.path.split(full_name)
-
-
-
-
 
         self.values = {}
         self.directory_vars = None
@@ -34,6 +35,12 @@ class ParameterEnsemble:
         self.stat_processes_error = -1
         self.stat_values_set_with_rep = -1
         self.stat_values_set = -1
+
+        self.weight = weight
+        self.id = id
+        self.queue = 'any'
+        ParameterEnsemble.normalising += weight
+
        
         self.__init_db()
 
@@ -163,6 +170,13 @@ class ParameterEnsemble:
                 self.stat_processes_running = v
             elif k == "E":
                 self.stat_processes_error = v
+ 
+ 
+    def update_weight(self,weight):
+        ParameterEnsemble.normalising -= self.weight  
+        self.weight = weight
+        ParameterEnsemble.normalising += self.weight
+ 
         
 #
 #class ParameterEnsemble:
@@ -279,27 +293,14 @@ class ParameterEnsemble:
 
 
 
-class WeightedParameterEnsemble(ParameterEnsemble):
-    normalising = 0.
-    def __init__(self, full_name = "", id=-1, weight=1.,queue = 'any'):
-        ParameterEnsemble.__init__(self, full_name)
-        self.weight = weight
-        self.id = id
-        self.queue = 'any'
-        WeightedParameterEnsemble.normalising += weight
-       
-    def update_weight(self,weight):
-        self.weight = weight
-        WeightedParameterEnsemble.normalising += weight
-
 
 
 ################################################################################
 ################################################################################
 
 class ParameterEnsembleExecutor(ParameterEnsemble):
-    def __init__(self, full_name = ""):
-        ParameterEnsemble.__init__(self, full_name)
+    def __init__(self, full_name = "", init_db = True):
+        ParameterEnsemble.__init__(self, full_name, init_db)
         os.chdir(self.path)
            
     def launch_process(self):

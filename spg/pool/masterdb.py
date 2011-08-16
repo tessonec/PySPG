@@ -3,7 +3,7 @@ from spg import  CONFIG_DIR, TIMEOUT, VAR_PATH
 import sqlite3 as sql
 import spg.utils as utils
 
-from spg.parameter import WeightedParameterEnsemble
+from spg.parameter import ParameterEnsemble
 
 ######
 ######    def update_dbs_info(self):   # 
@@ -52,7 +52,7 @@ class MasterDB:
 
     def update_result_dbs(self): # These are the dbs that are registered and running
         #self.dbs = {} 
-        WeightedParameterEnsemble.normalising = 0.
+        ParameterEnsemble.normalising = 0.
 ####         res = self.cursor.execute("SELECT id, full_name, weight, queue FROM dbs WHERE status = 'R'")
         res = self.cursor.execute("SELECT id, full_name, weight, queue FROM dbs ")
         vec = [(id, full_name, weight, queue) for (id, full_name, weight, queue) in res]
@@ -65,7 +65,7 @@ class MasterDB:
 #                print full_name, self.dbs[full_name].weight
                 continue
             utils.newline_msg("INF","new db registered... '%s'"%full_name)
-            new_db = WeightedParameterEnsemble(full_name, id, weight, queue)
+            new_db = ParameterEnsemble(full_name, id, weight, queue)
             self.result_dbs[full_name] = new_db
     #    print self.dbs
    

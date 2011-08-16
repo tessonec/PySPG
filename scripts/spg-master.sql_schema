@@ -21,6 +21,8 @@ db_name: filename of the database
 status: status of execution of the database
     #:::~ status can be either 
     #:::~    'S': stopped
+    #:::~    'O': offline 
+    #:::~    'P': paused
     #:::~    'R': running
     #:::~    'D': done, finished
 total_combinations: number of parameter combinations found in the database

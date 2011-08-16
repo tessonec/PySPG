@@ -16,7 +16,7 @@ from spg.base import MultIteratorParser, IterConstant
 import sys
 import sqlite3 as sql
 
-class ParamDBBuilder(MultIteratorParser):
+class EnsembleBuilder(MultIteratorParser):
     """Generates a DB file with the representation of the parameters"""
     def __init__(self, stream=None, db_name = "results.sqlite", timeout = 5):
         MultIteratorParser.__init__(self, stream)

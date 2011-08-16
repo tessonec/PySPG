@@ -48,30 +48,27 @@ class ParameterAtom:
         pickle.dump( self, open(full_name, "w" ) )
 
 
-    def load_next_from_db(self, connection=None, cursor=None):
-        if not connection:
-            connection = sql.connect(self.full_name, timeout = TIMEOUT)
-        if not cursor:
-            cursor = connection.cursor()
-
+    def load_next_from_ensemble(self, param_ens):
+        """ loads the next parameter atom from a parameter ensemble"""
+        
         #:::~ Table with the name of the executable
-        (self.command, ) = cursor.execute( "SELECT name FROM executable " ).fetchone()
+        (self.command, ) = param_ens.execute_query_fetchone( "SELECT name FROM executable " )
         #:::~ get the names of the columns
-        sel = cursor.execute("SELECT name FROM entities ORDER BY id")
+        sel = param_ens.execute_query("SELECT name FROM entities ORDER BY id")
         self.entities = [ i[0] for i in sel ]
 
-        res = cursor.execute(
+        res = param_ens.execute_query_fetchone(
                     "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
                     "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
-                   ).fetchone()
+                   )
         #     print res
         if res == None:
             return None
 
         self.current_run_id  = res[0]
         self.current_valuesset_id= res[1]
-        cursor.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
-        connection.commit()
+        param_ens.execute_query( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
+#        connection.commit()
         for i in range( len(self.entities) ):
             self.values[ self.entities[i] ] = res[i+2]
 
@@ -80,14 +77,11 @@ class ParameterAtom:
         return self.values
 
 
-    def dump_in_db(self, connection=None, cursor=None):
-        if not connection:
-            connection = sql.connect(self.full_db_name, timeout = TIMEOUT)
-        if not cursor:
-            cursor = connection.cursor()
+    def dump_result_in_ensemble(self, param_ens):
+        """ loads the next parameter atom from a parameter ensemble"""
 
         #:::~ get the names of the outputs
-        fa = cursor.execute("PRAGMA table_info(results)")
+        fa = param_ens.execute_query("PRAGMA table_info(results)")
         self.output_column = [ i[1] for i in fa ]
         self.output_column = self.output_column[1:]
 #        utils.newline_msg("PRT","{%s} %s -- %s,%s -- %s"%( self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output) )
@@ -98,10 +92,10 @@ class ParameterAtom:
             cc = 'INSERT INTO results (%s) VALUES (%s) ' % (", ".join(self.output_column) , ", ".join(["'%s'" % str(i) for i in all_d]))
 #             print cc, self.current_run_id 
             try:
-                cursor.execute(cc)
-                cursor.execute('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
+                param_ens.execute_query(cc)
+                param_ens.execute_query('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
             except:
-                cursor.execute('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
+                param_ens.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
             flog = open(self.full_db_name.replace("sqlite", "log"), "aw") 
             print >> flog, "{%s} %s: ret=%s -- %s,%s -- %s" % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output)
             try:
@@ -116,7 +110,7 @@ class ParameterAtom:
             #:::~    'R': running
             #:::~    'D': successfully run (done)
             #:::~    'E': run but with non-zero error code
-            cursor.execute('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
+            param_ens.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
              
             flog = open(self.full_db_name.replace("sqlite", "log"), "aw") 
             print >> flog, "{%s} %s: ret=%s -- %s,%s -- %s" % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output)
@@ -127,7 +121,7 @@ class ParameterAtom:
             flog.close()
             #self.connection.commit()
 
-        connection.commit()
+#        connection.commit()
         #conn.close()
         #del cursor
         #del conn

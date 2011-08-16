@@ -3,7 +3,7 @@
 import cmd
 
 import spg.utils as utils
-from spg.parameter import ParamDBBuilder
+from spg.parameter import EnsembleBuilder, ParameterEnsemble
 from spg.pool import MasterDB
 
 from spg import VAR_PATH, RUN_DIR
@@ -12,30 +12,6 @@ import sqlite3 as sql
 import sys, optparse
 import os, os.path
 
-
-
-def translate_name(st):
-    """translates the parameters filename and the  database name 
-       into the other and viceversa (returns a duple: param, db)"""
-    full_name = st
-    if not os.path.exists(full_name):
-        full_name = os.path.expanduser( "~/%s"%st )
-    if not os.path.exists(full_name):
-        utils.newline_msg("ERR","database '%s' does not exist"%st)
-        sys.exit(2)
-    #  print ">", full_name
-    path, st = os.path.split(full_name)
-    if path:
-        os.chdir(path)
-    if ".sqlite" in st:
-        par_name = st.replace("results","").replace(".sqlite","")
-        par_name = "parameters%s.dat"%par_name
-        return par_name, st
-    else:
-        db_name = st.replace("parameters","").replace(".dat","")
-        db_name = "results%s.sqlite"%db_name
-        return st,db_name
-        
 
 
 
@@ -51,9 +27,47 @@ class DBCommandParser(cmd.Cmd):
         self.values = {'repeat': 1, 'sql_retries': 1, 'timeout' : 60, 'weight': 1}
 
         self.doc_header = "default values: %s"%(self.values )
-        
+        self.current_param_db = None 
         self.master_db =  MasterDB()
+    
+    
+         
+
+    def __translate_name( self,st):
+        """translates the parameters filename and the  database name 
+           into the other and viceversa (returns a duple: param_name, db_name)"""
+        full_name = st
+        if not os.path.exists(full_name):
+            full_name = os.path.expanduser( "%s/%s"%(RUN_DIR,st) )
+        if not os.path.exists(full_name):
+            utils.newline_msg("ERR","database '%s' does not exist"%st)
+            sys.exit(2)
+        #  print ">", full_name
+        path, st = os.path.split(full_name)
+#        if path:
+#            os.chdir(path)
+        if ".sqlite" in st:
+            par_name = st.replace("results","").replace(".sqlite","")
+            par_name = "parameters%s.dat"%par_name
+            return "%s/%s"%(path,par_name), "%s/%s"%(path,st)
+        else:
+            db_name = st.replace("parameters","").replace(".dat","")
+            db_name = "results%s.sqlite"%db_name
+            return "%s/%s"%(path,st),"%s/%s"%(path,db_name)
+            
+ 
+    def __update_active_result_db(self, c):
+        c = c.strip()
+        if not c: return 
+            
+        param_name, db_name = self.__translate_name(c)
+        if os.path.exists( db_name ):
+           self.current_param_db = ParameterEnsemble( db_name )
+        if os.path.exists( param_name ) and not os.path.exists( db_name ):
+           self.current_param_db = ParameterEnsemble( db_name , db_init = False)
+        return   
         
+
         
     def do_init(self, c):
         """init PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
@@ -62,8 +76,8 @@ class DBCommandParser(cmd.Cmd):
         i_arg = c[0]
         if len(c) >1: self.do_set( ":".join( c[1:] ) )
 
-        i_arg, db_name = translate_name(i_arg)
-        parser = ParamDBBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
+        i_arg, db_name = self.__translate_name(i_arg)
+        parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
         if 'executable' in self.values.keys():
             parser.command = self.values['executable']
         parser.init_db(retry = self.values['sql_retries'])
@@ -74,8 +88,8 @@ class DBCommandParser(cmd.Cmd):
         """clean PARAMETERS_NAME|DB_NAME
         cleans the database. It accepts several of them"""
         for i_arg in c.split():
-            i_arg, db_name = translate_name(i_arg)
-            parser = ParamDBBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
+            i_arg, db_name = self.__translate_name(i_arg)
+            parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
             parser.clean_status()
 
 
@@ -83,8 +97,8 @@ class DBCommandParser(cmd.Cmd):
         """clean_all PARAMETERS_NAME|DB_NAME
         cleans completely the database. It accepts several of them"""
         for i_arg in c.split():
-            i_arg, db_name = translate_name(i_arg)
-            parser = ParamDBBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
+            i_arg, db_name = self.__translate_name(i_arg)
+            parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
             parser.clean_all_status()
     
     def do_add(self, c):
@@ -103,12 +117,22 @@ class DBCommandParser(cmd.Cmd):
             #print "%5d: %s"%(i_id, i_name)
             print "%5d: %s"%(i.id, os.path.relpath(i.full_name,RUN_DIR))
         
+    def do_status(self, c):
+        """gives the status of the results database """
+        ret = [ self.master_db.result_dbs[i] for i in  self.master_db.result_dbs]
+        
+        
+        
+        for i in sorted( ret , key = lambda x: x.full_name ):
+            #print "%5d: %s"%(i_id, i_name) 
+            print "%5d: %s"%(i.id, os.path.relpath(i.full_name,RUN_DIR))
+        
         
     def do_remove(self, c):
         """remove PARAMETERS_NAME|DB_NAME
         removes the database from the registered ones. It accepts many dbs"""
         for i_arg in c.split():
-            i_arg, db_name = translate_name(i_arg)
+            i_arg, db_name = self.__translate_name(i_arg)
             connection = sql.connect("%s/spg_pool.sqlite"%VAR_PATH)
             cursor = connection.cursor()
             cursor.execute( "DELETE FROM dbs WHERE full_name = ?",(os.path.realpath(db_name),) )

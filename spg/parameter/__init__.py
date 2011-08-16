@@ -1,7 +1,7 @@
 
-from paramdb import ParamDBBuilder
+from paramdb import EnsembleBuilder
 
 from atom import ParameterAtom, ParameterAtomExecutor
 
-from ensemble import ParameterEnsemble, WeightedParameterEnsemble, ParameterEnsembleExecutor, ResultsDBQuery
+from ensemble import ParameterEnsemble, ParameterEnsembleExecutor, ResultsDBQuery
 
