@@ -21,7 +21,7 @@ import numpy as n
 class ParameterEnsemble:
     normalising = 0.
     
-    def __init__(self, full_name = "", id=-1, weight=1., queue = 'any', init_db = True):
+    def __init__(self, full_name = "", id=-1, weight=1., queue = 'any', status = None, init_db = True):
         self.full_name = full_name
         self.path, self.db_name = os.path.split(full_name)
 
@@ -39,6 +39,8 @@ class ParameterEnsemble:
         self.weight = weight
         self.id = id
         self.queue = 'any'
+        self.status = status
+        
         ParameterEnsemble.normalising += weight
 
        

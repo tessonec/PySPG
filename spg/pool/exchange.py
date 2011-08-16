@@ -78,7 +78,7 @@ class DataExchanger(MasterDB):
 #       print ParameterDB.normalising 
 #      while not db_fits :
             rnd = ParameterEnsemble.normalising * random.random()
-            ls_dbs = sorted( self.dbs.keys() )
+            ls_dbs = sorted( self.result_dbs.keys() )
             curr_db = ls_dbs.pop()
             ac = self.result_dbs[ curr_db ].weight
             
@@ -121,30 +121,30 @@ class DataExchanger(MasterDB):
         for i_d in os.listdir("%s/run"%(VAR_PATH) ):
             pd = ParameterAtom(i_d)
             pd.load(src = 'run')
-            a_db =self.dbs[pd.full_db_name]
+            a_db =self.result_dbs[pd.full_db_name]
             pd.dump_result_in_ensemble( a_db  )
 
-
-    def synchronise_master(self):
-        for i in self.dbs:
-            icursor = self.dbs[i].cursor
-            icursor.execute("SELECT status, COUNT(*) FROM run_status GROUP BY status")
-            done, not_run, running,error = 0,0,0,0
-            for (k,v) in icursor:
-                if k == "D":
-                    done = v
-                elif k == "N":
-                    not_run = v
-                elif k == "R":
-                    running = v
-                elif k == "E":
-                    error = v
-            (no_combinations,) = icursor.execute("SELECT COUNT(*) FROM run_status ").fetchone()
-            (total_values_set,) = icursor.execute("SELECT COUNT(*) FROM values_set ").fetchone()
-
-            self.cursor.execute("UPDATE dbs SET total_values_set = ? , total_combinations = ?, done_combinations = ?, running_combinations = ?, error_combinations = ? WHERE full_name = ? ",(total_values_set, no_combinations, done, running, error,  self.dbs[i].full_name ))
-            if not_run == 0:
-                self.cursor.execute("UPDATE dbs SET status = ? WHERE full_name = ? ",('D',self.dbs[i].full_name))
-
-        self.connection.commit()
+#
+#    def synchronise_master(self):
+#        for i in self.dbs:
+#            icursor = self.dbs[i].cursor
+#            icursor.execute("SELECT status, COUNT(*) FROM run_status GROUP BY status")
+#            done, not_run, running,error = 0,0,0,0
+#            for (k,v) in icursor:
+#                if k == "D":
+#                    done = v
+#                elif k == "N":
+#                    not_run = v
+#                elif k == "R":
+#                    running = v
+#                elif k == "E":
+#                    error = v
+#            (no_combinations,) = icursor.execute("SELECT COUNT(*) FROM run_status ").fetchone()
+#            (total_values_set,) = icursor.execute("SELECT COUNT(*) FROM values_set ").fetchone()
+#
+#            self.cursor.execute("UPDATE dbs SET total_values_set = ? , total_combinations = ?, done_combinations = ?, running_combinations = ?, error_combinations = ? WHERE full_name = ? ",(total_values_set, no_combinations, done, running, error,  self.dbs[i].full_name ))
+#            if not_run == 0:
+#                self.cursor.execute("UPDATE dbs SET status = ? WHERE full_name = ? ",('D',self.dbs[i].full_name))
+#
+#        self.connection.commit()
 

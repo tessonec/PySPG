@@ -18,7 +18,7 @@ import os, os.path
 
 class DBCommandParser(cmd.Cmd):
     """DB command handler"""
-   
+
  
     def __init__(self):
         cmd.Cmd.__init__(self)
@@ -29,9 +29,7 @@ class DBCommandParser(cmd.Cmd):
         self.doc_header = "default values: %s"%(self.values )
         self.current_param_db = None 
         self.master_db =  MasterDB()
-    
-    
-         
+
 
     def __translate_name( self,st):
         """translates the parameters filename and the  database name 
@@ -59,19 +57,26 @@ class DBCommandParser(cmd.Cmd):
     def __update_active_result_db(self, c):
         c = c.strip()
         if not c: return 
-            
+
         param_name, db_name = self.__translate_name(c)
         if os.path.exists( db_name ):
            self.current_param_db = ParameterEnsemble( db_name )
+           self.values["weight"] = self.current_param_db.weight 
         if os.path.exists( param_name ) and not os.path.exists( db_name ):
            self.current_param_db = ParameterEnsemble( db_name , db_init = False)
+           self.current_param_db.weight = self.values["weight"]
+        
+        db_id = self.master_db.execute_query_fetchone( "SELECT id FROM dbs WHERE full_name = '%s' "%full_name).fetchone()
+        if db_id is not None:
+            (self.current_param_db,) = db_id
+
         return   
         
 
         
-    def do_init(self, c):
-        """init PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
-        Generates a new database out of a single database"""
+    def do_build(self, c):
+        """build PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
+        Generates a new database out of a parameters.dat"""
         c = c.split()
         i_arg = c[0]
         if len(c) >1: self.do_set( ":".join( c[1:] ) )
@@ -83,7 +88,9 @@ class DBCommandParser(cmd.Cmd):
         parser.init_db(retry = self.values['sql_retries'])
         parser.fill_status(repeat = int(self.values['repeat']) )
         
-    
+        
+        
+
     def do_clean(self, c):
         """clean PARAMETERS_NAME|DB_NAME
         cleans the database. It accepts several of them"""
@@ -100,13 +107,13 @@ class DBCommandParser(cmd.Cmd):
             i_arg, db_name = self.__translate_name(i_arg)
             parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
             parser.clean_all_status()
-    
+
     def do_add(self, c):
         """add PARAMETERS_NAME|DB_NAME
         adds the database to the registered ones"""
 #        for i_arg in c.split():
         pass
-        
+
     def do_ls(self, c):
         """lists the databases already in the database"""
         ret = [ self.master_db.result_dbs[i] for i in  self.master_db.result_dbs]
@@ -119,15 +126,21 @@ class DBCommandParser(cmd.Cmd):
         
     def do_status(self, c):
         """gives the status of the results database """
-        ret = [ self.master_db.result_dbs[i] for i in  self.master_db.result_dbs]
-        
-        
-        
-        for i in sorted( ret , key = lambda x: x.full_name ):
-            #print "%5d: %s"%(i_id, i_name) 
-            print "%5d: %s"%(i.id, os.path.relpath(i.full_name,RUN_DIR))
-        
-        
+        self.master_db.update_results_stat( self.current_param_db.full_name )
+         = -1
+        self.current_param_db.stat_processes_not_run = -1
+        self.current_param_db.stat_processes_running = -1
+        self.current_param_db.stat_processes_error = -1
+        self.current_param_db.stat_values_set_with_rep = -1
+        self.current_param_db.stat_values_set = -1
+
+        print "%5d: %s"%( self.current_param_db.id, os.path.relpath(self.current_param_db.full_name,RUN_DIR) )
+        frac_done =  float(self.current_param_db.stat_processes_done) / float(self.current_param_db.stat_values_set)
+        print "[%s] TOT: %d - D: %d (%.5f) - R: %d -- E: %d "%
+             (status, self.current_param_db.stat_values_set, self.current_param_db.stat_processes_done, frac_done, running, frac_running, error, frac_error) 
+#
+
+
     def do_remove(self, c):
         """remove PARAMETERS_NAME|DB_NAME
         removes the database from the registered ones. It accepts many dbs"""
@@ -146,6 +159,9 @@ class DBCommandParser(cmd.Cmd):
         for k in ret:
             self.values[k] = ret[k]
             print "%s = %s" %(k,ret[k])
+        if self.current_param_db:
+            self.current_param_db.weight = self.values["weight"]
+            
         self.doc_header = "default values: %s"%(self.values )
                 
     def default(self, line):

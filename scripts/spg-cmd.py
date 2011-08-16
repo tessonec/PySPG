@@ -41,42 +41,6 @@ import sqlite3 as sql
 ######################################################################################################
 ######################################################################################################
 
-
-def write_db_stat_into_master(full_name, cur_master):
-       conn2 = sql.connect(full_name)
-       cur2 = conn2.cursor()
-       #:::~    'N': not run yet
-       #:::~    'R': running
-       #:::~    'D': successfully run (done)
-       #:::~    'E': run but with non-zero error code
-
-       (n_all, ) = cur2.execute("SELECT COUNT(*) FROM run_status ;").fetchone()
-       (total_sov, ) = cur2.execute("SELECT COUNT(*) FROM values_set ;").fetchone()
-       
-       cur2.execute('UPDATE run_status SET status = "N" WHERE status ="R"')
-       conn2.commit()
-       cur2.execute("SELECT status, COUNT(*) FROM run_status GROUP BY status")
-       done, not_run, running,error = 0,0,0,0
-       for (k,v) in cur2:
-                if k == "D":
-                  done = v
-                elif k == "N":
-                  not_run = v
-                elif k == "R":
-                  running = v
-                elif k == "E":
-                  error = v
-       conn2.close()
-       res = cur_master.execute("SELECT * FROM dbs WHERE full_name = ?",(full_name,)).fetchone()
-#       print res
-       if res == None:
-         cur_master.execute("INSERT INTO dbs (full_name,total_values_set, total_combinations, done_combinations, running_combinations, error_combinations, status) VALUES (?,?,?,?,?,?,?)",(full_name,n_all, total_sov, done, running, error, "S"  ))
-       else:
-         cur_master.execute("UPDATE dbs SET total_values_set = ? , total_combinations = ?, done_combinations = ?, running_combinations = ?, error_combinations = ? WHERE full_name = ? ",(n_all, total_sov, done, running, error, full_name ))
-         if not_run == 0:
-           cur_master.execute("UPDATE dbs SET status = ? WHERE full_name = ? ",('D',full_name))
-
-
 def process_queue(cmd, name, params):
    # queue [add|remove|set|stop] QUEUE_NAME {params} 
    # "(id INTEGER PRIMARY KEY, name CHAR(64), max_jobs INTEGER, status CHAR(1))")

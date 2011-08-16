@@ -49,23 +49,35 @@ class MasterDB:
         self.update_result_dbs()
 
 
+    def execute_query(self, query):
+        ret = [i for i in self.cursor.execute(query)]
+        return ret
+        
 
+    def execute_query_fetchone(self, query):
+        ret = self.cursor.execute(query).fetchone()
+        return ret
+        
     def update_result_dbs(self): # These are the dbs that are registered and running
         #self.dbs = {} 
         ParameterEnsemble.normalising = 0.
 ####         res = self.cursor.execute("SELECT id, full_name, weight, queue FROM dbs WHERE status = 'R'")
         res = self.cursor.execute("SELECT id, full_name, weight, queue FROM dbs ")
-        vec = [(id, full_name, weight, queue) for (id, full_name, weight, queue) in res]
+      #  vec = [(id, full_name, weight, queue, status) for (id, full_name, weight, queue, status) in res]
+        vec = [i for i in res]
     #    print self.dbs
         
-        for (id, full_name, weight, queue) in vec:
+        for (id, full_name, weight, queue, status) in vec:
             if full_name in self.result_dbs.keys():
                 self.result_dbs[full_name].id = id
                 self.result_dbs[full_name].queue = queue
+                self.result_dbs[full_name].status = status
+                self.result_dbs[full_name].weight = weight
+                
 #                print full_name, self.dbs[full_name].weight
                 continue
-            utils.newline_msg("INF","new db registered... '%s'"%full_name)
-            new_db = ParameterEnsemble(full_name, id, weight, queue)
+         ###   utils.newline_msg("INF","new db registered... '%s'"%full_name)
+            new_db = ParameterEnsemble(full_name, id, weight, queue, status)
             self.result_dbs[full_name] = new_db
     #    print self.dbs
    
@@ -73,7 +85,7 @@ class MasterDB:
 
     def update_results_stat(self, param_db):
         
-        
+        param_db.update_status()
         res = self.cursor.execute("SELECT * FROM dbs WHERE full_name = ?",(param_db.full_name,)).fetchone()
 #       print res
         if res == None:
@@ -93,5 +105,6 @@ class MasterDB:
     def synchronise_master(self):
         for i in self.result_dbs:
             self.update_results_stat(i.full_name)
+
 
 
