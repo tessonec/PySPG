@@ -13,7 +13,7 @@ import sys, optparse
 import os, os.path
 
 
-
+import fnmatch
 
 
 class DBCommandParser(cmd.Cmd):
@@ -53,7 +53,6 @@ class DBCommandParser(cmd.Cmd):
             db_name = "results%s.sqlite"%db_name
             return "%s/%s"%(path,st),"%s/%s"%(path,db_name)
             
- 
     def __update_active_result_db(self, c):
         c = c.strip()
         if not c: return 
@@ -72,7 +71,15 @@ class DBCommandParser(cmd.Cmd):
 
         return   
         
-
+    def __filter_db_list(self, ls = None, filter = None):
+        if ls == None:
+            ls = self.master_db.result_dbs.keys()
+        ret = [ os.path.relpath(i,RUN_DIR) for i in ls ]
+        if filter:
+            ret = fnmatch.filter(ret, filter) 
+              
+        return [ "%s/%s"%(RUN_DIR, i) for i in ret ]
+    
         
     def do_build(self, c):
         """build PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
@@ -87,9 +94,6 @@ class DBCommandParser(cmd.Cmd):
             parser.command = self.values['executable']
         parser.init_db(retry = self.values['sql_retries'])
         parser.fill_status(repeat = int(self.values['repeat']) )
-        
-        
-        
 
     def do_clean(self, c):
         """clean PARAMETERS_NAME|DB_NAME
@@ -116,28 +120,34 @@ class DBCommandParser(cmd.Cmd):
 
     def do_ls(self, c):
         """lists the databases already in the database"""
-        ret = [ self.master_db.result_dbs[i] for i in  self.master_db.result_dbs]
-        
-        
-        
-        for i in sorted( ret , key = lambda x: x.full_name ):
+
+        ls_res_db = self.__filter_db_list( filter = c ) 
+        for i in sorted( ls_res_db  ):
             #print "%5d: %s"%(i_id, i_name)
-            print "%5d: %s"%(i.id, os.path.relpath(i.full_name,RUN_DIR))
+            curr_db = self.master_db.result_dbs[i]
+            print "%5d: %s (%5.5f)"%(curr_db.id, os.path.relpath(curr_db.full_name,RUN_DIR), curr_db.weight )
         
+        
+#    def do_load(self,c):
+
     def do_status(self, c):
         """gives the status of the results database """
-        self.master_db.update_results_stat( self.current_param_db.full_name )
-         = -1
-        self.current_param_db.stat_processes_not_run = -1
-        self.current_param_db.stat_processes_running = -1
-        self.current_param_db.stat_processes_error = -1
-        self.current_param_db.stat_values_set_with_rep = -1
-        self.current_param_db.stat_values_set = -1
-
-        print "%5d: %s"%( self.current_param_db.id, os.path.relpath(self.current_param_db.full_name,RUN_DIR) )
-        frac_done =  float(self.current_param_db.stat_processes_done) / float(self.current_param_db.stat_values_set)
-        print "[%s] TOT: %d - D: %d (%.5f) - R: %d -- E: %d "%
-             (status, self.current_param_db.stat_values_set, self.current_param_db.stat_processes_done, frac_done, running, frac_running, error, frac_error) 
+        
+        if not c:
+            ls_res_db = [ self.current_param_db.full_name ]
+        else:
+            ls_res_db = self.__filter_db_list( filter = c )
+        for i in ls_res_db: 
+            curr_db = self.master_db.result_dbs[i]
+        
+            self.master_db.update_results_stat( curr_db )
+        
+            print "%5d: %s"%( curr_db.id, os.path.relpath(curr_db.full_name,RUN_DIR) )
+            frac_done =  float(curr_db.stat_processes_done) / float(curr_db.stat_values_set)
+            
+            n_repet = curr_db.stat_values_set_with_rep/ curr_db.stat_values_set
+            
+            print "     [status: %s] TOTAL: %d (*%d) - D: %d (%.5f) - R: %d -- E: %d "%(curr_db.status, curr_db.stat_values_set,n_repet , curr_db.stat_processes_done, frac_done, curr_db.stat_processes_running,  curr_db.stat_processes_error ) 
 #
 
 

@@ -19,7 +19,7 @@ import numpy as n
 
 
 class ParameterEnsemble:
-    normalising = 0.
+#    normalising = 0.
     
     def __init__(self, full_name = "", id=-1, weight=1., queue = 'any', status = None, init_db = True):
         self.full_name = full_name
@@ -29,19 +29,19 @@ class ParameterEnsemble:
         self.directory_vars = None
 
         
-        self.stat_processes_done = -1
-        self.stat_processes_not_run = -1
-        self.stat_processes_running = -1
-        self.stat_processes_error = -1
-        self.stat_values_set_with_rep = -1
-        self.stat_values_set = -1
+        self.stat_processes_done = 0
+        self.stat_processes_not_run = 0
+        self.stat_processes_running = 0
+        self.stat_processes_error = 0
+        self.stat_values_set_with_rep = 0
+        self.stat_values_set = 0
 
         self.weight = weight
         self.id = id
         self.queue = 'any'
         self.status = status
         
-        ParameterEnsemble.normalising += weight
+    #    ParameterEnsemble.normalising += weight
 
        
         self.__init_db()
@@ -175,9 +175,9 @@ class ParameterEnsemble:
  
  
     def update_weight(self,weight):
-        ParameterEnsemble.normalising -= self.weight  
+     #   ParameterEnsemble.normalising -= self.weight  
         self.weight = weight
-        ParameterEnsemble.normalising += self.weight
+     #   ParameterEnsemble.normalising += self.weight
  
         
 #

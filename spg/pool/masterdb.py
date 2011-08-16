@@ -44,26 +44,55 @@ class MasterDB:
             self.connection = connection
             
         self.cursor = self.connection.cursor()
-        
+        self.__init_db()
         self.result_dbs = {} 
         self.update_result_dbs()
 
+    def __init_db(self):
+    
+        #:::~ status can be either 
+        #:::~    'S': stopped
+        #:::~    'R': running
+        #:::~    'F': finished
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS dbs "
+                       "(id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), db_name CHAR(256), status CHAR(1), total_values_set INTEGER, "
+                       " total_combinations INTEGER, done_combinations INTEGER, running_combinations INTEGER, error_combinations INTEGER, "
+                       " weight FLOAT, queue CHAR(64))")
+    
+        #:::~ status can be either 
+        #:::~    'S': stopped
+        #:::~    'R': running
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS queues "
+                       "(id INTEGER PRIMARY KEY, name CHAR(64), max_jobs INTEGER, status CHAR(1))")
+    
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS running "
+                       "(id INTEGER PRIMARY KEY, job_id CHAR(64), dbs_id INTEGER, params_id INTEGER)")
+    
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS infiles "
+                          "(id INTEGER PRIMARY KEY, last INTEGER)")
+        
+        self.connection.commit()
 
     def execute_query(self, query):
         ret = [i for i in self.cursor.execute(query)]
+        self.connection.commit()
         return ret
         
 
     def execute_query_fetchone(self, query):
         ret = self.cursor.execute(query).fetchone()
+        self.connection.commit()
         return ret
         
-    def update_result_dbs(self): # These are the dbs that are registered and running
+    def update_result_dbs(self, status = None): # These are the dbs that are registered and running
         #self.dbs = {} 
-        ParameterEnsemble.normalising = 0.
+#        ParameterEnsemble.normalising = 0.
 ####         res = self.cursor.execute("SELECT id, full_name, weight, queue FROM dbs WHERE status = 'R'")
-        res = self.cursor.execute("SELECT id, full_name, weight, queue FROM dbs ")
-      #  vec = [(id, full_name, weight, queue, status) for (id, full_name, weight, queue, status) in res]
+        if status:
+            res = self.cursor.execute("SELECT id, full_name, weight, queue, status FROM dbs  WHERE status = '%s'"%status)
+        else:  
+            res = self.cursor.execute("SELECT id, full_name, weight, queue, status FROM dbs ")
+#  vec = [(id, full_name, weight, queue, status) for (id, full_name, weight, queue, status) in res]
         vec = [i for i in res]
     #    print self.dbs
         
@@ -76,7 +105,7 @@ class MasterDB:
                 
 #                print full_name, self.dbs[full_name].weight
                 continue
-         ###   utils.newline_msg("INF","new db registered... '%s'"%full_name)
+###   utils.newline_msg("INF","new db registered... '%s'"%full_name)
             new_db = ParameterEnsemble(full_name, id, weight, queue, status)
             self.result_dbs[full_name] = new_db
     #    print self.dbs

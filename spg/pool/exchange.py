@@ -72,13 +72,24 @@ class DataExchanger(MasterDB):
 #    #    print self.dbs
 #   
 
+    def update_running_ensembles(self):
+            self.normalising = 0.
+            self.active_dbs = []
+            for i in self.result_dbs.keys():
+                if self.result_dbs[i].status == 'R':
+                    self.normalising += self.result_dbs[ i ].weight
+                    self.active_dbs.append( self.result_dbs[ i ] )
+
+
 
     def generate_new_process(self):
 #     db_fits = False
 #       print ParameterDB.normalising 
 #      while not db_fits :
-            rnd = ParameterEnsemble.normalising * random.random()
-            ls_dbs = sorted( self.result_dbs.keys() )
+
+            rnd = self.normalising * random.random()
+            ls_dbs = self.active_dbs[:]
+#            ls_dbs = sorted( self.result_dbs.keys() )
             curr_db = ls_dbs.pop()
             ac = self.result_dbs[ curr_db ].weight
             
@@ -97,7 +108,7 @@ class DataExchanger(MasterDB):
         self.seeded_atoms =  self.waiting_processes - len(os.listdir("%s/queued"%(VAR_PATH) ) ) 
 #      utils.newline_msg("INF", "initialise_infiles - %d"%to_run_processes )
 #        print "inti"
-
+        self.update_running_ensembles()
         for i_atom in range(self.seeded_atoms):
             sel_db = self.generate_new_process(  )
 #            utils.newline_msg("INF", "  >> %s/%s"%(sel_db.path,sel_db.db_name) )
