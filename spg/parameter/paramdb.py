@@ -20,6 +20,7 @@ class EnsembleBuilder(MultIteratorParser):
     """Generates a DB file with the representation of the parameters"""
     def __init__(self, stream=None, db_name = "results.sqlite", timeout = 5):
         MultIteratorParser.__init__(self, stream)
+        print self.data
         if not check_params.consistency(self.command, self):
             utils.newline_msg("ERR","data not consistent.")
             sys.exit(1)

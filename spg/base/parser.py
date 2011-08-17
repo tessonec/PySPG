@@ -54,19 +54,19 @@ class MultIteratorParser(iterator.MultIterator):
         self.regexp = re.compile('\\w')
         
         if stream is not None:
-          self.fetch(stream)
+            self.fetch(stream)
 
 
     def output_conf(self):
-      ret = ""
-      for i in self.data:
-        if i.__class__ == iterator.Iterator:
-            ret += ".%s  %s\n"%(i.name, " ".join(i.data))
-        if i.__class__ == iterator.IterConstant:
-            ret += ":%s  %s\n"%(i.name, " ".join(i.data))
-        if i.__class__ == iterator.IterOperator:
-            ret += "%s%s  %s  %s  %s\n"%(i.type, i.name, i.xmin, i.xmax, i.xstep)
-      return ret
+        ret = ""
+        for i in self.data:
+            if i.__class__ == iterator.Iterator:
+                ret += ".%s  %s\n"%(i.name, " ".join(i.data))
+            if i.__class__ == iterator.IterConstant:
+                ret += ":%s  %s\n"%(i.name, " ".join(i.data))
+            if i.__class__ == iterator.IterOperator:
+                ret += "%s%s  %s  %s  %s\n"%(i.type, i.name, i.xmin, i.xmax, i.xstep)
+        return ret
 
 
     def fetch(self, stream):

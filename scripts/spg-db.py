@@ -31,12 +31,18 @@ class DBCommandParser(cmd.Cmd):
         self.master_db =  MasterDB()
 
 
+    def __shorten_name(self, st):
+        return os.path.relpath(st,RUN_DIR)
+
+    def __lengthen_name(self, st):
+        return "%s/%s"%(RUN_DIR, st)
+
     def __translate_name( self,st):
         """translates the parameters filename and the  database name 
            into the other and viceversa (returns a duple: param_name, db_name)"""
         full_name = st
         if not os.path.exists(full_name):
-            full_name = os.path.expanduser( "%s/%s"%(RUN_DIR,st) )
+            full_name = self.__lengthen_name(full_name)
         if not os.path.exists(full_name):
             utils.newline_msg("ERR","database '%s' does not exist"%st)
             sys.exit(2)
@@ -47,11 +53,13 @@ class DBCommandParser(cmd.Cmd):
         if ".sqlite" in st:
             par_name = st.replace("results","").replace(".sqlite","")
             par_name = "parameters%s.dat"%par_name
-            return "%s/%s"%(path,par_name), "%s/%s"%(path,st)
+#            return self.__lengthen_name( "%s/%s"%(path,par_name) ), self.__lengthen_name( "%s/%s"%(path,st) )
+            return  "%s/%s"%(path,par_name) , "%s/%s"%(path,st)
         else:
             db_name = st.replace("parameters","").replace(".dat","")
             db_name = "results%s.sqlite"%db_name
-            return "%s/%s"%(path,st),"%s/%s"%(path,db_name)
+            #return self.__lengthen_name( "%s/%s"%(path,st) ), self.__lengthen_name( "%s/%s"%(path,db_name) )
+            return  "%s/%s"%(path,st) ,  "%s/%s"%(path,db_name) 
             
     def __update_active_result_db(self, c):
         c = c.strip()
@@ -72,16 +80,21 @@ class DBCommandParser(cmd.Cmd):
         return   
         
     def __filter_db_list(self, ls = None, filter = None):
+#        if not filter and not ls:
+#            try: 
+#                return [ self.current_param_db.full_name ]
+#            except: 
+#                return None
         if ls == None:
             ls = self.master_db.result_dbs.keys()
-        ret = [ os.path.relpath(i,RUN_DIR) for i in ls ]
+        ret = [ self.__shorten_name(i) for i in ls ]
         if filter:
             ret = fnmatch.filter(ret, filter) 
               
-        return [ "%s/%s"%(RUN_DIR, i) for i in ret ]
+        return [ self.__lengthen_name( i ) for i in ret ]
     
         
-    def do_build(self, c):
+    def do_init(self, c):
         """build PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
         Generates a new database out of a parameters.dat"""
         c = c.split()
@@ -116,27 +129,72 @@ class DBCommandParser(cmd.Cmd):
         """add PARAMETERS_NAME|DB_NAME
         adds the database to the registered ones"""
 #        for i_arg in c.split():
-        pass
+        ls_res_db = self.__filter_db_list( filter = c )
+ #       for i in ls_res_db: 
+  #      pass
 
     def do_ls(self, c):
         """lists the databases already in the database"""
 
         ls_res_db = self.__filter_db_list( filter = c ) 
+        if not ls_res_db: return
+        print "--- registered dbs" 
         for i in sorted( ls_res_db  ):
             #print "%5d: %s"%(i_id, i_name)
             curr_db = self.master_db.result_dbs[i]
-            print "%5d: %s (%5.5f)"%(curr_db.id, os.path.relpath(curr_db.full_name,RUN_DIR), curr_db.weight )
+            print "%5d: %s (%5.5f)"%(curr_db.id, self.__shorten_name( curr_db.full_name ), curr_db.weight )
+        ls_res_db = fnmatch.filter( os.listdir("."), "results*.sqlite" )
+        ls_res_db.extend( fnmatch.filter( os.listdir("."), "parameter*.dat" ) )
+        ls_res_db = self.__filter_db_list(  ls_res_db, filter = c )
+        if len(ls_res_db) >0:
+            print "--- cwd dbs"
+            for i in sorted( ls_res_db  ):
+                print "     : %s "%self.__shorten_name(i)
+             
+        
+        
+    def do_load(self,c):
+        """build PARAMETERS_NAME|DB_NAME 
+        loads one of the databases from the registered ones"""
+        c = c.split()
+        if len(c) >1:
+            utils.newline_msg("err", "only one db can be loaded at a time", 2)
+            return
+        try: 
+            id = int(c[0])
+            self.current_param_db = filter(lambda x: x.id == id, self.master_db.result_dbs.values() )[0]
+        except:
+            i_arg = c[0]
+            i_arg, db_name = self.__translate_name(i_arg)
+            print i_arg, db_name
+            if self.master_db.result_dbs.has_key( db_name ):
+                self.current_param_db = self.master_db.result_dbs[db_name]
+                utils.newline_msg("msg", "loaded db '%s'"%self.__shorten_name( self.current_param_db.full_name ), 2)
+#            elif os.path.exists( db_name ) or os.path.exists( i_arg ):
+#                parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
+#                self.current_param_db = ParameterEnsemble( db_name )
+#                utils.newline_msg("msg", "loaded db '%s'/'%s'"%( self.__shorten_name( db_name ), self.__shorten_name( i_arg ) ), 2)
+#            
+                
+            else:    
+                utils.newline_msg("err", "db does not exist", 2)
+#        parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
+        
+#        if 'executable' in self.values.keys():
+#            parser.command = self.values['executable']
+#        parser.init_db(retry = self.values['sql_retries'])
         
         
 #    def do_load(self,c):
 
     def do_status(self, c):
         """gives the status of the results database """
-        
         if not c:
             ls_res_db = [ self.current_param_db.full_name ]
         else:
             ls_res_db = self.__filter_db_list( filter = c )
+        if not ls_res_db: return
+        
         for i in ls_res_db: 
             curr_db = self.master_db.result_dbs[i]
         
