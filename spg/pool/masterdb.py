@@ -73,23 +73,23 @@ class MasterDB:
         
         self.connection.commit()
 
-    def execute_query(self, query):
-        ret = [i for i in self.cursor.execute(query)]
+    def execute_query(self, query, *args):
+        ret = [i for i in self.cursor.execute(query, args)]
         self.connection.commit()
         return ret
         
 
-    def execute_query_fetchone(self, query):
-        ret = self.cursor.execute(query).fetchone()
+    def execute_query_fetchone(self, query, *args):
+        ret = self.cursor.execute(query, args).fetchone()
         self.connection.commit()
         return ret
         
     def update_result_dbs(self, status = None): # These are the dbs that are registered and running
-        #self.dbs = {} 
+        self.result_dbs = {} 
 #        ParameterEnsemble.normalising = 0.
 ####         res = self.cursor.execute("SELECT id, full_name, weight, queue FROM dbs WHERE status = 'R'")
         if status:
-            res = self.cursor.execute("SELECT id, full_name, weight, queue, status FROM dbs  WHERE status = '%s'"%status)
+            res = self.cursor.execute("SELECT id, full_name, weight, queue, status FROM dbs  WHERE status = ?",status)
         else:  
             res = self.cursor.execute("SELECT id, full_name, weight, queue, status FROM dbs ")
 #  vec = [(id, full_name, weight, queue, status) for (id, full_name, weight, queue, status) in res]

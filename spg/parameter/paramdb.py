@@ -16,6 +16,8 @@ from spg.base import MultIteratorParser, IterConstant
 import sys
 import sqlite3 as sql
 
+
+
 class EnsembleBuilder(MultIteratorParser):
     """Generates a DB file with the representation of the parameters"""
     def __init__(self, stream=None, db_name = "results.sqlite", timeout = 5):
@@ -73,17 +75,13 @@ class EnsembleBuilder(MultIteratorParser):
 
         self.possible_varying_ids = []
         i_try = 0
-        commited = False
-        while i_try < retry and not commited:
-            i_try += 1
-            for i in self:
+        for i in self:
                 self.cursor.execute( elements, [ self[i] for i in self.names] )
                 self.possible_varying_ids.append(self.cursor.lastrowid)
-            self.connection.commit()
-            commited = True
+        self.connection.commit()
               
-        if not commited:
-            utils.newline_msg("ERR", "database didn't unlock, exiting")
+        #if not commited:
+        #    utils.newline_msg("ERR", "database didn't unlock, exiting")
           
         self.number_of_columns = 0
         for ic, iv in self.stdout_contents:

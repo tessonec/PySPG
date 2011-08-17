@@ -73,7 +73,7 @@ class DBCommandParser(cmd.Cmd):
            self.current_param_db = ParameterEnsemble( db_name , db_init = False)
 #           self.current_param_db.weight = self.values["weight"]
         
-        db_id = self.master_db.execute_query_fetchone( "SELECT id FROM dbs WHERE full_name = '%s' "%full_name).fetchone()
+        db_id = self.master_db.execute_query_fetchone( "SELECT id FROM dbs WHERE full_name = ? ", full_name)
         if db_id is not None:
             (self.current_param_db,) = db_id
 
@@ -92,7 +92,15 @@ class DBCommandParser(cmd.Cmd):
             ret = fnmatch.filter(ret, filter) 
               
         return [ self.__lengthen_name( i ) for i in ret ]
-    
+
+    def __complete(self, text):    
+        completions = self.master_db.result_dbs[:]
+        if text:
+            completions = [ f
+                            for f in completions
+                            if f.startswith(text)
+                            ]
+        return completions
         
     def do_init(self, c):
         """build PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
@@ -114,6 +122,17 @@ class DBCommandParser(cmd.Cmd):
         self.master_db.update_results_stat( self.current_param_db )
         self.current_param_db.id = self.master_db.lastrowid
 
+    def complete_init(self, text, line, begidx, endidx):    
+        completions = fnmatch.filter( os.listdir("."), "results*.sqlite" )
+        completions.extend( fnmatch.filter( os.listdir("."), "parameters*.dat" ) )
+#        print completions, os.path.realpath(".")
+        if text:
+            completions = [ f
+                            for f in completions
+                            if f.startswith(text)
+                            ]
+        return completions
+        
 
         
 #    def clean_status(self):
@@ -127,7 +146,7 @@ class DBCommandParser(cmd.Cmd):
 #        self.connection.commit()
 
     def do_clean(self, c):
-        """cleans the database by setting the R into N"""
+        """cleans the results database by setting the R into N"""
         if self.current_param_db:
             self.current_param_db.execute_query('UPDATE run_status SET status = "N" WHERE status ="R"')
 #        for i_arg in c.split():
@@ -137,12 +156,12 @@ class DBCommandParser(cmd.Cmd):
 
 
     def do_clean_all(self, c):
-        """cleans the database by setting all into N"""
+        """cleans the results database by setting all into N"""
         if self.current_param_db:
             self.current_param_db.execute_query('UPDATE run_status SET status = "N" ')
 
     def do_ls(self, c):
-        """lists the databases already in the database"""
+        """lists the databases already registered in the master database and the possible ones found in the current directory"""
 
         ls_res_db = self.__filter_db_list( filter = c ) 
         if not ls_res_db: return
@@ -162,7 +181,7 @@ class DBCommandParser(cmd.Cmd):
         
         
     def do_load(self,c):
-        """loads one of the databases from the registered ones"""
+        """loads one of the registered databases from the master"""
         c = c.split()
         if len(c) >1:
             utils.newline_msg("err", "only one db can be loaded at a time", 2)
@@ -194,8 +213,11 @@ class DBCommandParser(cmd.Cmd):
         
 #    def do_load(self,c):
 
+    def complete_load(self, text, line, begidx, endidx):
+        return self.__complete(text)
+
     def do_info(self, c):
-        """gives the status of the results database """
+        """prints the information of the results database """
         if not c:
             ls_res_db = [ self.current_param_db.full_name ]
         else:
@@ -215,8 +237,7 @@ class DBCommandParser(cmd.Cmd):
             print "     [status: %s] TOTAL: %d (*%d) - D: %d (%.5f) - R: %d -- E: %d "%(curr_db.status, curr_db.stat_values_set,n_repet , curr_db.stat_processes_done, frac_done, curr_db.stat_processes_running,  curr_db.stat_processes_error ) 
 
     def do_remove(self, c):
-        """remove PARAMETERS_NAME|DB_NAME
-        removes the database from the registered ones. It accepts many dbs"""
+        """removes one results database from the registered ones"""
         if not c:
             ls_res_db = [ self.current_param_db.full_name ]
         else:
@@ -224,11 +245,15 @@ class DBCommandParser(cmd.Cmd):
         if not ls_res_db: return
         
         for i in ls_res_db: 
-            self.master_db.execute_query("DELETE FROM dbs WHERE full_name = %s"%( i ) )
+            self.master_db.execute_query("DELETE FROM dbs WHERE full_name = ?", i  )
+        self.master_db.update_result_dbs()
+ 
+    def complete_remove(self, text, line, begidx, endidx):
+        return self.__complete(text)
     
     def do_set(self, c):
         """sets a VAR1=VALUE1[:VAR2=VALUE2]
-        removes the database to the registered ones"""
+        sets a value in the currently loaded database """
         ret = utils.parse_to_dict(c, allowed_keys=self.possible_keys)
 #        for k in ret:
 #            self.values[k] = ret[k]
@@ -236,21 +261,67 @@ class DBCommandParser(cmd.Cmd):
         if self.current_param_db:
             if ret.has_key('weight'):
                 self.current_param_db.weight = ret["weight"]
-                self.master_db.execute( 'UPDATE dbs SET weight=%s WHERE id = %s'% ( self.current_param_db.weight, self.current_param_db.id ) )
+                self.master_db.execute( 'UPDATE dbs SET weight= ? WHERE id = ?', self.current_param_db.weight, self.current_param_db.id  )
             if ret.has_key('status'):
                 self.current_param_db.status = ret["status"]
-                self.master_db.execute( 'UPDATE dbs SET status="%s" WHERE id = %s'% ( self.current_param_db.status, self.current_param_db.id ) )
+                self.master_db.execute( 'UPDATE dbs SET status= ? WHERE id = ?', self.current_param_db.status, self.current_param_db.id  )
             if ret.has_key('repeat'):
                 self.current_param_db.repeat = ret["repeat"]
 #                self.master_db.execute( 'UPDATE dbs SET status="%s" WHERE id = %s'% ( self.current_param_db.status, self.current_param_db.id ) )
            
 #        self.doc_header = "default values: %s"%(self.values )
+
+    def __set_status(self, c, st):
+        if not c:
+            ls_res_db = [ self.current_param_db.full_name ]
+        else:
+            ls_res_db = self.__filter_db_list( filter = c )
+        if not ls_res_db: return
+        
+        for i in ls_res_db: 
+            self.current_param_db.status = st
+            self.master_db.execute( 'UPDATE dbs SET status= ? WHERE id = ?', st, self.current_param_db.id  )
+
+    def do_stop(self, c):
+        """stops the currently loaded registered database"""
+        self.__set_status(c, 'S')
+                
+    def do_start(self, c):
+        """starts the currently loaded registered database"""
+        self.__set_status(c, 'R')
+                
+    def do_pause(self, c):
+         """pauses the currently loaded registered database"""
+         self.__set_status(c, 'P')
                 
     def default(self, line):
         return True        
     
     def do_EOF(self, line):
         return True
+
+    def do_shell(self, line):
+        "Run a shell command"
+#        print "running shell command:", line
+        output = os.popen(line).read()
+        print output
+ #       self.last_output = output
+
+    def do_cd(self,line):
+        try:
+            os.chdir(line)
+        except:
+            utils.newline_msg("dir", "no directory named '%s'"%line, 2)
+
+    def complete_cd(self, text, line, begidx, endidx):    
+        completions = fnmatch.filter( os.listdir(".") )
+        print completions, os.path.realpath(".")
+        if text:
+            completions = [ f
+                            for f in completions
+                            if f.startswith(text)
+                            ]
+        return completions
 
 #    def do_EOF(self, line):
 #        return True
@@ -273,3 +344,51 @@ if __name__ == '__main__':
 #       "   clean PARAMETERS_NAME|DB_NAME \n"
 #       "   remove PARAMETERS_NAME|DB_NAME \n"
 
+
+
+
+
+
+
+
+
+
+
+
+
+###
+###
+###
+###
+###import cmd
+###
+###class HelloWorld(cmd.Cmd):
+###    """Simple command processor example."""
+###    
+###    FRIENDS = [ 'Alice', 'Adam', 'Barbara', 'Bob' ]
+###    
+###    def do_greet(self, person):
+###        "Greet the person"
+###        if person and person in self.FRIENDS:
+###            greeting = 'hi, %s!' % person
+###        elif person:
+###            greeting = "hello, " + person
+###        else:
+###            greeting = 'hello'
+###        print greeting
+###    
+###    def complete_greet(self, text, line, begidx, endidx):
+###        if not text:
+###            completions = self.FRIENDS[:]
+###        else:
+###            completions = [ f
+###                            for f in self.FRIENDS
+###                            if f.startswith(text)
+###                            ]
+###        return completions
+###    
+###    def do_EOF(self, line):
+###        return True
+###
+###if __name__ == '__main__':
+###    HelloWorld().cmdloop()

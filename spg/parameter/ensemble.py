@@ -61,16 +61,16 @@ class ParameterEnsemble:
 
 
 
-    def execute_query(self, query):
+    def execute_query(self, query, *args):
         self.__connect_db()
-        ret = [i for i in self.cursor.execute(query)]
+        ret = [i for i in self.cursor.execute(query, args)]
         self.__close_db()
         return ret 
 
 
-    def execute_query_fetchone(self, query):
+    def execute_query_fetchone(self, query, *args):
         self.__connect_db()
-        ret = self.cursor.execute(query).fetchone()
+        ret = self.cursor.execute(query, args).fetchone()
         self.__close_db()
         return ret 
 
