@@ -39,7 +39,7 @@ class MasterDB:
 
     def __init__(self,  connection = None):
         if not connection:
-            self.connection = sql.connect("%s/spg_pool.sqlite"%VAR_PATH)
+            self.connection = sql.connect("%s/spg_pool.sqlite"%VAR_PATH, timeout = TIMEOUT)
         else:
             self.connection = connection
             

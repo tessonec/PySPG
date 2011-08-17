@@ -29,7 +29,7 @@ class EnsembleBuilder(MultIteratorParser):
         self.connection =  sql.connect(db_name, timeout = timeout)
         self.cursor = self.connection.cursor()
 
-    def init_db(self, retry=1):
+    def init_db(self):
         #:::~ Table with the name of the executable
         self.cursor.execute("CREATE TABLE IF NOT EXISTS executable "
                             "(id INTEGER PRIMARY KEY, name CHAR(64))"
@@ -117,15 +117,15 @@ class EnsembleBuilder(MultIteratorParser):
         self.connection.commit()
 
 
-    def clean_status(self):
-        """Sets the run_status to None of all the run processes"""
-        self.cursor.execute('UPDATE run_status SET status = "N" WHERE status ="R"')
-        self.connection.commit()
-
-    def clean_all_status(self):
-        """Sets the run_status to None of all the processes"""
-        self.cursor.execute('UPDATE run_status SET status = "N" ')
-        self.connection.commit()
+#    def clean_status(self):
+#        """Sets the run_status to None of all the run processes"""
+#        self.cursor.execute('UPDATE run_status SET status = "N" WHERE status ="R"')
+#        self.connection.commit()
+#
+#    def clean_all_status(self):
+#        """Sets the run_status to None of all the processes"""
+#        self.cursor.execute('UPDATE run_status SET status = "N" ')
+#        self.connection.commit()
 
 
 #===============================================================================

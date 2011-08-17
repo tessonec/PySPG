@@ -22,11 +22,11 @@ class DBCommandParser(cmd.Cmd):
  
     def __init__(self):
         cmd.Cmd.__init__(self)
-        self.prompt = "( spg-db ) "
-        self.possible_keys = ['weight', 'repeat', 'executable' , 'sql_retries']
-        self.values = {'repeat': 1, 'sql_retries': 1, 'timeout' : 60, 'weight': 1}
+        self.prompt = "| spg-db :::~ "
+        self.possible_keys = ['weight', 'repeat',  'status']
+#        self.values = {'repeat': 1, 'sql_retries': 1, 'timeout' : 60, 'weight': 1}
 
-        self.doc_header = "default values: %s"%(self.values )
+#        self.doc_header = "default values: %s"%(self.values )
         self.current_param_db = None 
         self.master_db =  MasterDB()
 
@@ -68,10 +68,10 @@ class DBCommandParser(cmd.Cmd):
         param_name, db_name = self.__translate_name(c)
         if os.path.exists( db_name ):
            self.current_param_db = ParameterEnsemble( db_name )
-           self.values["weight"] = self.current_param_db.weight 
+#           self.values["weight"] = self.current_param_db.weight 
         if os.path.exists( param_name ) and not os.path.exists( db_name ):
            self.current_param_db = ParameterEnsemble( db_name , db_init = False)
-           self.current_param_db.weight = self.values["weight"]
+#           self.current_param_db.weight = self.values["weight"]
         
         db_id = self.master_db.execute_query_fetchone( "SELECT id FROM dbs WHERE full_name = '%s' "%full_name).fetchone()
         if db_id is not None:
@@ -99,39 +99,47 @@ class DBCommandParser(cmd.Cmd):
         Generates a new database out of a parameters.dat"""
         c = c.split()
         i_arg = c[0]
-        if len(c) >1: self.do_set( ":".join( c[1:] ) )
-
         i_arg, db_name = self.__translate_name(i_arg)
-        parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
-        if 'executable' in self.values.keys():
-            parser.command = self.values['executable']
-        parser.init_db(retry = self.values['sql_retries'])
-        parser.fill_status(repeat = int(self.values['repeat']) )
+        self.current_param_db = ParameterEnsemble( db_name ) #, weight = self.values['weight'] )
+
+        if len(c) >1: 
+            self.do_set( ":".join( c[1:] ) )
+
+        parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name , timeout = TIMEOUT )
+#        if 'executable' in self.values.keys():
+#            parser.command = self.values['executable']
+        parser.init_db(  )
+        parser.fill_status(repeat = self.current_param_db.repeat ) 
+#     __init__(full_name , id=-1, weight, queue , status, init_db = True):
+        self.master_db.update_results_stat( self.current_param_db )
+        self.current_param_db.id = self.master_db.lastrowid
+
+
+        
+#    def clean_status(self):
+#        """Sets the run_status to None of all the run processes"""
+#        self.cursor.execute('UPDATE run_status SET status = "N" WHERE status ="R"')
+#        self.connection.commit()
+#
+#    def clean_all_status(self):
+#        """Sets the run_status to None of all the processes"""
+#        self.cursor.execute('UPDATE run_status SET status = "N" ')
+#        self.connection.commit()
 
     def do_clean(self, c):
-        """clean PARAMETERS_NAME|DB_NAME
-        cleans the database. It accepts several of them"""
-        for i_arg in c.split():
-            i_arg, db_name = self.__translate_name(i_arg)
-            parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
-            parser.clean_status()
+        """cleans the database by setting the R into N"""
+        if self.current_param_db:
+            self.current_param_db.execute_query('UPDATE run_status SET status = "N" WHERE status ="R"')
+#        for i_arg in c.split():
+#            i_arg, db_name = self.__translate_name(i_arg)
+#            parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
+#            parser.clean_status()
 
 
     def do_clean_all(self, c):
-        """clean_all PARAMETERS_NAME|DB_NAME
-        cleans completely the database. It accepts several of them"""
-        for i_arg in c.split():
-            i_arg, db_name = self.__translate_name(i_arg)
-            parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
-            parser.clean_all_status()
-
-    def do_add(self, c):
-        """add PARAMETERS_NAME|DB_NAME
-        adds the database to the registered ones"""
-#        for i_arg in c.split():
-        ls_res_db = self.__filter_db_list( filter = c )
- #       for i in ls_res_db: 
-  #      pass
+        """cleans the database by setting all into N"""
+        if self.current_param_db:
+            self.current_param_db.execute_query('UPDATE run_status SET status = "N" ')
 
     def do_ls(self, c):
         """lists the databases already in the database"""
@@ -154,8 +162,7 @@ class DBCommandParser(cmd.Cmd):
         
         
     def do_load(self,c):
-        """build PARAMETERS_NAME|DB_NAME 
-        loads one of the databases from the registered ones"""
+        """loads one of the databases from the registered ones"""
         c = c.split()
         if len(c) >1:
             utils.newline_msg("err", "only one db can be loaded at a time", 2)
@@ -187,7 +194,7 @@ class DBCommandParser(cmd.Cmd):
         
 #    def do_load(self,c):
 
-    def do_status(self, c):
+    def do_info(self, c):
         """gives the status of the results database """
         if not c:
             ls_res_db = [ self.current_param_db.full_name ]
@@ -206,31 +213,38 @@ class DBCommandParser(cmd.Cmd):
             n_repet = curr_db.stat_values_set_with_rep/ curr_db.stat_values_set
             
             print "     [status: %s] TOTAL: %d (*%d) - D: %d (%.5f) - R: %d -- E: %d "%(curr_db.status, curr_db.stat_values_set,n_repet , curr_db.stat_processes_done, frac_done, curr_db.stat_processes_running,  curr_db.stat_processes_error ) 
-#
-
 
     def do_remove(self, c):
         """remove PARAMETERS_NAME|DB_NAME
         removes the database from the registered ones. It accepts many dbs"""
-        for i_arg in c.split():
-            i_arg, db_name = self.__translate_name(i_arg)
-            connection = sql.connect("%s/spg_pool.sqlite"%VAR_PATH)
-            cursor = connection.cursor()
-            cursor.execute( "DELETE FROM dbs WHERE full_name = ?",(os.path.realpath(db_name),) )
-
-            connection.commit()
+        if not c:
+            ls_res_db = [ self.current_param_db.full_name ]
+        else:
+            ls_res_db = self.__filter_db_list( filter = c )
+        if not ls_res_db: return
+        
+        for i in ls_res_db: 
+            self.master_db.execute_query("DELETE FROM dbs WHERE full_name = %s"%( i ) )
     
     def do_set(self, c):
         """sets a VAR1=VALUE1[:VAR2=VALUE2]
         removes the database to the registered ones"""
         ret = utils.parse_to_dict(c, allowed_keys=self.possible_keys)
-        for k in ret:
-            self.values[k] = ret[k]
-            print "%s = %s" %(k,ret[k])
+#        for k in ret:
+#            self.values[k] = ret[k]
+#            print "%s = %s" %(k,ret[k])
         if self.current_param_db:
-            self.current_param_db.weight = self.values["weight"]
-            
-        self.doc_header = "default values: %s"%(self.values )
+            if ret.has_key('weight'):
+                self.current_param_db.weight = ret["weight"]
+                self.master_db.execute( 'UPDATE dbs SET weight=%s WHERE id = %s'% ( self.current_param_db.weight, self.current_param_db.id ) )
+            if ret.has_key('status'):
+                self.current_param_db.status = ret["status"]
+                self.master_db.execute( 'UPDATE dbs SET status="%s" WHERE id = %s'% ( self.current_param_db.status, self.current_param_db.id ) )
+            if ret.has_key('repeat'):
+                self.current_param_db.repeat = ret["repeat"]
+#                self.master_db.execute( 'UPDATE dbs SET status="%s" WHERE id = %s'% ( self.current_param_db.status, self.current_param_db.id ) )
+           
+#        self.doc_header = "default values: %s"%(self.values )
                 
     def default(self, line):
         return True        

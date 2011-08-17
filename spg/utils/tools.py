@@ -96,8 +96,13 @@ def parse_to_dict(string, allowed_keys = None):
         if allowed_keys and k not in allowed_keys:
             newline_msg("SYN", "error key: '%s' not allowed -allowed values are %s-"%(k,allowed_keys))
             sys.exit(1)
-            
-        ret[k] = v
+        try:
+            ret[k] = int(v)
+        except: 
+            try:
+                ret[k] = float(v)
+            except:
+                ret[k] = v
     return ret       
 
 #v = eevaluate_stringexp({x}+{y_3})",d)
