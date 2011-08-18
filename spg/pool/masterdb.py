@@ -46,7 +46,7 @@ class MasterDB:
         self.cursor = self.connection.cursor()
         self.__init_db()
         self.result_dbs = {} 
-        self.update_result_dbs()
+        self.initialise_result_dbs()
 
     def __init_db(self):
     
@@ -84,7 +84,7 @@ class MasterDB:
         self.connection.commit()
         return ret
         
-    def update_result_dbs(self, status = None): # These are the dbs that are registered and running
+    def initialise_result_dbs(self, status = None): # These are the dbs that are registered and running
         self.result_dbs = {} 
 #        ParameterEnsemble.normalising = 0.
 ####         res = self.cursor.execute("SELECT id, full_name, weight, queue FROM dbs WHERE status = 'R'")
@@ -112,19 +112,19 @@ class MasterDB:
    
 
 
-    def update_results_stat(self, param_db):
+    def update_result_db(self, param_db):
         
         param_db.update_status()
         res = self.cursor.execute("SELECT * FROM dbs WHERE full_name = ?",(param_db.full_name,)).fetchone()
 #       print res
         if res == None:
             self.cursor.execute(
-                    "INSERT INTO dbs (full_name,total_values_set, total_combinations, done_combinations, running_combinations, error_combinations, status) VALUES (?,?,?,?,?,?,?)",
-                    (param_db.full_name,param_db.stat_values_set_with_rep, param_db.stat_values_set, param_db.stat_processes_done, param_db.stat_processes_running, param_db.stat_processes_error, "S"  ))
+                    "INSERT INTO dbs (full_name,total_values_set, total_combinations, done_combinations, running_combinations, error_combinations, status, weight , queue ) VALUES (?,?,?,?,?,?,?,?,?)",
+                    (param_db.full_name,param_db.stat_values_set_with_rep, param_db.stat_values_set, param_db.stat_processes_done, param_db.stat_processes_running, param_db.stat_processes_error, param_db.status , param_db.weight , param_db.queue))
         else:
             self.cursor.execute(
-                    "UPDATE dbs SET total_values_set = ? , total_combinations = ?, done_combinations = ?, running_combinations = ?, error_combinations = ? WHERE full_name = ? ",
-                    (param_db.stat_values_set_with_rep, param_db.stat_values_set, param_db.stat_processes_done, param_db.stat_processes_running, param_db.stat_processes_error, param_db.full_name ))
+                    "UPDATE dbs SET total_values_set = ? , total_combinations = ?, done_combinations = ?, running_combinations = ?, error_combinations = ?, status = ? , weight = ?, queue = ? WHERE full_name = ? ",
+                    (param_db.stat_values_set_with_rep, param_db.stat_values_set, param_db.stat_processes_done, param_db.stat_processes_running, param_db.stat_processes_error, param_db.full_name , param_db.status, param_db.weight, param_db.queue))
         if param_db.stat_processes_not_run == 0:
             self.cursor.execute("UPDATE dbs SET status = ? WHERE full_name = ? ",('D',param_db.full_name))
             
@@ -133,7 +133,7 @@ class MasterDB:
 
     def synchronise_master(self):
         for i in self.result_dbs:
-            self.update_results_stat(i.full_name)
+            self.update_result_db(i)
 
 
 

@@ -67,13 +67,16 @@ def consistency(exec_file, miparser):
     assert len(set(miparser.items() ) - set( possible_lines.keys() ) ) == 0 , "not all the variables are recognised: offending vars: %s"%(set( miparser.items() ) -set( possible_lines.keys() )  )
 
     for el in miparser.data:
-      
+    #    print el.name, 
         it = copy.copy( el )
         family, var_type, default = possible_lines[it.name]
+     #   print  family, var_type, default, 
+        
         values = [ i for i in it ]
         if len(values) == 0:
             values = it.data
         for val in values:
+            
             if family == "flag" : 
                 utils.newline_msg("VAL", "flag can not contain a value")
             elif family == "choice" and str(val) not in default: 
@@ -84,7 +87,7 @@ def consistency(exec_file, miparser):
                     float(val) 
                 except:
                     utils.newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
-                consistent_param = False
+                    consistent_param = False
             elif var_type in set(["int","unsigned", "long int", "long"]): 
                 try: 
                     int(val) 
@@ -98,7 +101,7 @@ def consistency(exec_file, miparser):
                     utils.newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
                     consistent_param = False
 
- 
+   #         print consistent_param
 
     return consistent_param
 

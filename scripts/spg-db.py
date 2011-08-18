@@ -22,8 +22,8 @@ class DBCommandParser(cmd.Cmd):
  
     def __init__(self):
         cmd.Cmd.__init__(self)
-        self.prompt = "| spg-db :::~ "
-        self.possible_keys = ['weight', 'repeat',  'status']
+        self.prompt = "|spg-db:::~ "
+        self.possible_keys = ['weight', 'repeat',  'status', 'queue']
 #        self.values = {'repeat': 1, 'sql_retries': 1, 'timeout' : 60, 'weight': 1}
 
 #        self.doc_header = "default values: %s"%(self.values )
@@ -40,7 +40,7 @@ class DBCommandParser(cmd.Cmd):
     def __translate_name( self,st):
         """translates the parameters filename and the  database name 
            into the other and viceversa (returns a duple: param_name, db_name)"""
-        full_name = st
+        full_name = os.path.realpath( st )
         if not os.path.exists(full_name):
             full_name = self.__lengthen_name(full_name)
         if not os.path.exists(full_name):
@@ -91,10 +91,10 @@ class DBCommandParser(cmd.Cmd):
         if filter:
             ret = fnmatch.filter(ret, filter) 
               
-        return [ self.__lengthen_name( i ) for i in ret ]
+        return sorted( [ self.__lengthen_name( i ) for i in ret ] )
 
     def __complete(self, text):    
-        completions = self.master_db.result_dbs[:]
+        completions = self.master_db.result_dbs.keys()
         if text:
             completions = [ f
                             for f in completions
@@ -108,19 +108,22 @@ class DBCommandParser(cmd.Cmd):
         c = c.split()
         i_arg = c[0]
         i_arg, db_name = self.__translate_name(i_arg)
-        self.current_param_db = ParameterEnsemble( db_name ) #, weight = self.values['weight'] )
+        if self.master_db.result_dbs.has_key( db_name ):
+            utils.newline_msg("WRN", "results db '%s' already registered"%self.__shorten_name( db_name ), 2)
+            return 
 
-        if len(c) >1: 
-            self.do_set( ":".join( c[1:] ) )
+        self.current_param_db = ParameterEnsemble( db_name, init_db = False ) #, weight = self.values['weight'] )
+        if len(c) >1: self.do_set( ":".join( c[1:] ) )
 
-        parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name , timeout = TIMEOUT )
+        parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name  )
 #        if 'executable' in self.values.keys():
 #            parser.command = self.values['executable']
         parser.init_db(  )
         parser.fill_status(repeat = self.current_param_db.repeat ) 
 #     __init__(full_name , id=-1, weight, queue , status, init_db = True):
-        self.master_db.update_results_stat( self.current_param_db )
-        self.current_param_db.id = self.master_db.lastrowid
+        self.master_db.update_result_db( self.current_param_db )
+        self.current_param_db.id = self.master_db.cursor.lastrowid
+        self.master_db.initialise_result_dbs()
 
     def complete_init(self, text, line, begidx, endidx):    
         completions = fnmatch.filter( os.listdir("."), "results*.sqlite" )
@@ -133,7 +136,23 @@ class DBCommandParser(cmd.Cmd):
                             ]
         return completions
         
+    def do_register(self,c):
+        """registers a given results database into the master database"""
+        c = c.split()
+        i_arg = c[0]
+        i_arg, db_name = self.__translate_name(i_arg)
+        if self.master_db.result_dbs.has_key( db_name ):
+            utils.newline_msg("WRN", "results db '%s' already registered"%self.__shorten_name( db_name ), 2)
+            return 
 
+        self.current_param_db = ParameterEnsemble( db_name ) #, weight = self.values['weight'] )
+        if len(c) >1: 
+            self.do_set( ":".join( c[1:] ) )
+
+        self.master_db.update_result_db( self.current_param_db )
+        self.current_param_db.id = self.master_db.cursor.lastrowid
+        self.master_db.initialise_result_dbs()
+        print " *--- registered '%s'with id=%d  "%(   self.current_param_db.full_name, self.current_param_db.id )
         
 #    def clean_status(self):
 #        """Sets the run_status to None of all the run processes"""
@@ -169,7 +188,10 @@ class DBCommandParser(cmd.Cmd):
         for i in sorted( ls_res_db  ):
             #print "%5d: %s"%(i_id, i_name)
             curr_db = self.master_db.result_dbs[i]
-            print "%5d: %s (%5.5f)"%(curr_db.id, self.__shorten_name( curr_db.full_name ), curr_db.weight )
+            try:
+                print "%5d: %s (%5.5f)"%(curr_db.id, self.__shorten_name( curr_db.full_name ), curr_db.weight )
+            except:
+                print "%5d: %s (%5s)"%(curr_db.id, self.__shorten_name( curr_db.full_name ), curr_db.weight )
         ls_res_db = fnmatch.filter( os.listdir("."), "results*.sqlite" )
         ls_res_db.extend( fnmatch.filter( os.listdir("."), "parameter*.dat" ) )
         ls_res_db = self.__filter_db_list(  ls_res_db, filter = c )
@@ -184,7 +206,7 @@ class DBCommandParser(cmd.Cmd):
         """loads one of the registered databases from the master"""
         c = c.split()
         if len(c) >1:
-            utils.newline_msg("err", "only one db can be loaded at a time", 2)
+            utils.newline_msg("ERR", "only one db can be loaded at a time", 2)
             return
         try: 
             id = int(c[0])
@@ -192,18 +214,16 @@ class DBCommandParser(cmd.Cmd):
         except:
             i_arg = c[0]
             i_arg, db_name = self.__translate_name(i_arg)
-            print i_arg, db_name
+    #       print i_arg, db_name
             if self.master_db.result_dbs.has_key( db_name ):
                 self.current_param_db = self.master_db.result_dbs[db_name]
-                utils.newline_msg("msg", "loaded db '%s'"%self.__shorten_name( self.current_param_db.full_name ), 2)
+                print " --- loaded db '%s'"%self.__shorten_name( self.current_param_db.full_name )
 #            elif os.path.exists( db_name ) or os.path.exists( i_arg ):
 #                parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
 #                self.current_param_db = ParameterEnsemble( db_name )
 #                utils.newline_msg("msg", "loaded db '%s'/'%s'"%( self.__shorten_name( db_name ), self.__shorten_name( i_arg ) ), 2)
-#            
-                
             else:    
-                utils.newline_msg("err", "db does not exist", 2)
+                utils.newline_msg("ERR", "db does not exist", 2)
 #        parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
         
 #        if 'executable' in self.values.keys():
@@ -219,7 +239,10 @@ class DBCommandParser(cmd.Cmd):
     def do_info(self, c):
         """prints the information of the results database """
         if not c:
-            ls_res_db = [ self.current_param_db.full_name ]
+            if not self.current_param_db:
+                return
+            else:
+                ls_res_db = [ self.current_param_db.full_name ]
         else:
             ls_res_db = self.__filter_db_list( filter = c )
         if not ls_res_db: return
@@ -227,14 +250,14 @@ class DBCommandParser(cmd.Cmd):
         for i in ls_res_db: 
             curr_db = self.master_db.result_dbs[i]
         
-            self.master_db.update_results_stat( curr_db )
+            self.master_db.update_result_db( curr_db )
         
             print "%5d: %s"%( curr_db.id, os.path.relpath(curr_db.full_name,RUN_DIR) )
             frac_done =  float(curr_db.stat_processes_done) / float(curr_db.stat_values_set)
             
             n_repet = curr_db.stat_values_set_with_rep/ curr_db.stat_values_set
             
-            print "     [status: %s] TOTAL: %d (*%d) - D: %d (%.5f) - R: %d -- E: %d "%(curr_db.status, curr_db.stat_values_set,n_repet , curr_db.stat_processes_done, frac_done, curr_db.stat_processes_running,  curr_db.stat_processes_error ) 
+            print "     [status: %s] TOTAL: %d (*%d) - D: %d (%.5f) - R: %d - E: %d / w=%5.5f queue=%s  "%(curr_db.status, curr_db.stat_values_set,n_repet , curr_db.stat_processes_done, frac_done, curr_db.stat_processes_running,  curr_db.stat_processes_error, curr_db.weight, curr_db.queue ) 
 
     def do_remove(self, c):
         """removes one results database from the registered ones"""
@@ -261,12 +284,15 @@ class DBCommandParser(cmd.Cmd):
         if self.current_param_db:
             if ret.has_key('weight'):
                 self.current_param_db.weight = ret["weight"]
-                self.master_db.execute( 'UPDATE dbs SET weight= ? WHERE id = ?', self.current_param_db.weight, self.current_param_db.id  )
+                self.master_db.execute_query( 'UPDATE dbs SET weight= ? WHERE id = ?', self.current_param_db.weight, self.current_param_db.id  )
             if ret.has_key('status'):
                 self.current_param_db.status = ret["status"]
-                self.master_db.execute( 'UPDATE dbs SET status= ? WHERE id = ?', self.current_param_db.status, self.current_param_db.id  )
+                self.master_db.execute_query( 'UPDATE dbs SET status= ? WHERE id = ?', self.current_param_db.status, self.current_param_db.id  )
             if ret.has_key('repeat'):
                 self.current_param_db.repeat = ret["repeat"]
+            if ret.has_key('queue'):
+                self.current_param_db.queue = ret["queue"]
+                self.master_db.execute_query( 'UPDATE dbs SET queue= ? WHERE id = ?', self.current_param_db.queue, self.current_param_db.id  )
 #                self.master_db.execute( 'UPDATE dbs SET status="%s" WHERE id = %s'% ( self.current_param_db.status, self.current_param_db.id ) )
            
 #        self.doc_header = "default values: %s"%(self.values )
@@ -294,8 +320,8 @@ class DBCommandParser(cmd.Cmd):
          """pauses the currently loaded registered database"""
          self.__set_status(c, 'P')
                 
-    def default(self, line):
-        return True        
+   # def default(self, line):
+   #     return True        
     
     def do_EOF(self, line):
         return True
@@ -314,14 +340,24 @@ class DBCommandParser(cmd.Cmd):
             utils.newline_msg("dir", "no directory named '%s'"%line, 2)
 
     def complete_cd(self, text, line, begidx, endidx):    
-        completions = fnmatch.filter( os.listdir(".") )
-        print completions, os.path.realpath(".")
+        completions =  filter(lambda x: os.path.isdir(x) , os.listdir(".") )
+    #    print completions 
+#      #  print completions, os.path.realpath(".")
+        print '\n\n>>>%s<<<\n\n'%( text, line, begidx, endidx )
         if text:
             completions = [ f
                             for f in completions
                             if f.startswith(text)
                             ]
         return completions
+#        if not text:
+#            completions = self.FRIENDS[:]
+#        else:
+#            completions = [ f
+#                            for f in self.FRIENDS
+#                            if f.startswith(text)
+#                            ]
+#        return completions
 
 #    def do_EOF(self, line):
 #        return True
@@ -386,7 +422,7 @@ if __name__ == '__main__':
 ###                            if f.startswith(text)
 ###                            ]
 ###        return completions
-###    
+###
 ###    def do_EOF(self, line):
 ###        return True
 ###
