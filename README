@@ -1,0 +1,26 @@
+spg-worker
+
+Falta agregar en el spg-worker la cola en la que esta, para que lea los in_* correctamente
+
+
+-------------------
+spg.pool.queue.Queue
+
+Falta que se lancen los workers en el background. Tienen que ser conscientes de en que cola estan
+
+subprocess.Popen(["background-process", "arguments"])
+
+chequear status con .poll
+
+-------------------
+spg-queue 
+
+comandos a implementar
+
+add NAME SET_VARS ## tiene que agregar el directorio en el spool
+remove NAME
+stop 
+start 
+set max_jobs=X
+
+

@@ -7,8 +7,8 @@ Created on Wed Jun  8 16:20:26 2011
 """
 
 
-
-from spg.pool import Queue, DataExchanger
+from spg.master import DataExchanger
+from spg.pool import Queue, TorqueQueue
 from spg.utils import newline_msg, inline_msg
 
 
@@ -40,19 +40,27 @@ if __name__ == "__main__":
                             help = "do not sync dbs" )
 
     options, args = parser.parse_args()
-    pex = DataExchanger( pp.connection  )
+    pex = DataExchanger( pp.connection )
     pex.waiting_processes = options.populate
 
     self.queues = {}
     while True:
         ls_queues  = pex.execute_query("SELECT name, max_jobs FROM queues WHERE status = 'R'")
         inline_msg("INF", "awaken @%s.........................."%time.ctime())
+        
+        tbr_queues = set( self.queues.keys() ) - set( [i for (i,j) in ls_queues] )
+        for q in tbr_queues:
+            self.queues[q].kill_processes()
+
         for (name, max_jobs) in ls_queues:
             inline_msg("INF", "process pool.........................",indent = 2)
             #pp = ProcessPool()
             #pp.update_worker_info()
             if not self.queues.has_key(name):
-                self.queues[name] = Queue(name, max_jobs)
+                if options.activate_torque:
+                    self.queues[name] = TorqueQueue(name, max_jobs)
+                else:
+                    self.queues[name] = Queue(name, max_jobs)
             else:
                 self.queues[name].jobs = max_jobs
             self.queues[name].update_worker_info()

@@ -104,8 +104,8 @@ class DataExchanger(MasterDB):
             return  self.result_dbs[ curr_db ]
 
 
-    def initialise_infiles(self):
-        self.seeded_atoms =  self.waiting_processes - len(os.listdir("%s/queued"%(VAR_PATH) ) ) 
+    def initialise_infiles(self, queue_name):
+        self.seeded_atoms =  self.waiting_processes - len(os.listdir("%s/queued/%s"%(VAR_PATH,queue_name) ) ) 
 #      utils.newline_msg("INF", "initialise_infiles - %d"%to_run_processes )
 #        print "inti"
         self.update_running_ensembles()
@@ -123,7 +123,7 @@ class DataExchanger(MasterDB):
             ret = pd.load_next_from_ensemble( sel_db )
             if ret == None:
                 continue
-            pd.dump(src = "queued")
+            pd.dump(src = "queued/%s"%queue_name)
 
 
 
