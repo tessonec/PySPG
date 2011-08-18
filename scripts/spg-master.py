@@ -8,7 +8,7 @@ Created on Wed Jun  8 16:20:26 2011
 
 
 
-from spg.pool import ProcessPool, DataExchanger
+from spg.pool import Queue, DataExchanger
 from spg.utils import newline_msg, inline_msg
 
 
@@ -40,36 +40,39 @@ if __name__ == "__main__":
                             help = "do not sync dbs" )
 
     options, args = parser.parse_args()
-    pp = ProcessPool()
-    pp.update_worker_info()
     pex = DataExchanger( pp.connection  )
     pex.waiting_processes = options.populate
+
+    self.queues = {}
     while True:
-       inline_msg("INF", "awaken @%s.........................."%time.ctime())
-       
-       inline_msg("INF", "process pool.........................",indent = 2)
-       
-       pp.update_worker_info()
-       if not options.skip_queue :
-          for i_j in pp.queues:
-              inline_msg("INF", "%s - queue.normalise_processes()"%pp.queues[i_j].name,indent = 4)
-              pp.queues[i_j].normalise_processes()
-
-       pex.update_dbs()
-
-       inline_msg("INF", "populate/harvest data.......................",indent = 2)
-       if not options.skip_init:
-  #       newline_msg("INF", "initialise_infiles()")
-         pex.initialise_infiles()
-#       newline_msg("INF", "harvesting_data()")
-       if not options.skip_harvest:
-         pex.harvest_data()
-
-       if not options.skip_sync:
-         inline_msg("INF", "syncing..........(s:%d - h:%d)..................."%(pex.seeded_atoms, pex.harvested_atoms), indent = 2)
-         pex.synchronise_master()
-
-       newline_msg("INF", "sleep %s"%options.sleep,indent = 2)
-       if options.sleep < 0:
-           sys.exit(0)
-       time.sleep(options.sleep)
+        ls_queues  = pex.execute_query("SELECT name, max_jobs FROM queues WHERE status = 'R'")
+        inline_msg("INF", "awaken @%s.........................."%time.ctime())
+        for (name, max_jobs) in ls_queues:
+            inline_msg("INF", "process pool.........................",indent = 2)
+            #pp = ProcessPool()
+            #pp.update_worker_info()
+            if not self.queues.has_key(name):
+                self.queues[name] = Queue(name, max_jobs)
+            else:
+                self.queues[name].jobs = max_jobs
+            self.queues[name].update_worker_info()
+#            inline_msg("INF", "%s - queue.normalise_processes()"%pp.queues[i_j].name,indent = 4)
+            self.queues[name].normalise_processes()
+    
+#            pex.update_dbs()
+    
+            inline_msg("INF", "populate/harvest data.......................",indent = 2)
+            if not options.skip_init:
+      #       newline_msg("INF", "initialise_infiles()")
+                pex.initialise_infiles( name )
+    #       newline_msg("INF", "harvesting_data()")
+        if not options.skip_harvest:
+            pex.harvest_data()
+    
+        if not options.skip_sync:
+            inline_msg("INF", "syncing..........(s:%d - h:%d)..................."%(pex.seeded_atoms, pex.harvested_atoms), indent = 2)
+            pex.synchronise_master()
+    
+        newline_msg("INF", "sleep %s"%options.sleep,indent = 2)
+        if options.sleep < 0:  sys.exit(0)
+        time.sleep(options.sleep)
