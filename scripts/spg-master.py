@@ -30,8 +30,8 @@ if __name__ == "__main__":
                             default = 120 , help = "waiting time before refresh" )
     parser.add_option("--populate", type="int", action='store', dest="populate",
                             default = 50 , help = "how many processes to populate" )
-    parser.add_option("--skip-queue", action='store_true', dest="skip_queue",
-                            help = "do not process queues" )
+    parser.add_option("--torque", action='store_true', dest="activate_torque",
+                            help = "activates torque backend" )
     parser.add_option("--skip-harvest", action='store_true', dest="skip_harvest",
                             help = "do not harvest data" )
     parser.add_option("--skip-init", action='store_true', dest="skip_init",
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     options, args = parser.parse_args()
     pp = ProcessPool()
     pp.update_worker_info()
-    pex = DataExchanger( pp.db_master, pp.cur_master )
+    pex = DataExchanger( pp.connection  )
     pex.waiting_processes = options.populate
     while True:
        inline_msg("INF", "awaken @%s.........................."%time.ctime())
