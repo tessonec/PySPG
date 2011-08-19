@@ -18,7 +18,7 @@ import os
 import random
 import sqlite3 as sql
 
-
+import fnmatch
 
 
 
@@ -82,13 +82,20 @@ class DataExchanger(MasterDB):
 
 
 
-    def generate_new_process(self):
+    def generate_new_process(self, queue_name):
 #     db_fits = False
 #       print ParameterDB.normalising 
 #      while not db_fits :
 
+            ls_dbs = [ i for i in self.active_dbs 
+                       if fnmatch.fnmatch(queue_name, i.queue)
+                       ]
+            self.normalising = 0
+            for i in ls_dbs:
+                self.normalising += i.weight
+
             rnd = self.normalising * random.random()
-            ls_dbs = self.active_dbs[:]
+            
 #            ls_dbs = sorted( self.result_dbs.keys() )
             curr_db = ls_dbs.pop()
             ac = self.result_dbs[ curr_db ].weight
@@ -110,7 +117,7 @@ class DataExchanger(MasterDB):
 #        print "inti"
         self.update_running_ensembles()
         for i_atom in range(self.seeded_atoms):
-            sel_db = self.generate_new_process(  )
+            sel_db = self.generate_new_process( queue_name )
 #            utils.newline_msg("INF", "  >> %s/%s"%(sel_db.path,sel_db.db_name) )
         #    sel_db.next()
             
@@ -123,7 +130,7 @@ class DataExchanger(MasterDB):
             ret = pd.load_next_from_ensemble( sel_db )
             if ret == None:
                 continue
-            pd.dump(src = "queued/%s"%queue_name)
+            pd.dump(src = "queue/%s"%queue_name)
 
 
 
