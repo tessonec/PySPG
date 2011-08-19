@@ -105,7 +105,7 @@ class DataExchanger(MasterDB):
 
 
     def initialise_infiles(self, queue_name):
-        self.seeded_atoms =  self.waiting_processes - len(os.listdir("%s/queued/%s"%(VAR_PATH,queue_name) ) ) 
+        self.seeded_atoms =  self.waiting_processes - len(os.listdir("%s/queue/%s"%(VAR_PATH,queue_name) ) ) 
 #      utils.newline_msg("INF", "initialise_infiles - %d"%to_run_processes )
 #        print "inti"
         self.update_running_ensembles()
@@ -128,8 +128,9 @@ class DataExchanger(MasterDB):
 
 
     def harvest_data(self):
-        self.harvested_atoms  = len(os.listdir("%s/run"%(VAR_PATH) ))
-        for i_d in os.listdir("%s/run"%(VAR_PATH) ):
+        ls_atoms = os.listdir("%s/run"%(VAR_PATH) )
+        self.harvested_atoms  = len(ls_atoms)
+        for i_d in ls_atoms:
             pd = ParameterAtom(i_d)
             pd.load(src = 'run')
             a_db =self.result_dbs[pd.full_db_name]

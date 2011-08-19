@@ -24,13 +24,16 @@ if __name__ == "__main__":
      parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 ")
      parser.add_option("--sleep", type="int", action='store', dest="sleep",
                             default = 120 , help = "waiting time in case of a lack of new parameters" )
+     parser.add_option("--queue", type="string", action='store', dest="queue",
+                            default = 120 , help = "name of the queue this worker lives in" )
 
      options, args = parser.parse_args()
+     queue_name = options.queue
      while True:
         try:
-          next_file = min ( os.listdir("%s/queued"%(VAR_PATH) ) )
+          next_file = min ( os.listdir("%s/queue/%s"%(VAR_PATH,queue_name) ) )
           pex = ParameterAtomExecutor(next_file)
-          pex.load()
+          pex.load("queue/%s"%(queue_name) )
           
         except ValueError:
           utils.newline_msg("WRN", "no newly pickled elements")

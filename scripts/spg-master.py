@@ -30,8 +30,8 @@ if __name__ == "__main__":
                             default = 120 , help = "waiting time before refresh" )
     parser.add_option("--populate", type="int", action='store', dest="populate",
                             default = 50 , help = "how many processes to populate" )
-    parser.add_option("--torque", action='store_true', dest="activate_torque",
-                            help = "activates torque backend" )
+    parser.add_option("--queue-type", type='string', dest="queue",default="base",
+                            help = "type of queue: can be base, torque" )
     parser.add_option("--skip-harvest", action='store_true', dest="skip_harvest",
                             help = "do not harvest data" )
     parser.add_option("--skip-init", action='store_true', dest="skip_init",
@@ -40,7 +40,7 @@ if __name__ == "__main__":
                             help = "do not sync dbs" )
 
     options, args = parser.parse_args()
-    pex = DataExchanger( pp.connection )
+    pex = DataExchanger(  )
     pex.waiting_processes = options.populate
 
     self.queues = {}
@@ -57,7 +57,7 @@ if __name__ == "__main__":
             #pp = ProcessPool()
             #pp.update_worker_info()
             if not self.queues.has_key(name):
-                if options.activate_torque:
+                if options.queue == "torque":
                     self.queues[name] = TorqueQueue(name, max_jobs)
                 else:
                     self.queues[name] = Queue(name, max_jobs)

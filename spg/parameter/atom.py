@@ -31,7 +31,7 @@ class ParameterAtom:
         self.current_valuesset_id = None
 
 
-    def load(self, src = 'queued', no_rm = False):
+    def load(self, src = 'queue', no_rm = False):
         full_inname = "%s/%s/%s"%(VAR_PATH,src,self.in_name) 
         vals = pickle.load( open(full_inname)  )
         self.__dict__ = vals.__dict__
@@ -137,7 +137,7 @@ class ParameterAtomExecutor(ParameterAtom):
 
     def create_tree(self):
         for k in self.values:
-            if k.find("store_") != -1: return True
+            if k.find("store") != -1: return True
         return False
 
     def launch_process(self, configuration_filename):

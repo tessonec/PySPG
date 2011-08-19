@@ -23,34 +23,30 @@ class Queue:
     def populate_processes( self, new_jobs ):
         """How many processes to populate"""
         for i in range(new_jobs):
-            cmd = "qsub -q %s %s/spg-worker.py"%(self.name, BINARY_PATH)
+            cmd = "%s/spg-worker.py --queue=%s"%(BINARY_PATH,self.name)
             proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
             proc.wait()
 
-    def kill_processes( self, n_jobs = None):
+
+    def kill_processes(self, n_jobs = None):
         if not n_jobs: 
             n_jobs = len(self.processes)
-        for i in sorted(self.processes)[:n_jobs] :
-            cmd = "qdel %s"%(i)
-            proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
-            proc.wait()
+        tbr = []
+        for i in self.processes[:n_jobs] :
+            proc = self.processes[i]
+            proc.kill() 
+            tbr.append(proc)
+        for proc in tbr:
+            self.processes.remove(proc)
+
 #            self.master_db.execute("DELETE FROM running WHERE job_id = ?" , i)
 
     def update_worker_info(self):  # These are the spg-worker instances in the queueing system
-        proc = Popen("qstat", shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
-        output = proc.stdout
-        proc.wait()
-        # 9640.bruetli spg-worker.py tessonec 22:53:44 R default  
-        self.processes = []
-        for l in output:
-            content = l.split()
-            try:
-                job_id = int( content[0].split(".")[0] )
-#                status = content[4]
-                if  self.name ==  content[5]:
-                    self.processes.append( job_id ) 
-            except: 
-                continue
+        tbr = [ p for p in self.processes if p.poll() is not None]
+
+        for proc in tbr:
+            self.processes.remove(proc)
+
 
 
 
