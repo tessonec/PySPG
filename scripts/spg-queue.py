@@ -12,7 +12,11 @@ class QueueCommandParser(cmd.Cmd):
     def __init__(self):
         cmd.Cmd.__init__(self)
         self.prompt = "| spg-queue :::~ "
-        self.possible_keys = ['weight', 'repeat',  'status', 'queue']
+        self.current_queue = None 
+        self.master_db =  MasterDB()
+
+    def 
+
     
     def do_greet(self, person):
         "Greet the person"
