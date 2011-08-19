@@ -1,9 +1,18 @@
+#!/usr/bin/python
+
 import cmd
+import sys
+
 
 class QueueCommandParser(cmd.Cmd):
-    """Simple command processor example."""
-    
+    """command processor for the queues."""
+
     FRIENDS = [ 'Alice', 'Adam', 'Barbara', 'Bob' ]
+    
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+        self.prompt = "| spg-queue :::~ "
+        self.possible_keys = ['weight', 'repeat',  'status', 'queue']
     
     def do_greet(self, person):
         "Greet the person"

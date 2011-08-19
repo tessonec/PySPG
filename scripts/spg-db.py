@@ -4,7 +4,7 @@ import cmd
 
 import spg.utils as utils
 from spg.parameter import EnsembleBuilder, ParameterEnsemble
-from spg.pool import MasterDB
+from spg.master import MasterDB
 
 from spg import VAR_PATH, RUN_DIR
 
@@ -22,7 +22,7 @@ class DBCommandParser(cmd.Cmd):
  
     def __init__(self):
         cmd.Cmd.__init__(self)
-        self.prompt = "|spg-db:::~ "
+        self.prompt = "| spg-db :::~ "
         self.possible_keys = ['weight', 'repeat',  'status', 'queue']
 #        self.values = {'repeat': 1, 'sql_retries': 1, 'timeout' : 60, 'weight': 1}
 
@@ -343,7 +343,7 @@ class DBCommandParser(cmd.Cmd):
         completions =  filter(lambda x: os.path.isdir(x) , os.listdir(".") )
     #    print completions 
 #      #  print completions, os.path.realpath(".")
-        print '\n\n>>>%s<<<\n\n'%( text, line, begidx, endidx )
+   #     print '\n\n>>>%s<<<\n\n'%( text, line, begidx, endidx )
         if text:
             completions = [ f
                             for f in completions
