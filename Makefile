@@ -2,33 +2,46 @@
 
 
 BASEDIR         = $(HOME)/opt
+LIBDIR          = $(BASEDIR)/lib/spg
+BINDIR          = $(BASEDIR)/bin
 
 .PHONY: clean all install
 
 
 install:
 	# scripts
-	install scripts/spg-db.py ${BASEDIR}/bin
-	install scripts/spg-run.py ${BASEDIR}/bin
-	install scripts/spg-cmd.py ${BASEDIR}/bin
-	install scripts/spg-master.py ${BASEDIR}/bin
-	install scripts/spg-worker.py ${BASEDIR}/bin
-	install scripts/spg-results.py ${BASEDIR}/bin
+	install scripts/spg-db.py ${BINDIR}
+	install scripts/spg-queue.py ${BINDIR}
+	install scripts/spg-run.py ${BINDIR}
+	install scripts/spg-master.py ${BINDIR}
+	install scripts/spg-worker.py ${BINDIR}
+	install scripts/spg-results.py ${BINDIR}
 	# library (base)
-	install -m 0644 spg/__init__.py ${BASEDIR}/lib/spg
-	install -m 0644 spg/utils.py ${BASEDIR}/lib/spg
-	install -m 0644 spg/base/__init__.py ${BASEDIR}/lib/spg/base
-	install -m 0644 spg/base/iterator.py ${BASEDIR}/lib/spg/base
-	install -m 0644 spg/base/parser.py ${BASEDIR}/lib/spg/base
-	install -m 0644 spg/base/checks.py ${BASEDIR}/lib/spg/base
+	install -m 0644 spg/__init__.py ${LIBDIR}
+	mkdir -p ${LIBDIR}/base
+	install -m 0644 spg/base/__init__.py ${LIBDIR}/base
+	install -m 0644 spg/base/iterator.py ${LIBDIR}/base
+	install -m 0644 spg/base/parser.py ${LIBDIR}/base
+	# library (master)
+	mkdir -p ${LIBDIR}/master
+	install -m 0644 spg/master/__init__.py ${LIBDIR}/master
+	install -m 0644 spg/master/exchange.py ${LIBDIR}/master
+	install -m 0644 spg/master/masterdb.py ${LIBDIR}/master
 	# library (parameter)
-	install -m 0644 spg/parameter/__init__.py ${BASEDIR}/lib/parameter
-	install -m 0644 spg/parameter/atom.py ${BASEDIR}/lib/parameter
-	install -m 0644 spg/parameter/ensemble.py ${BASEDIR}/lib/parameter
-	install -m 0644 spg/parameter/db.py ${BASEDIR}/lib/parameter
+	mkdir -p ${LIBDIR}/parameter
+	install -m 0644 spg/parameter/__init__.py ${LIBDIR}/parameter
+	install -m 0644 spg/parameter/atom.py ${LIBDIR}/parameter
+	install -m 0644 spg/parameter/ensemble.py ${LIBDIR}/parameter
+	install -m 0644 spg/parameter/paramdb.py ${LIBDIR}/parameter
 	# library (pool)
-	install -m 0644 spg/pool/__init__.py ${BASEDIR}/lib/spg/pool
-	install -m 0644 spg/pool/exchange.py ${BASEDIR}/lib/spg/pool
-	install -m 0644 spg/pool/process.py ${BASEDIR}/lib/spg/pool
+	mkdir -p ${LIBDIR}/pool
+	install -m 0644 spg/pool/__init__.py ${LIBDIR}/pool
+	install -m 0644 spg/pool/queue.py ${LIBDIR}/pool
+	install -m 0644 spg/pool/torque.py ${LIBDIR}/pool
+	# library (utils)
+	mkdir -p ${LIBDIR}/utils
+	install -m 0644 spg/utils/__init__.py ${LIBDIR}/utils
+	install -m 0644 spg/utils/check_params.py ${LIBDIR}/utils
+	install -m 0644 spg/utils/tools.py ${LIBDIR}/utils
 
 
