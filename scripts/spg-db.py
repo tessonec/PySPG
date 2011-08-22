@@ -269,7 +269,7 @@ class DBCommandParser(cmd.Cmd):
         
         for i in ls_res_db: 
             self.master_db.execute_query("DELETE FROM dbs WHERE full_name = ?", i  )
-        self.master_db.update_result_dbs()
+        self.master_db.synchronise_master()
  
     def complete_remove(self, text, line, begidx, endidx):
         return self.__complete(text)
