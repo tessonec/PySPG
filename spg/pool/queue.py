@@ -24,8 +24,9 @@ class Queue:
     def spawn_workers( self, new_jobs ):
         """How many processes to populate"""
         for i in range(new_jobs):
-            cmd = "%s/spg-worker.py --queue=%s"%(BINARY_PATH,self.name)
-            proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
+            cmd = ["%s/spg-worker.py"%BINARY_PATH, "--queue=%s"%self.name]
+#            proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
+            proc = Popen(cmd, stdin = PIPE, stdout = PIPE, stderr = PIPE )
             self.processes.append(proc)
 #            proc.wait()
 

@@ -1,11 +1,11 @@
-
-import os.path
-
-version_number = '2.9.9'
-release_date = '09 Ago 2011'
+version_number = '3.0.0'
+release_date = '24 Ago 2011'
 
 from base.iterator import *
 from base.parser   import *
+
+
+import os.path
 
 ROOT_DIR = os.path.expanduser("~/opt")
 CONFIG_DIR = os.path.expanduser(ROOT_DIR+"/etc")
