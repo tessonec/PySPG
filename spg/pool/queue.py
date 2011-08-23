@@ -15,7 +15,7 @@ class Queue:
 
     def normalise_workers(self):
         running_proc = len( self.processes )
-        print running_proc
+#        print running_proc
         if running_proc > self.jobs :
             self.kill_workers( running_proc - self.jobs )
         elif running_proc < self.jobs :

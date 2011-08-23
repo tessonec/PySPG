@@ -47,7 +47,7 @@ if __name__ == "__main__":
     while True:
         ls_queues  = pex.execute_query("SELECT name, max_jobs FROM queues WHERE status = 'R'")
 #        inline_msg("INF", "awaken @%s.........................."%time.ctime())
-        print ls_queues
+#        print ls_queues
         tbr_queues = set( all_queues.keys() ) - set( [i for (i,j) in ls_queues] )
         for q in tbr_queues:
             all_queues[q].kill_processes()
@@ -66,15 +66,15 @@ if __name__ == "__main__":
             else:
                 all_queues[name].jobs = max_jobs
             
-            newline_msg("INF", "update_worker.",indent = 2)
+            inline_msg("INF", "update_worker.",indent = 2)
             all_queues[name].update_worker_info()
 #            inline_msg("INF", "%s - queue.normalise_processes()"%pp.queues[i_j].name,indent = 4)
-            newline_msg("INF", "normalise.",indent = 2)
+            inline_msg("INF", "normalise.",indent = 2)
             all_queues[name].normalise_workers()
     
 #            pex.update_dbs()
     
-            newline_msg("INF", "populate/harvest data.",indent = 2)
+            inline_msg("INF", "populate/harvest data.",indent = 2)
             if not options.skip_init:
       #       newline_msg("INF", "initialise_infiles()")
                 pex.seed_atoms( name )
