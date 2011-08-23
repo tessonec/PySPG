@@ -23,9 +23,9 @@ EXE_TIMEOUT = 60*10 # in seconds
 if __name__ == "__main__":
      parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 ")
      parser.add_option("--sleep", type="int", action='store', dest="sleep",
-                            default = 120 , help = "waiting time in case of a lack of new parameters" )
+                            default = 5 , help = "waiting time in case of a lack of new parameters" )
      parser.add_option("--queue", type="string", action='store', dest="queue",
-                            default = 120 , help = "name of the queue this worker lives in" )
+                            default = "default" , help = "name of the queue this worker lives in" )
 
      options, args = parser.parse_args()
      queue_name = options.queue

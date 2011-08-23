@@ -13,29 +13,35 @@ class Queue:
         self.last_finished_processes = 0
 
 
-    def normalise_processes(self):
+    def normalise_workers(self):
         running_proc = len( self.processes )
+        print running_proc
         if running_proc > self.jobs :
-            self.kill_processes( running_proc - self.jobs )
+            self.kill_workers( running_proc - self.jobs )
         elif running_proc < self.jobs :
-            self.populate_processes( self.jobs - running_proc  )
+            self.spawn_workers( self.jobs - running_proc  )
 
-    def populate_processes( self, new_jobs ):
+    def spawn_workers( self, new_jobs ):
         """How many processes to populate"""
         for i in range(new_jobs):
             cmd = "%s/spg-worker.py --queue=%s"%(BINARY_PATH,self.name)
             proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
-            proc.wait()
+            self.processes.append(proc)
+#            proc.wait()
 
 
-    def kill_processes(self, n_jobs = None):
-        if not n_jobs: 
-            n_jobs = len(self.processes)
+    def kill_workers(self, n_jobs = None):
         tbr = []
-        for i in self.processes[:n_jobs] :
-            proc = self.processes[i]
-            proc.kill() 
-            tbr.append(proc)
+        if not n_jobs: 
+            for proc in self.processes:
+                proc.kill() 
+                proc.wait()
+                tbr.append(proc)
+        else:
+            for proc in self.processes[:n_jobs] :
+                proc.kill() 
+                proc.wait()
+                tbr.append(proc)
         for proc in tbr:
             self.processes.remove(proc)
 
@@ -43,74 +49,8 @@ class Queue:
 
     def update_worker_info(self):  # These are the spg-worker instances in the queueing system
         tbr = [ p for p in self.processes if p.poll() is not None]
-
+        print tbr
         for proc in tbr:
             self.processes.remove(proc)
-
-
-
-
-###################################################################################################
-###################################################################################################
-###################################################################################################
-###################################################################################################
-###################################################################################################
-
-
-###################################################################################################
-###################################################################################################
-###################################################################################################
-###################################################################################################
-###################################################################################################
-
-
-
-
-#
-#class ProcessPool:
-#    def __init__(self, queue_name =None):
-#        self.queue = queue_name
-#        self.update_time = 60 * 1
-#
-#
-#        self.update_queue_info()
-#
-#    def update_queue_info(self): # These are the queues available to launch the processes in
-#        self.queues = {}
-#        res = self.connection.execute("SELECT name, max_jobs FROM queues WHERE status = 'R'")
-#        for (name, max_jobs) in res:
-#            self.queues[name] = Queue(name, max_jobs)
-##           self.queues[name].set_db(self.db_master)
-
-
-######
-######    def update_dbs_info(self):   # 
-######        for i in self.dbs.keys():
-######            self.update_db_info(i)
-######
-######    def update_db_info(self,db_fullname): 
-######            
-######            curr_sql = SQLHelper(db_fullname)
-######            sel = curr_sql.select_fetchall("SELECT status, COUNT(*) FROM run_status GROUP BY status")
-######            
-######            res = {'D':0, 'R':0, 'E':0}
-######            ac = 0
-######            for (k,v) in sel :
-######                res[k] = int(v)
-######                ac += int(v)
-######                #:::~    'N': not run yet
-######                #:::~    'R': running
-######                #:::~    'D': successfully run (done)
-######                #:::~    'E': run but with non-zero error code
-######            self.db_master.execute("UPDATE dbs " 
-######                                    "SET total_combinations = ?, done_combinations = ?,"
-######                                    "running_combinations =  ? , error_combinations = ? "
-######                                    "WHERE full_name = ?", (ac, res['D'], res['R'], res['E'],db_fullname))
-######            
-###    (id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), 
-###     db_name CHAR(256), status CHAR(1), 
-###     total_combinations INTEGER, done_combinations INTEGER, 
-###     running_combinations INTEGER, error_combinations INTEGER, 
-            
 
 

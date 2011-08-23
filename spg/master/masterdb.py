@@ -133,7 +133,7 @@ class MasterDB:
 
     def synchronise_master(self):
         for i in self.result_dbs:
-            self.update_result_db(i)
+            self.update_result_db(self.result_dbs[i])
 
 
 

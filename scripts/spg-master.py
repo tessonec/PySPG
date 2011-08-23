@@ -43,39 +43,44 @@ if __name__ == "__main__":
     pex = DataExchanger(  )
     pex.waiting_processes = options.populate
 
-    self.queues = {}
+    all_queues = {}
     while True:
         ls_queues  = pex.execute_query("SELECT name, max_jobs FROM queues WHERE status = 'R'")
-        inline_msg("INF", "awaken @%s.........................."%time.ctime())
-        
-        tbr_queues = set( self.queues.keys() ) - set( [i for (i,j) in ls_queues] )
+#        inline_msg("INF", "awaken @%s.........................."%time.ctime())
+        print ls_queues
+        tbr_queues = set( all_queues.keys() ) - set( [i for (i,j) in ls_queues] )
         for q in tbr_queues:
-            self.queues[q].kill_processes()
+            all_queues[q].kill_processes()
 
         for (name, max_jobs) in ls_queues:
-            inline_msg("INF", "process pool.........................",indent = 2)
+ #           inline_msg("INF", "process queue '%s'"%name,indent = 2)
             #pp = ProcessPool()
             #pp.update_worker_info()
-            if not self.queues.has_key(name):
+            if not all_queues.has_key(name):
+                newline_msg("INF", "creating queue '%s'"%name,indent = 2)
+                
                 if options.queue == "torque":
-                    self.queues[name] = TorqueQueue(name, max_jobs)
+                    all_queues[name] = TorqueQueue(name, max_jobs)
                 else:
-                    self.queues[name] = Queue(name, max_jobs)
+                    all_queues[name] = Queue(name, max_jobs)
             else:
-                self.queues[name].jobs = max_jobs
-            self.queues[name].update_worker_info()
+                all_queues[name].jobs = max_jobs
+            
+            newline_msg("INF", "update_worker.",indent = 2)
+            all_queues[name].update_worker_info()
 #            inline_msg("INF", "%s - queue.normalise_processes()"%pp.queues[i_j].name,indent = 4)
-            self.queues[name].normalise_processes()
+            newline_msg("INF", "normalise.",indent = 2)
+            all_queues[name].normalise_workers()
     
 #            pex.update_dbs()
     
-            inline_msg("INF", "populate/harvest data.......................",indent = 2)
+            newline_msg("INF", "populate/harvest data.",indent = 2)
             if not options.skip_init:
       #       newline_msg("INF", "initialise_infiles()")
-                pex.initialise_infiles( name )
+                pex.seed_atoms( name )
     #       newline_msg("INF", "harvesting_data()")
         if not options.skip_harvest:
-            pex.harvest_data()
+            pex.harvest_atoms()
     
         if not options.skip_sync:
             inline_msg("INF", "syncing..........(s:%d - h:%d)..................."%(pex.seeded_atoms, pex.harvested_atoms), indent = 2)

@@ -1,7 +1,8 @@
 #!/usr/bin/python
 
-import cmd, sys, fnmatch
+import cmd, sys, fnmatch, os
 
+from spg import VAR_PATH
 from spg.master import MasterDB
 from spg.utils import newline_msg
 
@@ -53,14 +54,16 @@ class QueueCommandParser(cmd.Cmd):
 ###           status CHAR(1) )
 
 
-    def do_init(self, c):
+    def do_add(self, c):
         """adds queue queue"""
         self.__update_queue_list()
+        
         if len( filter(lambda x: x[1] == c, self.queues) ):
-                utils.newline_msg("ERR", "queue '%s' already exists"%queue, 2)
+                newline_msg("ERR", "queue '%s' already exists"%queue, 2)
                 return 
-        self.master_db.execute_query( "INSERT INTO queues (name, max_jobs, status) VALUES (?,?,?)",(queue,  1, 'S'))
-        self.current_queue = queue
+        self.master_db.execute_query( "INSERT INTO queues (name, max_jobs, status) VALUES (?,?,?)",c,  1, 'S')
+        os.makedirs("%s/queue/%s"%(VAR_PATH,c))
+        self.current_queue = c
 
 
     def do_set_max_jobs(self, c):
@@ -80,6 +83,23 @@ class QueueCommandParser(cmd.Cmd):
             for q in lsq:
                 #print status, q
                 self.master_db.execute_query( 'UPDATE queues SET max_jobs= ? WHERE name = ?',  max_jobs, q )
+
+
+    def do_remove(self, c):
+        """sets the maximum number of jobs in the given queue 
+           usage: [regexp] N_JOBS"""
+        c = c.split()
+        if len(c) == 0 and self.current_queue:
+            self.master_db.execute_query( 'DELETE FROM queues WHERE name = ?', self.current_queue  )
+        elif len(c) == 1:
+            re = c[0]
+#            print re, max_jobs
+            lsq = [ n for  (id, n, mj, s) in self.queues ]
+            lsq = fnmatch.filter(lsq, re)
+#        print lsq
+            for q in lsq:
+                #print status, q
+                self.master_db.execute_query( 'DELETE FROM queues WHERE name = ?', q  )        
 
 
 #        ret = utils.parse_to_dict(c, allowed_keys=self.possible_keys)

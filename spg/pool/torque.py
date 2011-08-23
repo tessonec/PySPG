@@ -7,14 +7,14 @@ from queue import Queue
 
 class TorqueQueue(Queue):
 
-    def populate_processes( self, new_jobs ):
+    def spawn_workers( self, new_jobs ):
         for i in range(new_jobs):
             cmd = "qsub -q %s %s/spg-worker.py --queue=%s"%(self.name, BINARY_PATH, self.name)
             proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
             self.processes.append(proc)
 #            proc.wait()
 
-    def kill_processes( self, n_jobs = None):
+    def kill_workers( self, n_jobs = None):
         if not n_jobs: 
             n_jobs = len(self.processes)
         for i in sorted(self.processes)[:n_jobs] :
