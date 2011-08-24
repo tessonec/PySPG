@@ -8,7 +8,7 @@ Created on Wed Jun  8 16:20:26 2011
 
 
 from spg.master import DataExchanger
-from spg.pool import Queue, TorqueQueue
+from spg.queue import Queue, TorqueQueue, set_queueing_system
 from spg.utils import newline_msg, inline_msg
 
 
@@ -40,6 +40,10 @@ if __name__ == "__main__":
                             help = "do not sync dbs" )
 
     options, args = parser.parse_args()
+    
+    
+    set_queueing_system( options.queue )
+    
     pex = DataExchanger(  )
     pex.waiting_processes = options.populate
 
@@ -65,15 +69,15 @@ if __name__ == "__main__":
                     all_queues[name] = Queue(name, max_jobs)
             else:
                 all_queues[name].jobs = max_jobs
-            
+
             inline_msg("INF", "update_worker.",indent = 2)
             all_queues[name].update_worker_info()
 #            inline_msg("INF", "%s - queue.normalise_processes()"%pp.queues[i_j].name,indent = 4)
             inline_msg("INF", "normalise.",indent = 2)
             all_queues[name].normalise_workers()
-    
+
 #            pex.update_dbs()
-    
+
             inline_msg("INF", "populate/harvest data.",indent = 2)
             if not options.skip_init:
       #       newline_msg("INF", "initialise_infiles()")

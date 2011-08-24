@@ -33,11 +33,12 @@ install:
 	install -m 0644 spg/parameter/atom.py ${LIBDIR}/parameter
 	install -m 0644 spg/parameter/ensemble.py ${LIBDIR}/parameter
 	install -m 0644 spg/parameter/paramdb.py ${LIBDIR}/parameter
-	# library (pool)
-	mkdir -p ${LIBDIR}/pool
-	install -m 0644 spg/pool/__init__.py ${LIBDIR}/pool
-	install -m 0644 spg/pool/queue.py ${LIBDIR}/pool
-	install -m 0644 spg/pool/torque.py ${LIBDIR}/pool
+	# library (queue)
+	mkdir -p ${LIBDIR}/queue
+	install -m 0644 spg/queue/__init__.py ${LIBDIR}/pool
+	install -m 0644 spg/queue/base.py ${LIBDIR}/pool
+	install -m 0644 spg/queue/utils.py ${LIBDIR}/pool
+	install -m 0644 spg/queue/torque.py ${LIBDIR}/pool
 	# library (utils)
 	mkdir -p ${LIBDIR}/utils
 	install -m 0644 spg/utils/__init__.py ${LIBDIR}/utils

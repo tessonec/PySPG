@@ -2,6 +2,9 @@
 
 
 from spg.parameter import ParameterAtomExecutor
+from spg.queue import get_queueing_system
+import spg.queue.torque as torque
+ 
 import spg.utils as utils
 from spg import VAR_PATH 
 
@@ -28,7 +31,15 @@ if __name__ == "__main__":
                             default = "default" , help = "name of the queue this worker lives in" )
 
      options, args = parser.parse_args()
-     queue_name = options.queue
+     queue_type = get_queueing_system()
+
+     
+
+     if queue_type == "base":
+         queue_name = opt_queue
+     elif queue_name == "torque":
+         queue_name =  torque.get_queue_name()
+
      while True:
         try:
           next_file = min ( os.listdir("%s/queue/%s"%(VAR_PATH,queue_name) ) )
