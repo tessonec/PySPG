@@ -84,7 +84,7 @@ if __name__ == "__main__":
             pex.harvest_atoms()
     
         inline_msg("INF", "syncing...(s:%s - h:%d).........................."%(seeded_atoms_ac, pex.harvested_atoms), indent = 2)
-        print >> file_log, "atoms: seeded= %d - harvested= %d"%(seeded_atoms_ac, pex.harvested_atoms)
+        print >> file_log, "atoms: seeded= %s - harvested= %d"%(seeded_atoms_ac, pex.harvested_atoms)
         file_log.flush()
         
         if not options.skip_sync:
