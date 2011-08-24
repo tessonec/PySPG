@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
      if queue_type == "base":
          queue_name = opt_queue
-     elif queue_name == "torque":
+     elif queue_type == "torque":
          queue_name =  torque.get_queue_name()
      print "queue_type =",queue_type, " ///// queue_name",queue_name
      while True:
