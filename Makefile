@@ -35,10 +35,10 @@ install:
 	install -m 0644 spg/parameter/paramdb.py ${LIBDIR}/parameter
 	# library (queue)
 	mkdir -p ${LIBDIR}/queue
-	install -m 0644 spg/queue/__init__.py ${LIBDIR}/pool
-	install -m 0644 spg/queue/base.py ${LIBDIR}/pool
-	install -m 0644 spg/queue/utils.py ${LIBDIR}/pool
-	install -m 0644 spg/queue/torque.py ${LIBDIR}/pool
+	install -m 0644 spg/queue/__init__.py ${LIBDIR}/queue
+	install -m 0644 spg/queue/base.py ${LIBDIR}/queue
+	install -m 0644 spg/queue/utils.py ${LIBDIR}/queue
+	install -m 0644 spg/queue/torque.py ${LIBDIR}/queue
 	# library (utils)
 	mkdir -p ${LIBDIR}/utils
 	install -m 0644 spg/utils/__init__.py ${LIBDIR}/utils
