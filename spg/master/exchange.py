@@ -12,7 +12,7 @@ from spg import utils
 from spg import VAR_PATH, TIMEOUT
 from spg.parameter import ParameterAtom, ParameterEnsemble
 
-from masterdb import MasterDB
+from spg.master import MasterDB
 
 import os
 import random
@@ -23,7 +23,7 @@ import fnmatch
 
 
 class DataExchanger(MasterDB):
-#    waiting_processes = 100
+    max_atoms_to_seed = 100
     
     def __init__(self, connection = None):
         MasterDB.__init__(self, connection)
@@ -69,7 +69,7 @@ class DataExchanger(MasterDB):
 
 
     def seed_atoms(self, queue_name):
-        self.seeded_atoms =  self.waiting_processes - len(os.listdir("%s/queue/%s"%(VAR_PATH,queue_name) ) ) 
+        self.seeded_atoms =  self.max_atoms_to_seed - len(os.listdir("%s/queue/%s"%(VAR_PATH,queue_name) ) ) 
 #      utils.newline_msg("INF", "initialise_infiles - %d"%to_run_processes )
 #        print "inti"
         self.update_ensemble_list()

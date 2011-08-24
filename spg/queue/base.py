@@ -15,12 +15,16 @@ class Queue:
 
 
     def normalise_workers(self):
-        running_proc = len( self.workers)
+        """it returns the difference between processes after normalisation minus the previously existing jobs"""
+        n_workers = len( self.workers)
 #        print running_proc
-        if running_proc > self.max_workers :
-            self.kill_workers( running_proc - self.max_workers )
-        elif running_proc < self.max_workers :
-            self.spawn_workers( self.max_workers - running_proc  )
+        if n_workers > self.max_workers :
+            self.kill_workers( n_workers - self.max_workers )
+
+        elif n_workers < self.max_workers :
+            self.spawn_workers( self.max_workers - n_workers  )
+        return self.max_workers-n_workers 
+        
 
     def spawn_workers( self, new_jobs ):
         """How many processes to populate"""

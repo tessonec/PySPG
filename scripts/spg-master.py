@@ -41,27 +41,28 @@ if __name__ == "__main__":
 
     options, args = parser.parse_args()
     
+    file_log = open("spg-master.log","aw")
     
     set_queueing_system( options.queue )
     
+    print >> file_log,  "starting session:  ", time.ctime()
+    print >> file_log,  "queueing system: %s"%options.queue
+    
+    
     pex = DataExchanger(  )
-    pex.waiting_processes = options.populate
+    pex.max_atoms_to_seed = options.populate
 
     all_queues = {}
     while True:
         ls_queues  = pex.execute_query("SELECT name, max_jobs FROM queues WHERE status = 'R'")
-#        inline_msg("INF", "awaken @%s.........................."%time.ctime())
-#        print ls_queues
         tbr_queues = set( all_queues.keys() ) - set( [i for (i,j) in ls_queues] )
         for q in tbr_queues:
             all_queues[q].kill_processes()
-
+        seeded_atoms_ac = []
         for (name, max_jobs) in ls_queues:
- #           inline_msg("INF", "process queue '%s'"%name,indent = 2)
-            #pp = ProcessPool()
-            #pp.update_worker_info()
             if not all_queues.has_key(name):
-                newline_msg("INF", "creating queue '%s'"%name,indent = 2)
+                newline_msg("INF", "initialising queue '%s'"%name,indent = 2)
+                print >> file_log,  "initialising queue: %s [max_jobs: %s]"%(name, max_jobs)
                 
                 if options.queue == "torque":
                     all_queues[name] = TorqueQueue(name, max_jobs)
@@ -70,26 +71,25 @@ if __name__ == "__main__":
             else:
                 all_queues[name].jobs = max_jobs
 
-            inline_msg("INF", "update_worker.",indent = 2)
             all_queues[name].update_worker_info()
-#            inline_msg("INF", "%s - queue.normalise_processes()"%pp.queues[i_j].name,indent = 4)
-            inline_msg("INF", "normalise.",indent = 2)
-            all_queues[name].normalise_workers()
-
-#            pex.update_dbs()
-
+            worker_diff  = all_queues[name].normalise_workers()
+            if worker_diff > 0 :
+                print >> file_log,  "queue: %s seeded-killed = %d]"%(name, worker_diff)
+                
             inline_msg("INF", "populate/harvest data.",indent = 2)
             if not options.skip_init:
-      #       newline_msg("INF", "initialise_infiles()")
                 pex.seed_atoms( name )
-    #       newline_msg("INF", "harvesting_data()")
+                seeded_atoms_ac.append(pex.seeded_atoms ) 
         if not options.skip_harvest:
             pex.harvest_atoms()
     
+        inline_msg("INF", "syncing...(s:%s - h:%d).........................."%(seeded_atoms_ac, pex.harvested_atoms), indent = 2)
+        print >> file_log, "atoms: seeded= %d - harvested= %d"%(seeded_atoms_ac, pex.harvested_atoms)
+        file_log.flush()
+        
         if not options.skip_sync:
-            inline_msg("INF", "syncing..........(s:%d - h:%d)..................."%(pex.seeded_atoms, pex.harvested_atoms), indent = 2)
             pex.synchronise_master()
-    
+      
         newline_msg("INF", "sleep %s"%options.sleep,indent = 2)
         if options.sleep < 0:  sys.exit(0)
         time.sleep(options.sleep)

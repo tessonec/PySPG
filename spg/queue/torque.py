@@ -11,7 +11,7 @@ class TorqueQueue(Queue):
     queue_type = "torque" 
 
     def spawn_workers( self, new_jobs ):
-        print "spawning workers: ", new_jobs
+   #     print "spawning workers: ", new_jobs
         for i in range(new_jobs):
             cmd = "qsub -q %s %s/spg-worker.py"%(self.name, BINARY_PATH)
             proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
@@ -19,7 +19,7 @@ class TorqueQueue(Queue):
             proc.wait()
 
     def kill_workers( self, n_jobs = None):
-        print "killing workers: ", n_jobs
+    #    print "killing workers: ", n_jobs
         if not n_jobs: 
             for i in self.workers:
                 cmd = "qdel %s"%(i)
@@ -48,7 +48,7 @@ class TorqueQueue(Queue):
             except: 
                 continue
 
-        print "number of workers: ", len(self.workers)
+    #    print "number of workers: ", len(self.workers)
 
 
 
