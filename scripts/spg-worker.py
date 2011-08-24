@@ -39,7 +39,7 @@ if __name__ == "__main__":
          queue_name = opt_queue
      elif queue_name == "torque":
          queue_name =  torque.get_queue_name()
-
+     print "queue_type =",queue_type, " ///// queue_name",queue_name
      while True:
         try:
           next_file = min ( os.listdir("%s/queue/%s"%(VAR_PATH,queue_name) ) )
