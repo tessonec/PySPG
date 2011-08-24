@@ -53,5 +53,5 @@ class TorqueQueue(Queue):
 
 
 def get_queue_name():
-    return os.environ("PBS_O_QUEUE")
+    return os.environ["PBS_O_QUEUE"]
     
