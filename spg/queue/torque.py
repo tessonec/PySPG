@@ -1,6 +1,6 @@
 from spg import BINARY_PATH, VAR_PATH
 
-from queue import Queue
+from base import Queue
 
 
 from subprocess import Popen, PIPE
