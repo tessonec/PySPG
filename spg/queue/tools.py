@@ -18,7 +18,7 @@ def get_queueing_system():
 
 def set_queueing_system(queue_type):
     fout = open("%s/queue_type"%(VAR_PATH),"w")
-    fout << queue_type
+    fout.write( queue_type )
     fout.close()
 
          
