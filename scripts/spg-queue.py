@@ -1,10 +1,12 @@
 #!/usr/bin/python
 
-import cmd, sys, fnmatch, os
 
 from spg import VAR_PATH
 from spg.master import MasterDB
 from spg.utils import newline_msg
+
+import cmd, sys, fnmatch, os
+from subprocess import Popen, PIPE
 
 
 class QueueCommandParser(cmd.Cmd):
@@ -83,6 +85,19 @@ class QueueCommandParser(cmd.Cmd):
             for q in lsq:
                 #print status, q
                 self.master_db.execute_query( 'UPDATE queues SET max_jobs= ? WHERE name = ?',  max_jobs, q )
+
+
+
+    def do_clean_pool(cmd, name, params):
+        proc = Popen("rm -f %s/run/*"%VAR_PATH, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
+        proc.wait()
+        self.__update_queue_list()
+        
+        for (id, name, max_jobs, status) in self.queues:
+            proc = Popen("rm -f %s/queue/%s/*"%(VAR_PATH,name), shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
+            proc.wait()
+
+
 
 
     def do_remove(self, c):

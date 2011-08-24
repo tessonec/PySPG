@@ -80,11 +80,7 @@ class DBCommandParser(cmd.Cmd):
         return   
         
     def __filter_db_list(self, ls = None, filter = None):
-#        if not filter and not ls:
-#            try: 
-#                return [ self.current_param_db.full_name ]
-#            except: 
-#                return None
+
         if ls == None:
             ls = self.master_db.result_dbs.keys()
         ret = [ self.__shorten_name(i) for i in ls ]
@@ -92,6 +88,19 @@ class DBCommandParser(cmd.Cmd):
             ret = fnmatch.filter(ret, filter) 
               
         return sorted( [ self.__lengthen_name( i ) for i in ret ] )
+
+    def __get_db_from_cmdline(self, c):
+        """it returns the db name (or None) of a database identified either from its id or """
+        try: 
+            id = int(c)
+            filtered = filter(lambda x: x.id == id, self.master_db.result_dbs.values() )
+            if filtered:
+                return filtered[0] 
+        except:
+            foo, db_name = self.__translate_name(c)
+            if self.master_db.result_dbs.has_key(db_name):
+                return self.master_db.result_dbs[db_name]
+        return None
 
     def __complete(self, text):    
         completions = self.master_db.result_dbs.keys()
@@ -164,6 +173,7 @@ class DBCommandParser(cmd.Cmd):
 #        self.cursor.execute('UPDATE run_status SET status = "N" ')
 #        self.connection.commit()
 
+
     def do_clean(self, c):
         """cleans the results database by setting the R into N"""
         if self.current_param_db:
@@ -183,19 +193,20 @@ class DBCommandParser(cmd.Cmd):
         """lists the databases already registered in the master database and the possible ones found in the current directory"""
 
         ls_res_db = self.__filter_db_list( filter = c ) 
-        if not ls_res_db: return
-        print "--- registered dbs" 
-        for i in sorted( ls_res_db  ):
-            #print "%5d: %s"%(i_id, i_name)
-            curr_db = self.master_db.result_dbs[i]
-            try:
-                print "%5d: %s (%5.5f)"%(curr_db.id, self.__shorten_name( curr_db.full_name ), curr_db.weight )
-            except:
-                print "%5d: %s (%5s)"%(curr_db.id, self.__shorten_name( curr_db.full_name ), curr_db.weight )
+        if ls_res_db: 
+            print "--- registered dbs" 
+            for i in sorted( ls_res_db  ):
+                #print "%5d: %s"%(i_id, i_name)
+                curr_db = self.master_db.result_dbs[i]
+                try:
+                    print "%5d: %s (%5.5f)"%(curr_db.id, self.__shorten_name( curr_db.full_name ), curr_db.weight )
+                except:
+                    print "%5d: %s (%5s)"%(curr_db.id, self.__shorten_name( curr_db.full_name ), curr_db.weight )
+                    
         ls_res_db = fnmatch.filter( os.listdir("."), "results*.sqlite" )
         ls_res_db.extend( fnmatch.filter( os.listdir("."), "parameter*.dat" ) )
         ls_res_db = self.__filter_db_list(  ls_res_db, filter = c )
-        if len(ls_res_db) >0:
+        if ls_res_db:
             print "--- cwd dbs"
             for i in sorted( ls_res_db  ):
                 print "     : %s "%self.__shorten_name(i)
@@ -208,30 +219,13 @@ class DBCommandParser(cmd.Cmd):
         if len(c) >1:
             utils.newline_msg("ERR", "only one db can be loaded at a time", 2)
             return
-        try: 
-            id = int(c[0])
-            self.current_param_db = filter(lambda x: x.id == id, self.master_db.result_dbs.values() )[0]
-        except:
-            i_arg = c[0]
-            i_arg, db_name = self.__translate_name(i_arg)
-    #       print i_arg, db_name
-            if self.master_db.result_dbs.has_key( db_name ):
-                self.current_param_db = self.master_db.result_dbs[db_name]
-                print " --- loaded db '%s'"%self.__shorten_name( self.current_param_db.full_name )
-#            elif os.path.exists( db_name ) or os.path.exists( i_arg ):
-#                parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
-#                self.current_param_db = ParameterEnsemble( db_name )
-#                utils.newline_msg("msg", "loaded db '%s'/'%s'"%( self.__shorten_name( db_name ), self.__shorten_name( i_arg ) ), 2)
-            else:    
-                utils.newline_msg("ERR", "db does not exist", 2)
-#        parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name , timeout = self.values['timeout'] )
-        
-#        if 'executable' in self.values.keys():
-#            parser.command = self.values['executable']
-#        parser.init_db(retry = self.values['sql_retries'])
-        
-        
-#    def do_load(self,c):
+        ret = self.__get_db_from_cmdline(c[0])
+        if ret:
+            self.current_param_db = ret 
+            print " --- loaded db '%s'"%self.__shorten_name( self.current_param_db.full_name )
+        else:    
+            utils.newline_msg("ERR", "db does not exist", 2)
+
 
     def complete_load(self, text, line, begidx, endidx):
         return self.__complete(text)

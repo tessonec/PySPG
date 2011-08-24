@@ -1,4 +1,4 @@
-version_number = '3.0.0'
+version_number = '3.0.1'
 release_date = '24 Ago 2011'
 
 from base.iterator import *
