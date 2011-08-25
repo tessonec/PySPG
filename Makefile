@@ -37,9 +37,15 @@ install:
 	install -m 0644 spg/parameter/atom.py ${LIBDIR}/parameter
 	install -m 0644 spg/parameter/ensemble.py ${LIBDIR}/parameter
 	install -m 0644 spg/parameter/paramdb.py ${LIBDIR}/parameter
-	# library (queue)
+	# library (plot)
+	mkdir -p ${LIBDIR}/plot
+	install -m 0644 spg/plot/__init__.py ${LIBDIR}/plot
+	install -m 0644 spg/plot/grace.py ${LIBDIR}/plot
+	install -m 0644 spg/plot/pylab.py ${LIBDIR}/plot
+	# library (plot)
 	mkdir -p ${LIBDIR}/queue
 	install -m 0644 spg/queue/__init__.py ${LIBDIR}/queue
+	install -m 0644 spg/queue/base.py ${LIBDIR}/queue
 	install -m 0644 spg/queue/base.py ${LIBDIR}/queue
 	install -m 0644 spg/queue/tools.py ${LIBDIR}/queue
 	install -m 0644 spg/queue/torque.py ${LIBDIR}/queue
