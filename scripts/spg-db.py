@@ -104,19 +104,19 @@ class DBCommandParser(BaseDBCommandParser):
     def do_set(self, c):
         """sets a VAR1=VALUE1[:VAR2=VALUE2]
         sets a value in the currently loaded database """
+        if not self.current_param_db: 
+            utils.newline_msg("WRN", "current db not set... skipping")
+            return 
+        
         ret = utils.parse_to_dict(c, allowed_keys=self.possible_keys)
-        if self.current_param_db:
-            if ret.has_key('weight'):
-                self.current_param_db.weight = ret["weight"]
-                self.master_db.execute_query( 'UPDATE dbs SET weight= ? WHERE id = ?', self.current_param_db.weight, self.current_param_db.id  )
-            if ret.has_key('status'):
-                self.current_param_db.status = ret["status"]
-                self.master_db.execute_query( 'UPDATE dbs SET status= ? WHERE id = ?', self.current_param_db.status, self.current_param_db.id  )
-            if ret.has_key('repeat'):
-                self.current_param_db.repeat = ret["repeat"]
-            if ret.has_key('queue'):
-                self.current_param_db.queue = ret["queue"]
-                self.master_db.execute_query( 'UPDATE dbs SET queue= ? WHERE id = ?', self.current_param_db.queue, self.current_param_db.id  )
+        if not ret: 
+            return
+        
+        for k in ret.keys():
+            self.current_param_db.__dict__[k] = ret[k]
+            if k == "repeat": continue # repeat is not in the master db (should it be added)
+            self.master_db.execute_query( 'UPDATE dbs SET %s= ? WHERE id = ?'%k, ret[k], self.current_param_db.id  )
+
 
     def __set_status(self, c, st):
         if not c:

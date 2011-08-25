@@ -1,1 +1,1 @@
-from basedbcmdline import BaseDBCommandParser
+from ensembledb import BaseDBCommandParser
