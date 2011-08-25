@@ -18,10 +18,10 @@ class BaseDBCommandParser(cmd.Cmd):
     """DB command handler"""
 
  
-    def __init__(self):
+    def __init__(self, EnsembleConstructor = ParameterEnsemble):
         cmd.Cmd.__init__(self)
         self.current_param_db = None 
-        self.master_db =  MasterDB()
+        self.master_db =  MasterDB(EnsembleConstructor = EnsembleConstructor)
 
 
     def __shorten_name(self, st):

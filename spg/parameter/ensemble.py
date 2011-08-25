@@ -19,7 +19,6 @@ import numpy as n
 
 
 class ParameterEnsemble:
-#    normalising = 0.
     
     def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = True):
         self.full_name = full_name
@@ -42,11 +41,8 @@ class ParameterEnsemble:
         self.status = status
         self.repeat = repeat
         
-    #    ParameterEnsemble.normalising += weight
         if init_db:
             self.__init_db()
-
-
 
     def __connect_db(self):
         self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
@@ -73,26 +69,6 @@ class ParameterEnsemble:
         ret = self.cursor.execute(query, args).fetchone()
         self.__close_db()
         return ret 
-
-
-#    def query_db(self, query):
-#        self.__connect_db()
-#
-#        
-#        self.__close_db()
-#        
-#        return ret
-#
-#
-#    def query_db_fetchone(self, query):
-#        self.__connect_db()
-#
-#        ret = self.cursor.execute(query).fetchone()
-#        
-#        self.__close_db()
-#        
-#        return ret
-
 
 
     def __init_db(self):
@@ -301,8 +277,8 @@ class ParameterEnsemble:
 ################################################################################
 
 class ParameterEnsembleExecutor(ParameterEnsemble):
-    def __init__(self, full_name = "", init_db = True):
-        ParameterEnsemble.__init__(self, full_name, init_db)
+    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = True):
+        ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  , init_db )
         os.chdir(self.path)
            
     def launch_process(self):
@@ -355,40 +331,26 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 ################################################################################
 
 class ResultsDBQuery(ParameterEnsemble):
-    def __init__(self, full_name = ""):
-        ParameterEnsemble.__init__(self, full_name)
+    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = True):
+        ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  , init_db )
         self.coalesce = []
-    
+
     def clean_dict(self,dict_to_clean):
-    # adds quotes to strings
-      
+        """ adds quotes to strings """
         for i in dict_to_clean:  
             try:
-                float( dict_to_clean[i] ) # if it is a number is does not get surrounded by quotes
+                float( dict_to_clean[i] ) 
             except:
                 dict_to_clean[ i ] = "'%s'"%( dict_to_clean[i ].replace("'","").replace('"',"") )
 
     
     def table_from_query(self, query):
-    #    print query
+        """ print query """
         self.__connect_db()
         self.execute(query)
         ret = n.array( [ map(float,i) for i in self.cursor ] )
         self.__close_db()
         return ret
-        
-    
-#    def column_result_table(self, col_name, table_vars = None):
-#        if not table_vars:
-#          table_vars = list(self.variables)
-#          
-#        if self.directory_vars:
-#            for iv in self.directory_vars:
-#                try:
-#                    table_vars.remove(iv)
-#                except: pass
-#        query = "SELECT %s,AVG(r.%s) FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(",".join(["v.%s"%v for v in table_vars]), col_name)
-#        return self.get_table_from_query(query)        
 
 
 
@@ -407,7 +369,6 @@ class ResultsDBQuery(ParameterEnsemble):
             var_cols = "v.%s, "%table_vars[0]
         if len(table_vars) > 1:
             var_cols = "%s, "%",".join(["v.%s"%v for v in table_vars])
-#   print table_vars, var_cols        
         if not output_column:
             output_column = self.output_column[:]
             if "values_set_id" in output_column: 
@@ -424,12 +385,9 @@ class ResultsDBQuery(ParameterEnsemble):
                 out_cols = "r.%s "%output_column[0]
             elif len(output_column) > 1:
                 out_cols = " %s"%",".join(["r.%s"%v for v in output_column])
-#        print out_cols
           
         query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id "%(var_cols, out_cols)
-        #print query
         #:::~ This command was needed only because of a mistake in the id stores in the results table
-#       query = "SELECT %s %s FROM results AS r, values_set AS v , run_status AS rs WHERE rs.values_set_id = v.id AND rs.id = r.values_set_id "%(var_cols, out_cols)
         if restrict_to_values:
             restrict_cols = " AND ".join(["v.%s = %s"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
             if restrict_cols :
@@ -443,21 +401,6 @@ class ResultsDBQuery(ParameterEnsemble):
                     query = "%s %s GROUP BY rs.values_set_id"%(query, restrict_cols)
 
         return self.table_from_query(query)        
-#        if len(restrict_to_values) == 0:
-#            query = "SELECT %s,%s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id GROUP BY r.values_set_id"%(var_cols, out_cols)
-#          else:
-#            query = "SELECT %s,%s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id "%(var_cols, out_cols)
-#        else:          
-#          restrict_cols = " AND ".join(["v.%s = %s"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
-#          if len(restrict_cols ) > 0:
-#            restrict_cols = "AND %s"%restrict_cols 
-#          if not raw_data :
-#            query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s GROUP BY %s"%(var_cols, out_cols, restrict_cols, var_cols.strip(", "))
-#          elif restrict_by_val :
-#            query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s "%(var_cols, out_cols, restrict_cols)
-#          else:  
-#            query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id %s GROUP BY r.values_set_id"%(var_cols, out_cols, restrict_cols)
-
 
 
 
@@ -474,25 +417,10 @@ class ResultsDBQuery(ParameterEnsemble):
         self.cursor.execute(query)
         pairs = [ i for i in self.cursor ]
         self.__close_db()
-#      print query, pairs
         for i in pairs:
             d = {}
           
             for j in range( len( self.coalesce ) ):
-#             try:
-#               v = float( i[j] ) # if it is a number is does not get surrounded by quotes
                 d[self.coalesce[j] ] = i[j]
-#              except:
-#                d[self.coalesce[j] ] = "'%s'"%i[j]
             yield d
           
-
-
-#
-#if __name__ == "__main__":
-#    db_name = os.path.abspath( sys.argv[1] )
-#    
-#    rq = ResultsDBQuery(db_name)
-#    rq.get_results("ordprm_kuramoto")
-#    
-    

@@ -102,7 +102,10 @@ def parse_to_dict(string, allowed_keys = None):
             try:
                 ret[k] = float(v)
             except:
-                ret[k] = v
+                try:
+                    ret[k] = bool(v)
+                except:
+                    ret[k] = v
     return ret       
 
 #v = eevaluate_stringexp({x}+{y_3})",d)

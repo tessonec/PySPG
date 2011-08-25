@@ -5,44 +5,16 @@ import spg.utils as utils
 
 from spg.parameter import ParameterEnsemble
 
-######
-######    def update_dbs_info(self):   # 
-######        for i in self.dbs.keys():
-######            self.update_db_info(i)
-######
-######    def update_db_info(self,db_fullname): 
-######            
-######            curr_sql = SQLHelper(db_fullname)
-######            sel = curr_sql.select_fetchall("SELECT status, COUNT(*) FROM run_status GROUP BY status")
-######            
-######            res = {'D':0, 'R':0, 'E':0}
-######            ac = 0
-######            for (k,v) in sel :
-######                res[k] = int(v)
-######                ac += int(v)
-######                #:::~    'N': not run yet
-######                #:::~    'R': running
-######                #:::~    'D': successfully run (done)
-######                #:::~    'E': run but with non-zero error code
-######            self.db_master.execute("UPDATE dbs " 
-######                                    "SET total_combinations = ?, done_combinations = ?,"
-######                                    "running_combinations =  ? , error_combinations = ? "
-######                                    "WHERE full_name = ?", (ac, res['D'], res['R'], res['E'],db_fullname))
-######            
-###    (id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), 
-###     db_name CHAR(256), status CHAR(1), 
-###     total_combinations INTEGER, done_combinations INTEGER, 
-###     running_combinations INTEGER, error_combinations INTEGER, 
-
 
 class MasterDB:
 
-    def __init__(self,  connection = None):
+    def __init__(self,  connection = None, EnsembleConstructor = ParameterEnsemble):
         if not connection:
             self.connection = sql.connect("%s/spg_pool.sqlite"%VAR_PATH, timeout = TIMEOUT)
         else:
             self.connection = connection
             
+        self.EnsembleConstructor = EnsembleConstructor
         self.cursor = self.connection.cursor()
         self.__init_db()
         self.result_dbs = {} 
@@ -86,15 +58,11 @@ class MasterDB:
         
     def initialise_result_dbs(self, status = None): # These are the dbs that are registered and running
         self.result_dbs = {} 
-#        ParameterEnsemble.normalising = 0.
-####         res = self.cursor.execute("SELECT id, full_name, weight, queue FROM dbs WHERE status = 'R'")
         if status:
             res = self.cursor.execute("SELECT id, full_name, weight, queue, status FROM dbs  WHERE status = ?",status)
         else:  
             res = self.cursor.execute("SELECT id, full_name, weight, queue, status FROM dbs ")
-#  vec = [(id, full_name, weight, queue, status) for (id, full_name, weight, queue, status) in res]
         vec = [i for i in res]
-    #    print self.dbs
         
         for (id, full_name, weight, queue, status) in vec:
             if full_name in self.result_dbs.keys():
@@ -103,12 +71,9 @@ class MasterDB:
                 self.result_dbs[full_name].status = status
                 self.result_dbs[full_name].weight = weight
                 
-#                print full_name, self.dbs[full_name].weight
                 continue
-###   utils.newline_msg("INF","new db registered... '%s'"%full_name)
-            new_db = ParameterEnsemble(full_name, id, weight, queue, status)
+            new_db = self.EnsembleConstructor(full_name, id, weight, queue, status)
             self.result_dbs[full_name] = new_db
-    #    print self.dbs
    
 
 

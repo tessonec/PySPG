@@ -24,6 +24,9 @@ install:
 	install -m 0644 spg/base/iterator.py ${LIBDIR}/base
 	install -m 0644 spg/base/parser.py ${LIBDIR}/base
 	# library (master)
+	mkdir -p ${LIBDIR}/cmdline
+	install -m 0644 spg/cmdline/__init__.py ${LIBDIR}/cmdline
+	install -m 0644 spg/cmdline/basedbcmdline.py ${LIBDIR}/cmdline
 	mkdir -p ${LIBDIR}/master
 	install -m 0644 spg/master/__init__.py ${LIBDIR}/master
 	install -m 0644 spg/master/exchange.py ${LIBDIR}/master

@@ -30,40 +30,59 @@ import fnmatch
 class ResultsCommandParser(BaseDBCommandParser):
     """Results command handler"""
     
-     parser.add_option("--table-depth", type="int", action='store', dest="table_depth",
-                        default = 1, help = "The depth (how many independent variables) on the table are to be created")
-
-     parser.add_option("--coalesce", type="string", action='store', dest="coalesce",
-                        default = None, help = "comma separated list -with no blanks- ")
-
-     parser.add_option("--prefix", type="string", action='store', dest="prefix",
-                        default= "output", help = "prefix for the output")
-
-     parser.add_option("--expand-dirs", action='store_true', dest="expand_dirs",
-                        help = "whether to expand dirs instead of appending names to the output name")
-
-     parser.add_option("--by-val", action='store_true', dest="by_val",
-                        help = "whether to coalesce table by var -useful if repeated-")
-
-     parser.add_option("--raw", action='store_true', dest="raw_data",
-                        help = "whether to store all the data-points")
-
-     parser.add_option("--split-cols", action='store_true', dest="split_columns",
-                        help = "splits outputs column-wise")
+#     parser.add_option("--table-depth", type="int", action='store', dest="table_depth",
+#                        default = 1, help = "The depth (how many independent variables) on the table are to be created")
+#
+#     parser.add_option("--coalesce", type="string", action='store', dest="coalesce",
+#                        default = None, help = "comma separated list -with no blanks- ")
+#
+#     parser.add_option("--prefix", type="string", action='store', dest="prefix",
+#                        default= "output", help = "prefix for the output")
+#
+#     parser.add_option("--expand-dirs", action='store_true', dest="expand_dirs",
+#                        help = "whether to expand dirs instead of appending names to the output name")
+#
+#     parser.add_option("--by-val", action='store_true', dest="by_val",
+#                        help = "whether to coalesce table by var -useful if repeated-")
+#
+#     parser.add_option("--raw", action='store_true', dest="raw_data",
+#                        help = "whether to store all the data-points")
+#
+#     parser.add_option("--split-cols", action='store_true', dest="split_columns",
+#                        help = "splits outputs column-wise")
 
 #     parser.add_option("--filter","--insert", type="string", action='store',
  
     def __init__(self):
-        BaseDBCommandParser.__init__(self)
+        __init__(self, EnsembleConstructor = ResultsDBQuery)
         self.prompt = "| spg-results :::~ "
         
+        
+        self.allowed_keys = set( [ "table_depth", "expand_dirs", "raw_data", "split_colums"] )
+        self.coalesce_vars = []
+        self.table_depth = 1
         self.expand_dirs = True 
         self.raw_data = False
         self.split_colums = False
+        
+        
         #        self.values = {'repeat': 1, 'sql_retries': 1, 'timeout' : 60, 'weight': 1}
 
 #        self.doc_header = "default values: %s"%(self.values )
 
+#    def do_load(c):
+#        BaseDBCommandParser.do_load(self, c)
+#        
+#        self.current_param_db.execute_query()
+#
+#    def do_save_table(c):
+#        """saves the table of values"""
+
+
+
+
+
+    def do_set(c):
 
 
 
@@ -77,45 +96,38 @@ class ResultsCommandParser(BaseDBCommandParser):
 
 
 
-
-
-
-
-
-
-
-#########################################################################################
-#########################################################################################
-def parse_command_line():
-     from optparse import OptionParser
-
-     parser = OptionParser()
-
-     parser.add_option("--table-depth", type="int", action='store', dest="table_depth",
-                        default = 1, help = "The depth (how many independent variables) on the table are to be created")
-
-     parser.add_option("--coalesce", type="string", action='store', dest="coalesce",
-                        default = None, help = "comma separated list -with no blanks- ")
-
-     parser.add_option("--prefix", type="string", action='store', dest="prefix",
-                        default= "output", help = "prefix for the output")
-
-     parser.add_option("--expand-dirs", action='store_true', dest="expand_dirs",
-                        help = "whether to expand dirs instead of appending names to the output name")
-
-     parser.add_option("--by-val", action='store_true', dest="by_val",
-                        help = "whether to coalesce table by var -useful if repeated-")
-
-     parser.add_option("--raw", action='store_true', dest="raw_data",
-                        help = "whether to store all the data-points")
-
-     parser.add_option("--split-cols", action='store_true', dest="split_columns",
-                        help = "splits outputs column-wise")
-
-#     parser.add_option("--filter","--insert", type="string", action='store', dest="insert",
-#                        help = "Inserts the given iterator before the first variable. The second argument is usually enclosed between quotes")
-
-     return  parser.parse_args()
+##########################################################################################
+##########################################################################################
+#def parse_command_line():
+#     from optparse import OptionParser
+#
+#     parser = OptionParser()
+#
+#     parser.add_option("--table-depth", type="int", action='store', dest="table_depth",
+#                        default = 1, help = "The depth (how many independent variables) on the table are to be created")
+#
+#     parser.add_option("--coalesce", type="string", action='store', dest="coalesce",
+#                        default = None, help = "comma separated list -with no blanks- ")
+#
+#     parser.add_option("--prefix", type="string", action='store', dest="prefix",
+#                        default= "output", help = "prefix for the output")
+#
+#     parser.add_option("--expand-dirs", action='store_true', dest="expand_dirs",
+#                        help = "whether to expand dirs instead of appending names to the output name")
+#
+#     parser.add_option("--by-val", action='store_true', dest="by_val",
+#                        help = "whether to coalesce table by var -useful if repeated-")
+#
+#     parser.add_option("--raw", action='store_true', dest="raw_data",
+#                        help = "whether to store all the data-points")
+#
+#     parser.add_option("--split-cols", action='store_true', dest="split_columns",
+#                        help = "splits outputs column-wise")
+#
+##     parser.add_option("--filter","--insert", type="string", action='store', dest="insert",
+##                        help = "Inserts the given iterator before the first variable. The second argument is usually enclosed between quotes")
+#
+#     return  parser.parse_args()
 
 
 if __name__ == "__main__":
