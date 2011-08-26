@@ -10,9 +10,15 @@ from spg.parameter import ResultsDBQuery
 import spg.utils as utils
 from spg.cmdline import BaseDBCommandParser
 
+from spg.plot import PyplotStyle
+
 import os.path, os
 
-import numpy as n
+import numpy as np
+import math as m
+from matplotlib import rc
+import matplotlib.pyplot as plt
+import matplotlib.pylab as plb
 
 
 from spg.master import MasterDB
@@ -44,6 +50,7 @@ class ResultCommandParser(BaseDBCommandParser):
         self.split_colums = False
         self.restrict_by_val = True
         self.prefix = "output_"
+        
         
 #        self.values = {'repeat': 1, 'sql_retries': 1, 'timeout' : 60, 'weight': 1}
 #        self.doc_header = "default values: %s"%(self.values )
@@ -79,7 +86,7 @@ class ResultCommandParser(BaseDBCommandParser):
                  output_fname = "%s/%s-%s.dat"%(gen_s, self.prefix  , column)
               d,f = os.path.split(output_fname)
               if d != "" and not os.path.exists(d): os.makedirs(d)
-              n.savetxt( output_fname, data)
+              np.savetxt( output_fname, data)
          else:
            data = self.current_param_db.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
           
@@ -92,11 +99,28 @@ class ResultCommandParser(BaseDBCommandParser):
               output_fname = "%s/%s.dat"%(gen_s, self.prefix  )
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
-           n.savetxt( output_fname, data)
+           np.savetxt( output_fname, data)
+
+    def do_plot_split(self):
+        
+        for oc in self.figures.keys():
+             plt.close( self.figures[oc] )
+        self.figures.clear()
+        for column in self.output_column:
+            self.figures[column] = plt.figure()
+            axes = self.figures[column].add_subplot(1,1,1)
+            for i in self.current_param_db:
+                data = self.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
+                axes.plot( data, 'o' )
+              
+               
+        
 
     def do_set(self, c):
         """sets a VAR1=VALUE1[:VAR2=VALUE2]
         sets a value in the currently loaded database """
+        pw = PyplotStyle()
+        
         if not self.current_param_db: 
             utils.newline_msg("WRN", "current db not set... skipping")
             return 
