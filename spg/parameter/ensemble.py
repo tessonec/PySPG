@@ -1,8 +1,6 @@
 from spg import utils
 from spg import BINARY_PATH, TIMEOUT
 
-
-
 #import os.path, os, sys
 import os
 from subprocess import Popen, PIPE
@@ -150,10 +148,10 @@ class ParameterEnsemble:
                 self.stat_processes_error = v
  
  
-    def update_weight(self,weight):
-     #   ParameterEnsemble.normalising -= self.weight  
-        self.weight = weight
-     #   ParameterEnsemble.normalising += self.weight
+#    def update_weight(self,weight):
+#        ParameterEnsemble.normalising -= self.weight  
+#        self.weight = weight
+#        ParameterEnsemble.normalising += self.weight
  
         
 #
@@ -333,7 +331,8 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 class ResultsDBQuery(ParameterEnsemble):
     def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = True):
         ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  , init_db )
-        self.coalesced_vars = self.variables[:-2]
+        self.sepparated_vars = self.variables[:-2]
+        self.coalesced_vars = self.variables[-2:-1]
         self.in_table_vars =  self.variables[-1:]
 
 
@@ -352,20 +351,22 @@ class ResultsDBQuery(ParameterEnsemble):
                 in_table_vars = conf.split(",")
         if set(in_table_vars).issubset( set(self.variables) ):
             self.in_table_vars = in_table_vars
+            self.coalesced_vars = [ i for i in self.variables if ( i not in self.sepparated_vars ) and ( i not in self.in_table_vars ) ]
         else:
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(in_table_vars)-set(self.variables) )
         
                 
-    def setup_coalesced(self, conf):
+    def setup_sepparated_output(self, conf):
         try: 
             i = int(conf)
-            coalesced = self.variables[:i+1]
+            sepparated = self.variables[:i+1]
         except:
-            coalesced = conf.split(",")
-        if set(coalesced).issubset( set(self.variables) ):
-            self.coalesced_vars = coalesced
+            sepparated = conf.split(",")
+        if set(sepparated).issubset( set(self.variables) ):
+            self.sepparated_vars = sepparated
+            self.coalesced_vars = [ i for i in self.variables if ( i not in self.sepparated_vars ) and ( i not in self.in_table_vars ) ]
         else:
-            utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(coalesced)-set(self.variables) )
+            utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(sepparated)-set(self.variables) )
 
 
     def clean_dict(self,dict_to_clean):
@@ -379,10 +380,10 @@ class ResultsDBQuery(ParameterEnsemble):
     
     def table_from_query(self, query):
         """ print query """
-        self.__connect_db()
-        self.execute(query)
-        ret = n.array( [ map(float,i) for i in self.cursor ] )
-        self.__close_db()
+#        self.__connect_db()
+        
+        ret = n.array( [ map(float,i) for i in self.execute_query(query) ] )
+#        self.__close_db()
         return ret
 
 
@@ -393,7 +394,7 @@ class ResultsDBQuery(ParameterEnsemble):
 
         self.clean_dict(restrict_to_values)
 
-        for iv in self.coalesced_vars:
+        for iv in self.sepparated_vars:
             if iv in table_vars:
                 table_vars.remove(iv)
 
@@ -436,25 +437,22 @@ class ResultsDBQuery(ParameterEnsemble):
         return self.table_from_query(query)        
 
 
-
-
-
     def __iter__(self):
-        self.__connect_db()
-        if not self.coalesced_vars:  
+#        self.__connect_db()
+        if not self.sepparated_vars:  
             yield {}
             return
-        elif len(self.coalesced_vars) > 1:
-            query = "SELECT DISTINCT %s FROM values_set "%(",".join([v for v in self.coalesced_vars] ))
-        elif len(self.coalesced_vars) == 1:
-            query = "SELECT DISTINCT %s FROM values_set "%(" ".join([v for v in self.coalesced_vars] ))
-        self.cursor.execute(query)
-        pairs = [ i for i in self.cursor ]
-        self.__close_db()
+        elif len(self.sepparated_vars) == 1:
+            query = "SELECT DISTINCT %s FROM values_set "%(" ".join([v for v in self.sepparated_vars] ))
+        elif len(self.sepparated_vars) > 1:
+            query = "SELECT DISTINCT %s FROM values_set "%(",".join([v for v in self.sepparated_vars] ))
+
+        pairs = self.execute_query(query)
+#        pairs = [ i for i in self.cursor ]
+#        self.__close_db()
         d = {}
         for i in pairs:
             d.clear()
-            for j in range( len( self.coalesced_vars ) ):
-                d[self.coalesced_vars[j] ] = i[j]
+            for j in range( len( self.sepparated_vars ) ):
+                d[self.sepparated_vars[j] ] = i[j]
             yield d
-          

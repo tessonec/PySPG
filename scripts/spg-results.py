@@ -55,16 +55,18 @@ class ResultCommandParser(BaseDBCommandParser):
 #        self.values = {'repeat': 1, 'sql_retries': 1, 'timeout' : 60, 'weight': 1}
 #        self.doc_header = "default values: %s"%(self.values )
     def do_load(self,c):
+        """loads a results_database"""
         BaseDBCommandParser.do_load(self, c)
         self.output_column = self.current_param_db.output_column[:] 
         os.chdir( self.current_param_db.path )
 
 
     def do_set_output_column(c):
+        """sets which columns to generate output from"""
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
-        c = ",".join(c.split()).split(",")
+        c = c.split(",")
         if not set(c).issubset(  self.current_param_db.output_column ):
             utils.newline_msg("ERR", "the column(s) is(are) not in the output: %s"%( set(c) - set(  self.current_param_db.output_column )) )
         self.output_column = c
@@ -101,7 +103,8 @@ class ResultCommandParser(BaseDBCommandParser):
            if d != "" and not os.path.exists(d): os.makedirs(d)
            np.savetxt( output_fname, data)
 
-    def do_plot_split(self, c):
+    def do_plot_on_screen(self, c):
+        """plots variables as a function of a parameter"""
         for i in self.current_param_db:
             print i
 #        for oc in self.figures.keys():
@@ -116,16 +119,18 @@ class ResultCommandParser(BaseDBCommandParser):
               
 
     def do_setup_table(self,c):
+        """sets up the table's independent columns"""
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
         self.current_param_db.setup_output_table(c)
 
-    def do_setup_coalesced(self,c):
+    def do_setup_sepparated(self,c):
+        """sets up which variables are going to have a sepparated output"""
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
-        self.current_param_db.setup_coalesced(c)
+        self.current_param_db.setup_sepparated_output(c)
 
     def do_set_as_var(self,c):
         """ Sets a (set of) non-variables as variable """
@@ -166,7 +171,7 @@ class ResultCommandParser(BaseDBCommandParser):
         print "  + entities = %s "%( ", ".join(self.current_param_db.entities ) )
         print "  + columns = %s "%( ", ".join(self.current_param_db.output_column ) )
         print "  + split_colums = %s / expand_dirs = %s / raw_data = %s"%(self.split_colums, self.expand_dirs, self.raw_data)
-        print "  + structure = %s - %s - %s / restrict_by_val = %s"%(self.current_param_db.coalesced, self.current_param_db., self.restrict_by_val)
+        print "  + structure = %s - %s - %s / restrict_by_val = %s"%(self.current_param_db.sepparated_vars, self.current_param_db.coalesced_vars, self.current_param_db.in_table_vars, self.restrict_by_val)
 
 
 

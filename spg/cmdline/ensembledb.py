@@ -83,7 +83,7 @@ class BaseDBCommandParser(cmd.Cmd):
                 return self.master_db.result_dbs[db_name]
         return None
 
-    def complete(self, text):    
+    def complete(self, text, line= 0, begidx=0, endidx=1):    
         completions = self.master_db.result_dbs.keys()
         if text:
             completions = [ f
