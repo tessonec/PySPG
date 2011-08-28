@@ -42,28 +42,28 @@ class PyplotStyle:
 #    
 #    
 #    
-pw = PyplotWrapper() 
-print pw.marker,pw.colour
-pw.next()
-print pw.marker,pw.colour
-pw.next()
-print pw.marker,pw.colour
-pw.next()
-print pw.marker,pw.colour
-pw.next()
-print pw.marker,pw.colour
-pw.next()
-print pw.marker,pw.colour
-pw.next()
-print pw.marker,pw.colour
-pw.next()
-print pw.marker,pw.colour
-pw.next()
-print pw.marker,pw.colour
-pw.next()
-print pw.marker,pw.colour
-pw.next()
-print pw.marker,pw.colour
-pw.next()
-print pw.marker,pw.colour
-pw.next()
+#pw = PyplotWrapper() 
+#print pw.marker,pw.colour
+#pw.next()
+#print pw.marker,pw.colour
+#pw.next()
+#print pw.marker,pw.colour
+#pw.next()
+#print pw.marker,pw.colour
+#pw.next()
+#print pw.marker,pw.colour
+#pw.next()
+#print pw.marker,pw.colour
+#pw.next()
+#print pw.marker,pw.colour
+#pw.next()
+#print pw.marker,pw.colour
+#pw.next()
+#print pw.marker,pw.colour
+#pw.next()
+#print pw.marker,pw.colour
+#pw.next()
+#print pw.marker,pw.colour
+#pw.next()
+#print pw.marker,pw.colour
+#pw.next()

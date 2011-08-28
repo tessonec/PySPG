@@ -101,25 +101,50 @@ class ResultCommandParser(BaseDBCommandParser):
            if d != "" and not os.path.exists(d): os.makedirs(d)
            np.savetxt( output_fname, data)
 
-    def do_plot_split(self):
-        
-        for oc in self.figures.keys():
-             plt.close( self.figures[oc] )
-        self.figures.clear()
-        for column in self.output_column:
-            self.figures[column] = plt.figure()
-            axes = self.figures[column].add_subplot(1,1,1)
-            for i in self.current_param_db:
-                data = self.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
-                axes.plot( data, 'o' )
+    def do_plot_split(self, c):
+        for i in self.current_param_db:
+            print i
+#        for oc in self.figures.keys():
+#             plt.close( self.figures[oc] )
+#        self.figures.clear()
+#        for column in self.output_column:
+#            self.figures[column] = plt.figure()
+#            axes = self.figures[column].add_subplot(1,1,1)
+#            for i in self.current_param_db:
+#                data = self.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
+#                axes.plot( data, 'o' )
               
-               
+
+    def do_setup_table(self,c):
+        if not self.current_param_db:
+            utils.newline_msg("WRN", "current db not set... skipping")
+            return
+        self.current_param_db.setup_output_table(c)
+
+    def do_setup_coalesced(self,c):
+        if not self.current_param_db:
+            utils.newline_msg("WRN", "current db not set... skipping")
+            return
+        self.current_param_db.setup_coalesced(c)
+
+    def do_set_as_var(self,c):
+        """ Sets a (set of) non-variables as variable """
+        if not self.current_param_db: 
+            utils.newline_msg("WRN", "current db not set... skipping")
+            return 
+        ls_vars = c.split(",")
+        if not set(ls_vars).issubset( set(self.current_param_db.entities) ):
+            utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(ls_vars)-set(self.current_param_db.entities) )
+            return
+        for v in ls_vars:
+            self.current_param_db.execute_query( 'UPDATE entities SET varies=1 WHERE name = ?', v)
+        self.current_param_db.init_db()
+        
         
 
     def do_set(self, c):
         """sets a VAR1=VALUE1[:VAR2=VALUE2]
         sets a value in the currently loaded database """
-        pw = PyplotStyle()
         
         if not self.current_param_db: 
             utils.newline_msg("WRN", "current db not set... skipping")
@@ -138,9 +163,10 @@ class ResultCommandParser(BaseDBCommandParser):
             return
         print " -- db: %s"%( self.shorten_name( self.current_param_db.full_name ) )
         print "  + variables = %s "%( ", ".join(self.current_param_db.variables ) )
+        print "  + entities = %s "%( ", ".join(self.current_param_db.entities ) )
         print "  + columns = %s "%( ", ".join(self.current_param_db.output_column ) )
         print "  + split_colums = %s / expand_dirs = %s / raw_data = %s"%(self.split_colums, self.expand_dirs, self.raw_data)
-        print "  + table_depth = %s / restrict_by_val = %s"%(self.table_depth, self.restrict_by_val)
+        print "  + structure = %s - %s - %s / restrict_by_val = %s"%(self.current_param_db.coalesced, self.current_param_db., self.restrict_by_val)
 
 
 

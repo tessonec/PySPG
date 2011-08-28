@@ -42,7 +42,7 @@ class ParameterEnsemble:
         self.repeat = repeat
         
         if init_db:
-            self.__init_db()
+            self.init_db()
 
     def __connect_db(self):
         self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
@@ -71,7 +71,7 @@ class ParameterEnsemble:
         return ret 
 
 
-    def __init_db(self):
+    def init_db(self):
         self.__connect_db()
         #:::~ Table with the name of the executable
 #        (self.command, ) = self.cursor.execute( "SELECT name FROM executable " ).fetchone()
@@ -333,7 +333,40 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 class ResultsDBQuery(ParameterEnsemble):
     def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = True):
         ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  , init_db )
-        self.coalesce = []
+        self.coalesced_vars = self.variables[:-2]
+        self.in_table_vars =  self.variables[-1:]
+
+
+    def setup_output_table(self, conf):
+        try: 
+            i = int(conf)
+            in_table_vars = self.variables[-i:]
+        except:
+            if conf == "xy":
+                in_table_vars = self.variables[-1:]
+            if conf == "xyz":
+                in_table_vars = self.variables[-2:]
+            if conf == "xyzt":
+                in_table_vars = self.variables[-3:]
+            else:
+                in_table_vars = conf.split(",")
+        if set(in_table_vars).issubset( set(self.variables) ):
+            self.in_table_vars = in_table_vars
+        else:
+            utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(in_table_vars)-set(self.variables) )
+        
+                
+    def setup_coalesced(self, conf):
+        try: 
+            i = int(conf)
+            coalesced = self.variables[:i+1]
+        except:
+            coalesced = conf.split(",")
+        if set(coalesced).issubset( set(self.variables) ):
+            self.coalesced_vars = coalesced
+        else:
+            utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(coalesced)-set(self.variables) )
+
 
     def clean_dict(self,dict_to_clean):
         """ adds quotes to strings """
@@ -360,7 +393,7 @@ class ResultsDBQuery(ParameterEnsemble):
 
         self.clean_dict(restrict_to_values)
 
-        for iv in self.coalesce:
+        for iv in self.coalesced_vars:
             if iv in table_vars:
                 table_vars.remove(iv)
 
@@ -408,19 +441,20 @@ class ResultsDBQuery(ParameterEnsemble):
 
     def __iter__(self):
         self.__connect_db()
-        if len(self.coalesce) == 0:  
-            self.coalesce = self.variables
-        if len(self.coalesce) > 1:
-            query = "SELECT DISTINCT %s FROM values_set "%(",".join([v for v in self.coalesce] ))
-        else:
-            query = "SELECT DISTINCT %s FROM values_set "%(" ".join([v for v in self.coalesce] ))
+        if not self.coalesced_vars:  
+            yield {}
+            return
+        elif len(self.coalesced_vars) > 1:
+            query = "SELECT DISTINCT %s FROM values_set "%(",".join([v for v in self.coalesced_vars] ))
+        elif len(self.coalesced_vars) == 1:
+            query = "SELECT DISTINCT %s FROM values_set "%(" ".join([v for v in self.coalesced_vars] ))
         self.cursor.execute(query)
         pairs = [ i for i in self.cursor ]
         self.__close_db()
+        d = {}
         for i in pairs:
-            d = {}
-          
-            for j in range( len( self.coalesce ) ):
-                d[self.coalesce[j] ] = i[j]
+            d.clear()
+            for j in range( len( self.coalesced_vars ) ):
+                d[self.coalesced_vars[j] ] = i[j]
             yield d
           
