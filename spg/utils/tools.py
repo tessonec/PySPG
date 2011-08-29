@@ -102,9 +102,11 @@ def parse_to_dict(string, allowed_keys = None):
             try:
                 ret[k] = float(v)
             except:
-                try:
-                    ret[k] = bool(v)
-                except:
+                if v.lower()  == "true":
+                    ret[k] = True
+                elif v.lower()  == "false":
+                    ret[k] = False
+                else:
                     ret[k] = v
     return ret       
 

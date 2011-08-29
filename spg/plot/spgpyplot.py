@@ -37,12 +37,14 @@ class PyplotUnit(PlotUnit):
         
         self.plot_object.set_xlabel( self.x_label) 
         self.plot_object.set_ylabel( self.y_label) 
-
+        print self.x_scale, self.y_scale
         self.plot_object.set_xscale(self.x_scale)
-        self.plot_object.set_xscale(self.y_scale)
-        if self.x_range:
+        self.plot_object.set_yscale(self.y_scale)
+        x_min, x_max = self.x_range
+        y_min, y_max = self.y_range
+        if x_min and x_max:
             self.plot_object.set_xlim(self.x_range)
-        if self.y_range:
+        if y_min and y_max:
             self.plot_object.set_ylim(self.y_range)
 #        self.x_range = None
 #        self.y_range = None
@@ -60,12 +62,12 @@ class PyplotGraphicsUnit(GraphicsUnit):
         rc('text', usetex=True)
         rc('font', family='serif')
         self.figure = plt.figure()
+#        self.figure.set_title(r"$%s$"%self.label)
         
     def add_subplot(self, subplot_name):
         pos = 1+ len(self.subplots )
    #     print subplot_name, pos
-        obj = self.figure.add_subplot(self.n_cols, self.n_rows,  pos)
-        obj.set_title(r"$%s$"%self.label)
+        obj = self.figure.add_subplot(self.n_rows,  self.n_cols, pos)
         
         GraphicsUnit.add_subplot( self, subplot_name, plot_unit = PyplotUnit( plot_object = obj ) )
 

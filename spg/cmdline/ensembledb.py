@@ -181,5 +181,16 @@ class BaseDBCommandParser(cmd.Cmd):
         return completions
 
 
+    def do_run_script(self,c):
+        """executes a script file with commands accepted in this cmdline parser"""
+        if not os.path.exists(c):
+            utils.newline_msg("FIL", "file doesn't exist")
+            return
+        for l in open(c):
+            l = l.strip()
+            if not l: continue 
+            if l[0] == "#": continue
+            
+            self.onecmd(l.strip())
 
 

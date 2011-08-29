@@ -39,7 +39,7 @@ class ResultCommandParser(BaseDBCommandParser):
         BaseDBCommandParser.__init__(self, EnsembleConstructor = ResultsDBQuery)
         self.prompt = "| spg-results :::~ "
         
-        self.possible_keys = set( [ "table_depth", "expand_dirs", "raw_data", "split_colums", "restrict_by_val", "prefix", "n_rows", "plot_x_label", "plot_y_label", "plot_x_scale", "plot_y_scale"] )
+        self.possible_keys = set( [ "table_depth", "expand_dirs", "raw_data", "split_colums", "restrict_by_val", "prefix", "n_rows", "plot_x_label", "plot_y_label", "plot_x_scale", "plot_y_scale", "plot_x_min", "plot_x_max", "plot_y_min", "plot_y_max"] )
         self.output_column = []
         self.table_depth = 1
         self.n_rows = 3
@@ -53,6 +53,10 @@ class ResultCommandParser(BaseDBCommandParser):
         self.plot_y_label = ""
         self.plot_x_scale = "linear"
         self.plot_y_scale = "linear"
+        self.plot_x_min = None
+        self.plot_x_max = None
+        self.plot_y_min = None
+        self.plot_y_max = None
 
         self.autoscale = None
 
@@ -116,10 +120,12 @@ class ResultCommandParser(BaseDBCommandParser):
                 self.figures[ fig_label ] = PyplotGraphicsUnit(fig_label, self.n_rows, len(self.output_column) )
                 for column in self.output_column:
                     self.figures[ fig_label ].add_subplot(column)
-                    self.figures[ fig_label ].subplots[column].x_label = self.plot_x_label
-                    self.figures[ fig_label ].subplots[column].y_label = self.plot_y_label
+                    self.figures[ fig_label ].subplots[column].x_label = self.current_param_db.variables[-1]
+                    self.figures[ fig_label ].subplots[column].y_label = column
                     self.figures[ fig_label ].subplots[column].x_scale = self.plot_x_scale
                     self.figures[ fig_label ].subplots[column].y_scale = self.plot_y_scale
+                    self.figures[ fig_label ].subplots[column].x_range = (self.plot_x_min, self.plot_x_max)
+                    self.figures[ fig_label ].subplots[column].y_range = (self.plot_y_min, self.plot_y_max)
                     self.figures[ fig_label ].subplots[column].refresh_style()
 
             for column in self.output_column:#            self.figures[column] = plt.figure()
@@ -195,13 +201,6 @@ class ResultCommandParser(BaseDBCommandParser):
 
 
 
-    def do_run_script(self,c):
-        """executes a script file with commands accepted in this cmdline parser"""
-        if not os.path.exists(c):
-            utils.newline_msg("FIL", "file doesn't exist")
-            return
-        for l in open(c):
-            self.onecmd(l.strip())
         
 
 

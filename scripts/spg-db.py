@@ -145,14 +145,6 @@ class DBCommandParser(BaseDBCommandParser):
          """pauses the currently loaded registered database"""
          self.__set_status(c, 'P')
                 
-    def do_run_script(self,c):
-        """executes a script file with commands accepted in this cmdline parser"""
-        if not os.path.exists(c):
-            utils.newline_msg("FIL", "file doesn't exist")
-            return
-        for l in open(c):
-            self.onecmd(l.strip())
-        
     
 
 if __name__ == '__main__':

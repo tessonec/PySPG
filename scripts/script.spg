@@ -1,0 +1,11 @@
+load 8
+setup_vars_splitted epsilon
+#comentar la siguiente, descomentar las demas
+setup_vars_table a 
+setup_output_column ordprm_kuramoto,ordprm_shinomoto,jitter
+#set plot_x_scale=log
+#set plot_x_min=1.e-4
+#set plot_x_max=1.
+set plot_x_min=0.9
+set plot_x_max=1.3
+plot
