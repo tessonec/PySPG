@@ -31,14 +31,21 @@ class PlotUnit:
 
 
 class GraphicsUnit:
-    def __init__(self, geometry = None):
-        if geometry:
-            (self.n_cols, self.n_rows) = geometry
-            
+    def __init__(self, n_rows, n_plots):
+        (self.n_cols, self.n_rows) = self.get_geometry(n_rows, n_plots)
+#        (self.n_cols, self.n_rows) = geometry
+        
         self.subplots =  {}
         
     def add_subplot(self, subplot_name,  plot_unit = None):
         self.subplots[subplot_name] = plot_unit
     
-    
+    def get_geometry(self, n_rows, n_plots):
+        if n_plots <= n_rows:
+            return ( 1,n_plots )
+        
+        n_cols = n_plots/float(n_rows)
+        n_cols = (int(n_cols) +1) if (n_cols - int(n_cols) > 0.5 ) else int(n_cols) 
+        return (n_cols,n_rows)
+
     

@@ -39,16 +39,25 @@ class ResultCommandParser(BaseDBCommandParser):
         BaseDBCommandParser.__init__(self, EnsembleConstructor = ResultsDBQuery)
         self.prompt = "| spg-results :::~ "
         
-        
-        self.possible_keys = set( [ "table_depth", "expand_dirs", "raw_data", "split_colums", "restrict_by_val", "prefix"] )
-        self.coalesce_vars = []
+        self.possible_keys = set( [ "table_depth", "expand_dirs", "raw_data", "split_colums", "restrict_by_val", "prefix", "n_rows", "plot_x_label", "plot_y_label", "plot_x_scale", "plot_y_scale"] )
         self.output_column = []
         self.table_depth = 1
+        self.n_rows = 3
         self.expand_dirs = True 
         self.raw_data = False
         self.split_colums = False
-        self.restrict_by_val = True
+        self.restrict_by_val = False # was True
         self.prefix = "output_"
+
+        self.plot_x_label = ""
+        self.plot_y_label = ""
+        self.plot_x_scale = "linear"
+        self.plot_y_scale = "linear"
+
+        self.autoscale = None
+
+        
+        self.figures = {}
         
         
 #        self.values = {'repeat': 1, 'sql_retries': 1, 'timeout' : 60, 'weight': 1}
@@ -60,7 +69,7 @@ class ResultCommandParser(BaseDBCommandParser):
         os.chdir( self.current_param_db.path )
 
 
-    def do_set_output_column(c):
+    def do_setup_output_column(self,c):
         """sets which columns to generate output from"""
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
@@ -76,18 +85,18 @@ class ResultCommandParser(BaseDBCommandParser):
        for i in self.current_param_db:
          if self.split_columns:
            for column in self.output_column:
-              data = self.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
-              gen_d = generate_string(i, self.sepparated_vars, joining_string = "/" )
-              gen_s = generate_string(i, self.coalesced_vars, joining_string = "_" )
+              gen_d = utils.generate_string(i, self.separated_vars, joining_string = "/" )
+              gen_s = utils.generate_string(i, self.coalesced_vars, joining_string = "_" )
               output_fname = "%s/%s-%s-%s.dat"%(gen_d, self.prefix, column, gen_s)
               d,f = os.path.split(output_fname)
               if d != "" and not os.path.exists(d): os.makedirs(d)
+              data = self.current_param_db.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
               np.savetxt( output_fname, data)
          else:
            data = self.current_param_db.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
           
-           gen_d = generate_string(i, self.sepparated_vars, joining_string = "/" )
-           gen_s = generate_string(i, self.coalesced_vars, joining_string = "_" )
+           gen_d = utils.generate_string(i, self.separated_vars, joining_string = "/" )
+           gen_s = utils.generate_string(i, self.coalesced_vars, joining_string = "_" )
            output_fname = "%s/%s-%s.dat"%(gen_d, self.prefix, gen_s)
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
@@ -95,10 +104,31 @@ class ResultCommandParser(BaseDBCommandParser):
 
     def do_plot(self, c):
         """plots variables as a function of a parameter"""
-        for i in self.current_param_db:
-            print i
-#        for oc in self.figures.keys():
-#             plt.close( self.figures[oc] )
+
+        
+        for oc in self.figures.keys():
+             plt.close( self.figures[oc] )
+        
+        
+        for i_restrict in self.current_param_db:
+            fig_label = utils.generate_string(i_restrict, self.current_param_db.separated_vars, separator = "=", joining_string = " " )
+            if not self.figures.has_key(fig_label):
+                self.figures[ fig_label ] = PyplotGraphicsUnit(fig_label, self.n_rows, len(self.output_column) )
+                for column in self.output_column:
+                    self.figures[ fig_label ].add_subplot(column)
+                    self.figures[ fig_label ].subplots[column].x_label = self.plot_x_label
+                    self.figures[ fig_label ].subplots[column].y_label = self.plot_y_label
+                    self.figures[ fig_label ].subplots[column].x_scale = self.plot_x_scale
+                    self.figures[ fig_label ].subplots[column].y_scale = self.plot_y_scale
+                    self.figures[ fig_label ].subplots[column].refresh_style()
+
+            for column in self.output_column:#            self.figures[column] = plt.figure()
+                curve_label = utils.generate_string(i_restrict, self.current_param_db.coalesced_vars, separator = "=", joining_string = " " )
+                data = self.current_param_db.result_table(restrict_to_values = i_restrict, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
+#                print data
+                self.figures[fig_label].subplots[column].add_curve( curve_label, data[:,0], data[:,1] )
+                
+        plt.show()
 #        self.figures.clear()
 #        for column in self.output_column:
 #            self.figures[column] = plt.figure()
@@ -161,11 +191,18 @@ class ResultCommandParser(BaseDBCommandParser):
         print "  + entities = %s "%( ", ".join(self.current_param_db.entities ) )
         print "  + columns = %s "%( ", ".join(self.current_param_db.output_column ) )
         print "  + split_colums = %s / expand_dirs = %s / raw_data = %s"%(self.split_colums, self.expand_dirs, self.raw_data)
-        print "  + structure = %s - %s - %s / restrict_by_val = %s"%(self.current_param_db.sepparated_vars, self.current_param_db.coalesced_vars, self.current_param_db.in_table_vars, self.restrict_by_val)
+        print "  + structure = %s - %s - %s / restrict_by_val = %s"%(self.current_param_db.separated_vars, self.current_param_db.coalesced_vars, self.current_param_db.in_table_vars, self.restrict_by_val)
 
 
 
-
+    def do_run_script(self,c):
+        """executes a script file with commands accepted in this cmdline parser"""
+        if not os.path.exists(c):
+            utils.newline_msg("FIL", "file doesn't exist")
+            return
+        for l in open(c):
+            self.onecmd(l.strip())
+        
 
 
 ##########################################################################################

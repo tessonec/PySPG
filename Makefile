@@ -41,8 +41,9 @@ install:
 	mkdir -p ${LIBDIR}/plot
 	install -m 0644 spg/plot/__init__.py ${LIBDIR}/plot
 	install -m 0644 spg/plot/grace.py ${LIBDIR}/plot
-	install -m 0644 spg/plot/pylab.py ${LIBDIR}/plot
-	# library (plot)
+	install -m 0644 spg/plot/spgpyplot.py ${LIBDIR}/plot
+	install -m 0644 spg/plot/base.py ${LIBDIR}/plot
+	# library (queue)
 	mkdir -p ${LIBDIR}/queue
 	install -m 0644 spg/queue/__init__.py ${LIBDIR}/queue
 	install -m 0644 spg/queue/base.py ${LIBDIR}/queue

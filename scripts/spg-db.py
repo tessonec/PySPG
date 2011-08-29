@@ -60,7 +60,7 @@ class DBCommandParser(BaseDBCommandParser):
         """registers a given results database into the master database"""
         c = c.split()
         i_arg = c[0]
-        i_arg, db_name = self.__translate_name(i_arg)
+        i_arg, db_name = self.translate_name(i_arg)
         if self.master_db.result_dbs.has_key( db_name ):
             utils.newline_msg("WRN", "results db '%s' already registered"%self.__shorten_name( db_name ), 2)
             return 
@@ -91,11 +91,15 @@ class DBCommandParser(BaseDBCommandParser):
         if not c:
             ls_res_db = [ self.current_param_db.full_name ]
         else:
-            ls_res_db = self.__filter_db_list( filter = c )
+            ls_res_db = self.filter_db_list( filter = c )
         if not ls_res_db: return
+
+        self.current_param_db = None
         
         for i in ls_res_db: 
+            # print i
             self.master_db.execute_query("DELETE FROM dbs WHERE full_name = ?", i  )
+            del self.master_db.result_dbs[i]
         self.master_db.synchronise_master()
  
     def complete_remove(self, text, line, begidx, endidx):
@@ -141,6 +145,14 @@ class DBCommandParser(BaseDBCommandParser):
          """pauses the currently loaded registered database"""
          self.__set_status(c, 'P')
                 
+    def do_run_script(self,c):
+        """executes a script file with commands accepted in this cmdline parser"""
+        if not os.path.exists(c):
+            utils.newline_msg("FIL", "file doesn't exist")
+            return
+        for l in open(c):
+            self.onecmd(l.strip())
+        
     
 
 if __name__ == '__main__':

@@ -52,8 +52,11 @@ class PyplotUnit(PlotUnit):
         
 class PyplotGraphicsUnit(GraphicsUnit):
 
-    def __init__(self, geometry = None):
-        GraphicsUnit.__init__(self,geometry)
+
+    def __init__(self, fig_label, n_rows, n_plots):
+        GraphicsUnit.__init__(self,n_rows, n_plots)
+        self.label = fig_label
+        print self.n_cols, self.n_rows, self.label
         rc('text', usetex=True)
         rc('font', family='serif')
         self.figure = plt.figure()
@@ -62,33 +65,35 @@ class PyplotGraphicsUnit(GraphicsUnit):
         pos = 1+ len(self.subplots )
    #     print subplot_name, pos
         obj = self.figure.add_subplot(self.n_cols, self.n_rows,  pos)
-        GraphicsUnit.add_subplot( self, subplot_name, plot_unit = PyplotUnit( plot_object = obj ) )
+        obj.set_title(r"$%s$"%self.label)
         
-#        
-pp = PyplotGraphicsUnit((3,2))
-pp.add_subplot("saf")
-pp.add_subplot("otro")
-pp.add_subplot("other")
-pp.add_subplot("foo")
-pp.add_subplot("mas")
-pp.add_subplot("fin")
-#
-x = np.arange(0,10,.01)
-y1 = np.sin(x**2)
-y2 = np.sin(x**3)
-y3 = np.sin(x**4)
-#
-print pp.subplots
-#
-pp.subplots["saf"].add_curve( "**2", x, y1)
-pp.subplots["saf"].add_curve( "**3", x, y2)
-pp.subplots["foo"].add_curve( "**4", x, y3)
-pp.subplots["foo"].refresh_style()
+        GraphicsUnit.add_subplot( self, subplot_name, plot_unit = PyplotUnit( plot_object = obj ) )
 
-pp.subplots["mas"].add_curve( "**1", x, x)
-pp.subplots["mas"].refresh_style()
+#        
+#pp = PyplotGraphicsUnit((3,2))
+#pp.add_subplot("saf")
+#pp.add_subplot("otro")
+#pp.add_subplot("other")
+#pp.add_subplot("foo")
+#pp.add_subplot("mas")
+#pp.add_subplot("fin")
+##
+#x = np.arange(0,10,.01)
+#y1 = np.sin(x**2)
+#y2 = np.sin(x**3)
+#y3 = np.sin(x**4)
+##
+#print pp.subplots
+##
+#pp.subplots["saf"].add_curve( "**2", x, y1)
+#pp.subplots["saf"].add_curve( "**3", x, y2)
+#pp.subplots["foo"].add_curve( "**4", x, y3)
+#pp.subplots["foo"].refresh_style()
 #
-plt.show()
+#pp.subplots["mas"].add_curve( "**1", x, x)
+#pp.subplots["mas"].refresh_style()
+##
+#plt.show()
 
 
 

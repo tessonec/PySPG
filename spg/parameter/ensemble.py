@@ -83,7 +83,7 @@ class ParameterEnsemble:
         #:::~ get the names of the outputs
         fa = self.execute_query("PRAGMA table_info(results)")
         self.output_column = [ i[1] for i in fa ]
-        self.output_column = self.output_column[1:]
+        self.output_column = self.output_column[2:]
 #        self.__close_db()
 
 
@@ -351,7 +351,7 @@ class ResultsDBQuery(ParameterEnsemble):
                 in_table_vars = conf.split(",")
         if set(in_table_vars).issubset( set(self.variables) ):
             self.in_table_vars = in_table_vars
-            self.coalesced_vars = [ i for i in self.variables if ( i not in self.sepparated_vars ) and ( i not in self.in_table_vars ) ]
+            self.coalesced_vars = [ i for i in self.variables if ( i not in self.separated_vars ) and ( i not in self.in_table_vars ) ]
         else:
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(in_table_vars)-set(self.variables) )
         
@@ -388,21 +388,15 @@ class ResultsDBQuery(ParameterEnsemble):
 
 
 
-    def result_table(self, table_vars = None, restrict_to_values = {}, raw_data = False, restrict_by_val = False, output_column = []):
-        if not table_vars:
-            table_vars = self.variables[:]
-
+    def result_table(self, restrict_to_values = {}, raw_data = False, restrict_by_val = False, output_column = []):
+   
         self.clean_dict(restrict_to_values)
 
-        for iv in self.separated_vars:
-            if iv in table_vars:
-                table_vars.remove(iv)
-
-        var_cols = ""
-        if len(table_vars) == 1:
-            var_cols = "v.%s, "%table_vars[0]
-        if len(table_vars) > 1:
-            var_cols = "%s, "%",".join(["v.%s"%v for v in table_vars])
+        
+        if len(self.in_table_vars) == 1:
+            var_cols = "v.%s, "%self.in_table_vars[0]
+        if len(self.in_table_vars) > 1:
+            var_cols = "%s, "%",".join(["v.%s"%v for v in self.in_table_vars])
         if not output_column:
             output_column = self.output_column[:]
             if "values_set_id" in output_column: 
@@ -423,7 +417,7 @@ class ResultsDBQuery(ParameterEnsemble):
         query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id "%(var_cols, out_cols)
         #:::~ This command was needed only because of a mistake in the id stores in the results table
         if restrict_to_values:
-            restrict_cols = " AND ".join(["v.%s = %s"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
+            restrict_cols = " AND ".join(["v.%s = '%s'"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
             if restrict_cols :
                 restrict_cols = "AND %s"%restrict_cols 
             query = "%s  %s "%(query, restrict_cols)
@@ -432,8 +426,8 @@ class ResultsDBQuery(ParameterEnsemble):
                     if var_cols:
                         query = "%s  GROUP BY %s"%(query, var_cols.strip(", "))
                 else:  
-                    query = "%s %s GROUP BY rs.values_set_id"%(query, restrict_cols)
-
+                    query = "%s %s GROUP BY v.id"%(query, restrict_cols)
+#        print query
         return self.table_from_query(query)        
 
 
