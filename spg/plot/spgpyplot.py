@@ -7,7 +7,7 @@ import matplotlib.pylab as plb
 from base import GraphicsUnit, PlotUnit
 
 
-class PylabPlotUnit(PlotUnit):
+class PyplotUnit(PlotUnit):
     __markers_progression = ['o', "s" ,"v", "D", "^", "<", ">", "p", "*", "p", "h", "H", "p"]
     __colours_progression = ['black', "blue", "green", "red", "yellow", "cyan", "white", "magenta", "navy", "violet"]
     __current_style = 0
@@ -50,7 +50,7 @@ class PylabPlotUnit(PlotUnit):
             
        
         
-class PylabGraphicsUnit(GraphicsUnit):
+class PyplotGraphicsUnit(GraphicsUnit):
 
     def __init__(self, geometry = None):
         GraphicsUnit.__init__(self)
@@ -65,10 +65,10 @@ class PylabGraphicsUnit(GraphicsUnit):
         pos = 1+ len(self.subplots )
         print subplot_name, pos
         obj = self.figure.add_subplot(self.n_cols, self.n_rows,  pos)
-        GraphicsUnit.add_subplot( self, subplot_name, plot_unit = PylabPlotUnit( plot_object = obj ) )
+        GraphicsUnit.add_subplot( self, subplot_name, plot_unit = PyplotUnit( plot_object = obj ) )
         
 #        
-pp = PylabGraphicsUnit((3,2))
+pp = PyplotGraphicsUnit((3,2))
 pp.add_subplot("saf")
 pp.add_subplot("otro")
 pp.add_subplot("other")
