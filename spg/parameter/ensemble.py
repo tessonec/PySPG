@@ -331,7 +331,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 class ResultsDBQuery(ParameterEnsemble):
     def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = True):
         ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  , init_db )
-        self.sepparated_vars = self.variables[:-2]
+        self.separated_vars = self.variables[:-2]
         self.coalesced_vars = self.variables[-2:-1]
         self.in_table_vars =  self.variables[-1:]
 
@@ -356,17 +356,17 @@ class ResultsDBQuery(ParameterEnsemble):
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(in_table_vars)-set(self.variables) )
         
                 
-    def setup_sepparated_output(self, conf):
+    def setup_separated_output(self, conf):
         try: 
             i = int(conf)
-            sepparated = self.variables[:i+1]
+            separated = self.variables[:i+1]
         except:
-            sepparated = conf.split(",")
-        if set(sepparated).issubset( set(self.variables) ):
-            self.sepparated_vars = sepparated
-            self.coalesced_vars = [ i for i in self.variables if ( i not in self.sepparated_vars ) and ( i not in self.in_table_vars ) ]
+            separated = conf.split(",")
+        if set(separated).issubset( set(self.variables) ):
+            self.separated_vars = separated
+            self.coalesced_vars = [ i for i in self.variables if ( i not in self.separated_vars ) and ( i not in self.in_table_vars ) ]
         else:
-            utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(sepparated)-set(self.variables) )
+            utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(separated)-set(self.variables) )
 
 
     def clean_dict(self,dict_to_clean):
@@ -394,7 +394,7 @@ class ResultsDBQuery(ParameterEnsemble):
 
         self.clean_dict(restrict_to_values)
 
-        for iv in self.sepparated_vars:
+        for iv in self.separated_vars:
             if iv in table_vars:
                 table_vars.remove(iv)
 
@@ -439,13 +439,16 @@ class ResultsDBQuery(ParameterEnsemble):
 
     def __iter__(self):
 #        self.__connect_db()
-        if not self.sepparated_vars:  
+        vars_to_separate = self.separated_vars[:]
+        vars_to_separate.extend(self.coalesced_vars)
+
+        if not vars_to_separate:
             yield {}
             return
-        elif len(self.sepparated_vars) == 1:
-            query = "SELECT DISTINCT %s FROM values_set "%(" ".join([v for v in self.sepparated_vars] ))
-        elif len(self.sepparated_vars) > 1:
-            query = "SELECT DISTINCT %s FROM values_set "%(",".join([v for v in self.sepparated_vars] ))
+        elif len(vars_to_separate) == 1:
+            query = "SELECT DISTINCT %s FROM values_set "%( vars_to_separate[0] )
+        elif len(vars_to_separate) > 1:
+            query = "SELECT DISTINCT %s FROM values_set "%(",".join([v for v in vars_to_separate] ))
 
         pairs = self.execute_query(query)
 #        pairs = [ i for i in self.cursor ]
@@ -453,6 +456,6 @@ class ResultsDBQuery(ParameterEnsemble):
         d = {}
         for i in pairs:
             d.clear()
-            for j in range( len( self.sepparated_vars ) ):
-                d[self.sepparated_vars[j] ] = i[j]
+            for j in range( len( vars_to_separate ) ):
+                d[vars_to_separate[j] ] = i[j]
             yield d

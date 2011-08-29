@@ -10,7 +10,8 @@ from spg.parameter import ResultsDBQuery
 import spg.utils as utils
 from spg.cmdline import BaseDBCommandParser
 
-from spg.plot import PyplotStyle
+from spg.plot import PyplotUnit, PyplotGraphicsUnit 
+#from spg.plot import GraceUnit, GraceGraphicsUnit 
 
 import os.path, os
 
@@ -20,9 +21,7 @@ from matplotlib import rc
 import matplotlib.pyplot as plt
 import matplotlib.pylab as plb
 
-
 from spg.master import MasterDB
-
 from spg import VAR_PATH, RUN_DIR
 
 import sqlite3 as sql
@@ -74,36 +73,27 @@ class ResultCommandParser(BaseDBCommandParser):
 
     def do_save_table(c):
        """saves the table of values"""
-       if self.table_depth is not None:
-          self.coalesce_vars = self.current_param_db[:-self.table_depth]
        for i in self.current_param_db:
          if self.split_columns:
            for column in self.output_column:
               data = self.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
-              if not opts.expand_dirs:
-                 gen_s = generate_string(i, self.coalesce_vars )
-                 output_fname = "%s_%s-%s.dat"%(self.prefix, column, gen_s )
-              else:
-                 gen_s = generate_string(i, self.coalesce_vars, joining_string = "/" )
-                 output_fname = "%s/%s-%s.dat"%(gen_s, self.prefix  , column)
+              gen_d = generate_string(i, self.sepparated_vars, joining_string = "/" )
+              gen_s = generate_string(i, self.coalesced_vars, joining_string = "_" )
+              output_fname = "%s/%s-%s-%s.dat"%(gen_d, self.prefix, column, gen_s)
               d,f = os.path.split(output_fname)
               if d != "" and not os.path.exists(d): os.makedirs(d)
               np.savetxt( output_fname, data)
          else:
            data = self.current_param_db.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
           
-           if not opts.expand_dirs:
-              gen_s = generate_string(i, self.coalesce_vars )
-              output_fname = "%s-%s.dat"%(self.prefix, gen_s )
-           else:
-              gen_s = generate_string(i, self.coalesce_vars, joining_string = "/" )
-              
-              output_fname = "%s/%s.dat"%(gen_s, self.prefix  )
+           gen_d = generate_string(i, self.sepparated_vars, joining_string = "/" )
+           gen_s = generate_string(i, self.coalesced_vars, joining_string = "_" )
+           output_fname = "%s/%s-%s.dat"%(gen_d, self.prefix, gen_s)
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
            np.savetxt( output_fname, data)
 
-    def do_plot_on_screen(self, c):
+    def do_plot(self, c):
         """plots variables as a function of a parameter"""
         for i in self.current_param_db:
             print i
@@ -118,19 +108,19 @@ class ResultCommandParser(BaseDBCommandParser):
 #                axes.plot( data, 'o' )
               
 
-    def do_setup_table(self,c):
+    def do_setup_vars_table(self,c):
         """sets up the table's independent columns"""
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
         self.current_param_db.setup_output_table(c)
 
-    def do_setup_sepparated(self,c):
-        """sets up which variables are going to have a sepparated output"""
+    def do_setup_vars_splitted(self,c):
+        """sets up which variables are going to have a separated output"""
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
-        self.current_param_db.setup_sepparated_output(c)
+        self.current_param_db.setup_separated_output(c)
 
     def do_set_as_var(self,c):
         """ Sets a (set of) non-variables as variable """

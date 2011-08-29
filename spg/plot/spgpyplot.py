@@ -53,17 +53,14 @@ class PyplotUnit(PlotUnit):
 class PyplotGraphicsUnit(GraphicsUnit):
 
     def __init__(self, geometry = None):
-        GraphicsUnit.__init__(self)
+        GraphicsUnit.__init__(self,geometry)
         rc('text', usetex=True)
         rc('font', family='serif')
         self.figure = plt.figure()
         
-        if geometry:
-            (self.n_cols, self.n_rows) = geometry
-            
     def add_subplot(self, subplot_name):
         pos = 1+ len(self.subplots )
-        print subplot_name, pos
+   #     print subplot_name, pos
         obj = self.figure.add_subplot(self.n_cols, self.n_rows,  pos)
         GraphicsUnit.add_subplot( self, subplot_name, plot_unit = PyplotUnit( plot_object = obj ) )
         
