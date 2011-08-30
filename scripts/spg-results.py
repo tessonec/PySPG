@@ -60,30 +60,16 @@ class ResultCommandParser(BaseDBCommandParser):
 
         self.autoscale = None
 
-        
         self.figures = {}
-        
-        
 #        self.values = {'repeat': 1, 'sql_retries': 1, 'timeout' : 60, 'weight': 1}
 #        self.doc_header = "default values: %s"%(self.values )
+
     def do_load(self,c):
         """loads a results_database"""
         BaseDBCommandParser.do_load(self, c)
         self.output_column = self.current_param_db.output_column[:] 
         os.chdir( self.current_param_db.path )
-
-
-    def do_setup_output_column(self,c):
-        """sets which columns to generate output from"""
-        if not self.current_param_db:
-            utils.newline_msg("WRN", "current db not set... skipping")
-            return
-        c = c.split(",")
-        if not set(c).issubset(  self.current_param_db.output_column ):
-            utils.newline_msg("ERR", "the column(s) is(are) not in the output: %s"%( set(c) - set(  self.current_param_db.output_column )) )
-        self.output_column = c
-            
-
+  
     def do_save_table(c):
        """saves the table of values"""
        for i in self.current_param_db:
@@ -143,7 +129,6 @@ class ResultCommandParser(BaseDBCommandParser):
 #                data = self.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
 #                axes.plot( data, 'o' )
               
-
     def do_setup_vars_table(self,c):
         """sets up the table's independent columns"""
         if not self.current_param_db:
@@ -157,7 +142,18 @@ class ResultCommandParser(BaseDBCommandParser):
             utils.newline_msg("WRN", "current db not set... skipping")
             return
         self.current_param_db.setup_separated_output(c)
-
+        
+        
+    def do_setup_output_column(self,c):
+        """sets which columns to generate output from"""
+        if not self.current_param_db:
+            utils.newline_msg("WRN", "current db not set... skipping")
+            return
+        c = c.split(",")
+        if not set(c).issubset(  self.current_param_db.output_column ):
+            utils.newline_msg("ERR", "the column(s) is(are) not in the output: %s"%( set(c) - set(  self.current_param_db.output_column )) )
+        self.output_column = c
+            
     def do_set_as_var(self,c):
         """ Sets a (set of) non-variables as variable """
         if not self.current_param_db: 
@@ -170,8 +166,6 @@ class ResultCommandParser(BaseDBCommandParser):
         for v in ls_vars:
             self.current_param_db.execute_query( 'UPDATE entities SET varies=1 WHERE name = ?', v)
         self.current_param_db.init_db()
-        
-        
 
     def do_set(self, c):
         """sets a VAR1=VALUE1[:VAR2=VALUE2]

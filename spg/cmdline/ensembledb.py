@@ -20,6 +20,7 @@ class BaseDBCommandParser(cmd.Cmd):
  
     def __init__(self, EnsembleConstructor = ParameterEnsemble):
         cmd.Cmd.__init__(self)
+        self.EnsembleConstructor = EnsembleConstructor 
         self.current_param_db = None 
         self.master_db =  MasterDB(EnsembleConstructor = EnsembleConstructor)
 
@@ -81,6 +82,9 @@ class BaseDBCommandParser(cmd.Cmd):
             foo, db_name = self.translate_name(c)
             if self.master_db.result_dbs.has_key(db_name):
                 return self.master_db.result_dbs[db_name]
+            else:
+                return self.EnsembleConstructor(db_name, init_db = True)
+                utils.newline_msg("WRN", "database '%s' is not registered, loading it anyhow"%self.shorten_name(db_name))
         return None
 
     def complete(self, text, line= 0, begidx=0, endidx=1):    
