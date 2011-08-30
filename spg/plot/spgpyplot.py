@@ -37,7 +37,7 @@ class PyplotUnit(PlotUnit):
         
         self.plot_object.set_xlabel( self.x_label) 
         self.plot_object.set_ylabel( self.y_label) 
-        print self.x_scale, self.y_scale
+#        print self.x_scale, self.y_scale
         self.plot_object.set_xscale(self.x_scale)
         self.plot_object.set_yscale(self.y_scale)
         x_min, x_max = self.x_range
@@ -65,7 +65,7 @@ class PyplotGraphicsUnit(GraphicsUnit):
 #        self.figure.set_title(r"$%s$"%self.label)
         
     def add_subplot(self, subplot_name):
-        pos = 1+ len(self.subplots )
+        pos = 1 + len(self.subplots )
    #     print subplot_name, pos
         obj = self.figure.add_subplot(self.n_rows,  self.n_cols, pos)
         

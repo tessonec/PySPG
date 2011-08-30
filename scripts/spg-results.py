@@ -6,14 +6,14 @@ Created on Mon Jul 11 11:37:27 2011
 @author: Claudio Tessone - <tessonec@ethz.ch>
 """
 
-from spg.parameter import ResultsDBQuery
+from spg import VAR_PATH, RUN_DIR, CONFIG_DIR
 import spg.utils as utils
 from spg.cmdline import BaseDBCommandParser
+from spg.master import MasterDB
+from spg.parameter import ResultsDBQuery
 
 from spg.plot import PyplotUnit, PyplotGraphicsUnit 
-#from spg.plot import GraceUnit, GraceGraphicsUnit 
 
-import os.path, os
 
 import numpy as np
 import math as m
@@ -21,14 +21,9 @@ from matplotlib import rc
 import matplotlib.pyplot as plt
 import matplotlib.pylab as plb
 
-from spg.master import MasterDB
-from spg import VAR_PATH, RUN_DIR
-
 import sqlite3 as sql
 import sys, optparse
 import os, os.path
-
-
 import fnmatch
 
 
@@ -67,8 +62,10 @@ class ResultCommandParser(BaseDBCommandParser):
     def do_load(self,c):
         """loads a results_database"""
         BaseDBCommandParser.do_load(self, c)
-        self.output_column = self.current_param_db.output_column[:] 
+        self.output_column = self.current_param_db.output_column[:]
+        
         os.chdir( self.current_param_db.path )
+        
   
     def do_save_table(c):
        """saves the table of values"""
@@ -94,11 +91,16 @@ class ResultCommandParser(BaseDBCommandParser):
 
     def do_plot(self, c):
         """plots variables as a function of a parameter"""
-
-        
-        for oc in self.figures.keys():
-             plt.close( self.figures[oc] )
-        
+        try:
+            self.dict_of_params = utils.load_config( "%s/spg-conf/%s.params"%(CONFIG_DIR, self.current_param_db.executable[4:-3] ), "texlabel" )
+        except: self.dict_of_params = {}
+        try:
+            self.dict_of_stdout = utils.load_config( "%s/spg-conf/%s.stdout"%(CONFIG_DIR, self.current_param_db.executable[4:-3] ), "texlabel" )
+        except: self.dict_of_stdout = {}
+#        for oc in self.figures.keys():
+#             plt.close( self.figures[oc] )
+        plt.clf() 
+        self.figures = {}
         
         for i_restrict in self.current_param_db:
             fig_label = utils.generate_string(i_restrict, self.current_param_db.separated_vars, separator = "=", joining_string = " " )
@@ -113,7 +115,15 @@ class ResultCommandParser(BaseDBCommandParser):
                     self.figures[ fig_label ].subplots[column].x_range = (self.plot_x_min, self.plot_x_max)
                     self.figures[ fig_label ].subplots[column].y_range = (self.plot_y_min, self.plot_y_max)
                     self.figures[ fig_label ].subplots[column].refresh_style()
-
+                    if self.dict_of_stdout.has_key(column):
+                        self.figures[ fig_label ].subplots[column].plot_object.set_ylabel( self.dict_of_stdout[column] )
+                    else:
+                        self.figures[ fig_label ].subplots[column].plot_object.set_ylabel( column )
+                    if self.dict_of_params.has_key(self.current_param_db.in_table_vars[0] ):
+                        self.figures[ fig_label ].subplots[column].plot_object.set_ylabel( self.dict_of_params[ self.current_param_db.in_table_vars[0] ] )
+                    else:
+                        self.figures[ fig_label ].subplots[column].plot_object.set_params( self.current_param_db.in_table_vars[0] )
+                        
             for column in self.output_column:#            self.figures[column] = plt.figure()
                 curve_label = utils.generate_string(i_restrict, self.current_param_db.coalesced_vars, separator = "=", joining_string = " " )
                 data = self.current_param_db.result_table(restrict_to_values = i_restrict, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )

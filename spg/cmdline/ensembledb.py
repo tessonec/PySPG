@@ -87,7 +87,7 @@ class BaseDBCommandParser(cmd.Cmd):
                 utils.newline_msg("WRN", "database '%s' is not registered, loading it anyhow"%self.shorten_name(db_name))
         return None
 
-    def complete(self, text, line= 0, begidx=0, endidx=1):    
+    def complete(self, text):    
         completions = self.master_db.result_dbs.keys()
         if text:
             completions = [ f
