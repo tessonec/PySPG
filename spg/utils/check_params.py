@@ -168,7 +168,7 @@ def contents_in_output(exec_file):
      repeat: how many columns are to be taken by the parser
      help: a string containing an explanation of the variable"""
      
-    possible_keys = set(["type","label","help","scale","repeat"])
+    possible_keys = set(["type","label","texlabel","help","scale","repeat"])
     if exec_file[:2] == "ct" and exec_file[3] == "-" :  exec_file = exec_file[4:]
     ret = []
     exec_file,ext=os.path.splitext(exec_file)
