@@ -53,6 +53,7 @@ install:
 	# library (utils)
 	mkdir -p ${LIBDIR}/utils
 	install -m 0644 spg/utils/__init__.py ${LIBDIR}/utils
+	install -m 0644 spg/utils/load_configs.py ${LIBDIR}/utils
 	install -m 0644 spg/utils/check_params.py ${LIBDIR}/utils
 	install -m 0644 spg/utils/tools.py ${LIBDIR}/utils
 

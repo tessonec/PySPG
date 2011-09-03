@@ -10,6 +10,8 @@ import copy
 from spg import utils
 from spg import CONFIG_DIR
 
+from tools import newline_msg
+
 
 def import_backends(infile):
 
@@ -53,6 +55,49 @@ def import_backends(infile):
     
     return ret
 
+
+
+def load_parameters(prog_name, in_file):
+    """ Loads a parameter dataset"""
+    
+    if prog_name[:4] == "ctx-":  prog_name = prog_name[4:]
+
+    prog_name, ext = os.path.splitext(prog_name)
+    possible_lines = import_backends("%s/spg-conf/%s.ct"%(CONFIG_DIR,prog_name))
+    ret = {}
+    for k in possible_lines.keys():
+        (family, var_type, default)  = possible_lines[k]
+        if family == "flag":
+            ret[k] = False
+        elif family == "val":
+            eval("%s(%s)"%(var_type, default))
+        elif family == "choice":
+            eval("%s(%s)"%(var_type, default[0]))
+            
+    for line in open(in_file):
+        line = line.strip()
+        if not line: continue
+        if line[0] == "#": continue
+        vec = line.split() 
+        key = vec[0]
+        
+        if not possible_lines.has_key(key):
+            newline_msg("ERR", "key '%s' not understood"%key)
+            sys.exit(2)
+        (family, var_type, default)  = possible_lines[key]
+        if family == "flag":
+            ret[k] = True
+        elif family == "val":
+            ret[k] = eval("%s(%s)"%(var_type, vec[1]))
+        elif family == "choice":
+            if vec[1] in default:
+                ret[k] = eval("%s(%s)"%(var_type, default[0]))
+            else:
+                newline_msg("ERR", "value '%s' not among possible values for '': %s"%(vec[1],key,default))
+                sys.exit(2)
+                
+        
+    return ret
 
 
 def consistency(exec_file, miparser):

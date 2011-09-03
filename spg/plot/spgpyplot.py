@@ -58,7 +58,7 @@ class PyplotGraphicsUnit(GraphicsUnit):
     def __init__(self, fig_label, n_rows, n_plots):
         GraphicsUnit.__init__(self,n_rows, n_plots)
         self.label = fig_label
-        print self.n_cols, self.n_rows, self.label
+    #    print self.n_cols, self.n_rows, self.label
         rc('text', usetex=True)
         rc('font', family='serif')
         self.figure = plt.figure()

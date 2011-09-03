@@ -89,13 +89,13 @@ class ResultCommandParser(BaseDBCommandParser):
            if d != "" and not os.path.exists(d): os.makedirs(d)
            np.savetxt( output_fname, data)
 
-    def do_plot(self, c):
-        """plots variables as a function of a parameter"""
+
+    def __plot():
         try:
-            self.dict_of_params = utils.load_config( "%s/spg-conf/%s.params"%(CONFIG_DIR, self.current_param_db.executable[4:-3] ), "texlabel" )
+            self.dict_of_params = utils.load_config( "%s/spg-conf/%s.params"%(CONFIG_DIR, self.current_param_db.command[4:-3] ), "texlabel" )
         except: self.dict_of_params = {}
         try:
-            self.dict_of_stdout = utils.load_config( "%s/spg-conf/%s.stdout"%(CONFIG_DIR, self.current_param_db.executable[4:-3] ), "texlabel" )
+            self.dict_of_stdout = utils.load_config( "%s/spg-conf/%s.stdout"%(CONFIG_DIR, self.current_param_db.command[4:-3] ), "texlabel" )
         except: self.dict_of_stdout = {}
 #        for oc in self.figures.keys():
 #             plt.close( self.figures[oc] )
@@ -116,13 +116,13 @@ class ResultCommandParser(BaseDBCommandParser):
                     self.figures[ fig_label ].subplots[column].y_range = (self.plot_y_min, self.plot_y_max)
                     self.figures[ fig_label ].subplots[column].refresh_style()
                     if self.dict_of_stdout.has_key(column):
-                        self.figures[ fig_label ].subplots[column].plot_object.set_ylabel( self.dict_of_stdout[column] )
+                        self.figures[ fig_label ].subplots[column].plot_object.set_ylabel( "$%s$"%self.dict_of_stdout[column] )
                     else:
-                        self.figures[ fig_label ].subplots[column].plot_object.set_ylabel( column )
+                        self.figures[ fig_label ].subplots[column].plot_object.set_ylabel( "$%s$"%column )
                     if self.dict_of_params.has_key(self.current_param_db.in_table_vars[0] ):
-                        self.figures[ fig_label ].subplots[column].plot_object.set_ylabel( self.dict_of_params[ self.current_param_db.in_table_vars[0] ] )
+                        self.figures[ fig_label ].subplots[column].plot_object.set_xlabel( "$%s$"%self.dict_of_params[ self.current_param_db.in_table_vars[0] ] )
                     else:
-                        self.figures[ fig_label ].subplots[column].plot_object.set_params( self.current_param_db.in_table_vars[0] )
+                        self.figures[ fig_label ].subplots[column].plot_object.set_xlabel( "$%s$"%self.current_param_db.in_table_vars[0] )
                         
             for column in self.output_column:#            self.figures[column] = plt.figure()
                 curve_label = utils.generate_string(i_restrict, self.current_param_db.coalesced_vars, separator = "=", joining_string = " " )
@@ -130,6 +130,10 @@ class ResultCommandParser(BaseDBCommandParser):
 #                print data
                 self.figures[fig_label].subplots[column].add_curve( curve_label, data[:,0], data[:,1] )
                 
+
+    def do_plot(self, c):
+        """plots variables as a function of a parameter"""
+        self.__plot()
         plt.show()
 #        self.figures.clear()
 #        for column in self.output_column:
@@ -154,6 +158,15 @@ class ResultCommandParser(BaseDBCommandParser):
         self.current_param_db.setup_separated_output(c)
         
         
+    def do_plot_save(self, c):
+        """plots variables as a function of a parameter"""
+        if not c:
+            c = "eps"
+        self.__plot()        
+        for f_lab in self.figures.keys():
+            self.figures[f_lab].figure.savefig("%s.%s"%(f_lab,c))
+                
+
     def do_setup_output_column(self,c):
         """sets which columns to generate output from"""
         if not self.current_param_db:
