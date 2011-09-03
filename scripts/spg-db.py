@@ -33,7 +33,7 @@ class DBCommandParser(BaseDBCommandParser):
         i_arg = c[0]
         i_arg, db_name = self.translate_name(i_arg)
         if self.master_db.result_dbs.has_key( db_name ):
-            utils.newline_msg("WRN", "results db '%s' already registered"%self.__shorten_name( db_name ), 2)
+            utils.newline_msg("WRN", "results db '%s' already registered"%self.shorten_name( db_name ), 2)
             return 
 
         self.current_param_db = ParameterEnsemble( db_name, init_db = False ) 
@@ -62,7 +62,7 @@ class DBCommandParser(BaseDBCommandParser):
         i_arg = c[0]
         i_arg, db_name = self.translate_name(i_arg)
         if self.master_db.result_dbs.has_key( db_name ):
-            utils.newline_msg("WRN", "results db '%s' already registered"%self.__shorten_name( db_name ), 2)
+            utils.newline_msg("WRN", "results db '%s' already registered"%self.shorten_name( db_name ), 2)
             return 
 
         self.current_param_db = ParameterEnsemble( db_name ) 
@@ -103,7 +103,7 @@ class DBCommandParser(BaseDBCommandParser):
         self.master_db.synchronise_master()
  
     def complete_remove(self, text, line, begidx, endidx):
-        return self.__complete(text)
+        return self.complete(text)
     
     def do_set(self, c):
         """sets a VAR1=VALUE1[:VAR2=VALUE2]
@@ -126,7 +126,7 @@ class DBCommandParser(BaseDBCommandParser):
         if not c:
             ls_res_db = [ self.current_param_db.full_name ]
         else:
-            ls_res_db = self.__filter_db_list( filter = c )
+            ls_res_db = self.filter_db_list( filter = c )
         if not ls_res_db: return
         
         for i in ls_res_db: 
