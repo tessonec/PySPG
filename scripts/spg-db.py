@@ -131,7 +131,7 @@ class DBCommandParser(BaseDBCommandParser):
         
         for i in ls_res_db: 
             self.current_param_db.status = st
-            self.master_db.execute( 'UPDATE dbs SET status= ? WHERE id = ?', st, self.current_param_db.id  )
+            self.master_db.execute_query( 'UPDATE dbs SET status= ? WHERE id = ?', st, self.current_param_db.id  )
 
     def do_stop(self, c):
         """stops the currently loaded registered database"""
