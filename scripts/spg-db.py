@@ -31,7 +31,7 @@ class DBCommandParser(BaseDBCommandParser):
         Generates a new database out of a parameters.dat"""
         c = c.split()
         i_arg = c[0]
-        i_arg, db_name = self.__translate_name(i_arg)
+        i_arg, db_name = self.translate_name(i_arg)
         if self.master_db.result_dbs.has_key( db_name ):
             utils.newline_msg("WRN", "results db '%s' already registered"%self.__shorten_name( db_name ), 2)
             return 
