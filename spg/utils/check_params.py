@@ -105,7 +105,7 @@ def consistency(exec_file, miparser):
     """ Checks the consistency of a parameters.dat file """  
     consistent_param=True
   
-    if exec_file[:4] == "ctx-":  exec_file = exec_file[4:]
+    if exec_file[:2] == "ct" and exec_file[3] == "-" :  exec_file = exec_file[4:]
 
     exec_file, ext = os.path.splitext(exec_file)
     possible_lines = import_backends("%s/spg-conf/%s.ct"%(CONFIG_DIR,exec_file))
