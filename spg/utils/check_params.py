@@ -7,7 +7,6 @@ import copy
 #from math import *
 
 
-from spg import utils
 from spg import CONFIG_DIR
 
 from tools import newline_msg
@@ -28,7 +27,7 @@ def import_backends(infile):
                 except:
                     var_name = ""
             except:
-                utils.newline_msg("ERR", "while unfolding line: '%s'" % (line))
+                newline_msg("ERR", "while unfolding line: '%s'" % (line))
                 sys.exit()
             new_stuff = [
                     i.replace("%ARG%", var_name).replace("%ARG1%", var_name)
@@ -60,7 +59,7 @@ def import_backends(infile):
 def load_parameters(prog_name, in_file):
     """ Loads a parameter dataset"""
     
-    if prog_name[:4] == "ctx-":  prog_name = prog_name[4:]
+    if prog_name[:2] == "ct" and prog_name[3] == "-" :  prog_name = prog_name[4:]
 
     prog_name, ext = os.path.splitext(prog_name)
     possible_lines = import_backends("%s/spg-conf/%s.ct"%(CONFIG_DIR,prog_name))
@@ -70,31 +69,33 @@ def load_parameters(prog_name, in_file):
         if family == "flag":
             ret[k] = False
         elif family == "val":
-            eval("%s(%s)"%(var_type, default))
-        elif family == "choice":
-            eval("%s(%s)"%(var_type, default[0]))
             
+            ret[k] = eval("%s('%s')"%(var_type, default))
+        elif family == "choice":
+            ret[k] = eval("%s('%s')"%(var_type, default[0]))
     for line in open(in_file):
         line = line.strip()
         if not line: continue
         if line[0] == "#": continue
         vec = line.split() 
         key = vec[0]
-        
         if not possible_lines.has_key(key):
             newline_msg("ERR", "key '%s' not understood"%key)
             sys.exit(2)
         (family, var_type, default)  = possible_lines[key]
         if family == "flag":
-            ret[k] = True
+            ret[key] = True
         elif family == "val":
-            ret[k] = eval("%s(%s)"%(var_type, vec[1]))
+ #           print k, "%s(%s)"%(var_type, vec[1])
+            ret[key] = eval("%s('%s')"%(var_type, vec[1]))
+#            print ret[k]
         elif family == "choice":
             if vec[1] in default:
-                ret[k] = eval("%s(%s)"%(var_type, default[0]))
+                ret[key] = eval("%s('%s')"%(var_type, default[0]))
             else:
                 newline_msg("ERR", "value '%s' not among possible values for '': %s"%(vec[1],key,default))
                 sys.exit(2)
+        #print ret
                 
         
     return ret
@@ -123,27 +124,27 @@ def consistency(exec_file, miparser):
         for val in values:
             
             if family == "flag" : 
-                utils.newline_msg("VAL", "flag can not contain a value")
+                newline_msg("VAL", "flag can not contain a value")
             elif family == "choice" and str(val) not in default: 
-                utils.newline_msg("VAL", "choice value '%s' not recognised: possible values: %s"%(val, default))
+                newline_msg("VAL", "choice value '%s' not recognised: possible values: %s"%(val, default))
                 consistent_param = False
             elif var_type in set(["float","double"]): 
                 try: 
                     float(val) 
                 except:
-                    utils.newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
+                    newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
                     consistent_param = False
             elif var_type in set(["int","unsigned", "long int", "long"]): 
                 try: 
                     int(val) 
                 except:
-                    utils.newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
+                    newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
                     consistent_param = False
             elif var_type == "string":
                 try: 
                     str(val) 
                 except:
-                    utils.newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
+                    newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
                     consistent_param = False
 
    #         print consistent_param
@@ -185,7 +186,7 @@ def contents_in_output(exec_file):
             v=v.strip()
            
             if k not in possible_keys:
-                utils.newline_msg("SYN","in column '%s', unrecognised key '%s'"%(name,k))
+                newline_msg("SYN","in column '%s', unrecognised key '%s'"%(name,k))
                 sys.exit(1)
             values[k]=v
         ret.append((name,values))    
