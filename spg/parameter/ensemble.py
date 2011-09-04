@@ -288,7 +288,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
             dir = utils.generate_string(self.values,self.directory_vars, joining_string = "/")
             if not os.path.exists(dir): os.makedirs(dir)
             os.chdir(dir)
-        configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
+        configuration_filename = "input_%s_%d.dat"%(self.current_run_id)
         fconf = open(configuration_filename,"w")
         
         for k in self.values.keys():

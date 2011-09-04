@@ -84,7 +84,7 @@ class DBCommandParser(BaseDBCommandParser):
     def do_clean_all(self, c):
         """cleans the results database by setting all into N"""
         if self.current_param_db:
-            self.current_param_db.execute_query('UPDATE run_status SET status = "N" ')
+            self.current_param_db.execute_query('UPDATE run_status SET status = "N" WHERE id>0 ')
 
     def do_remove(self, c):
         """removes one results database from the registered ones"""
