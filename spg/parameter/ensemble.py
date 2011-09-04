@@ -96,6 +96,7 @@ class ParameterEnsemble:
         query = "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join( ["v.%s"%i for i in self.entities] )  +"WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
         print query
         res = self.execute_query_fetchone(query)
+        print res
         if res == None:
             utils.newline_msg("WRN","db '%s' did not return any new data point"%self.full_name)
             return None
