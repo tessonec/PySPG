@@ -114,9 +114,9 @@ class ParameterEnsemble:
         return self.values
 
     def create_trees(self):
-        self.__connect_db()
+#        self.__connect_db()
         ret = self.execute_query_fetchone("SELECT * FROM entities WHERE name LIKE 'store_%'")
-        self.__close_db()
+#        self.__close_db()
         return ret is not None
 
 
