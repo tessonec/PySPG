@@ -18,7 +18,7 @@ if __name__ == "__main__":
     parser.add_option("--tree", action='store_true', dest="tree",
                        help = "whether to create a directory tree with the key-value pairs" )
 
-    parser.add_option("--dumy", action='store_true', dest="dummy",
+    parser.add_option("--dummy", action='store_true', dest="dummy",
                        help = "generates the input files, only" )
 
     parser.add_option("-d","--directory-var", action='store', type = "string", dest="directory_vars",
