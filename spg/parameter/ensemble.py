@@ -92,14 +92,17 @@ class ParameterEnsemble:
         return self
 
 
+    def reset(self):     
+        self.execute_query( 'UPDATE run_status SET status ="R" WHERE id >0 '  )
+
     def next(self):
         query = "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join( ["v.%s"%i for i in self.entities] )  +"WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
-        print query
+#       print query
         res = self.execute_query_fetchone(query)
-        print res
+#        print res
         if res == None:
-            utils.newline_msg("WRN","db '%s' did not return any new data point"%self.full_name)
-            return None
+            # utils.newline_msg("WRN","db '%s' did not return any new data point"%self.full_name)
+            raise StopIteration
 
         self.current_run_id  = res[0]
         self.current_valuesset_id = res[1]
@@ -329,18 +332,18 @@ class ParameterEnsembleInputFilesGenerator(ParameterEnsemble):
         os.chdir(self.path)
            
     def launch_process(self):
-        pwd = os.path.abspath(".")
+#        pwd = os.path.abspath(".")
    #     if self.directory_vars or self.create_trees():
    #         dir = utils.generate_string(self.values,self.directory_vars, joining_string = "/")
    #         if not os.path.exists(dir): os.makedirs(dir)
     #        os.chdir(dir)
-        configuration_filename = "input_%s_%8d.dat"%(self.db_name, self.current_valuesset_id)
+        configuration_filename = "input_%%8.d.dat"%(self.db_name, self.current_valuesset_id)
         fconf = open(configuration_filename,"w")
         
         for k in self.values.keys():
             print >> fconf, k, utils.replace_in_string(self.values[k], self.values) 
         fconf.close()
-        
+   
 
 
 

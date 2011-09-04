@@ -50,6 +50,9 @@ if __name__ == "__main__":
       
       if options.tree:
           os.chdir(path)
+      
+      if options.dummy:
+          executor.reset()
           #      parser.init_db()
 #          parser.fill_status(repeat = options.repeat )
 
