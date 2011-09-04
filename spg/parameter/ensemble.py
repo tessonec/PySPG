@@ -321,6 +321,30 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 #       self.connection.commit()
 
 
+
+
+class ParameterEnsembleInputFilesGenerator(ParameterEnsemble):
+    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = True):
+        ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  , init_db )
+        os.chdir(self.path)
+           
+    def launch_process(self):
+        pwd = os.path.abspath(".")
+        if self.directory_vars or self.create_trees():
+            dir = utils.generate_string(self.values,self.directory_vars, joining_string = "/")
+            if not os.path.exists(dir): os.makedirs(dir)
+            os.chdir(dir)
+        configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
+        fconf = open(configuration_filename,"w")
+        
+        for k in self.values.keys():
+            print >> fconf, k, utils.replace_in_string(self.values[k], self.values) 
+        fconf.close()
+        
+
+
+
+
 ################################################################################
 ################################################################################
 ################################################################################

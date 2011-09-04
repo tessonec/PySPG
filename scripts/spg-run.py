@@ -18,6 +18,9 @@ if __name__ == "__main__":
     parser.add_option("--tree", action='store_true', dest="tree",
                        help = "whether to create a directory tree with the key-value pairs" )
 
+    parser.add_option("--dumy", action='store_true', dest="dummy",
+                       help = "generates the input files, only" )
+
     parser.add_option("-d","--directory-var", action='store', type = "string", dest="directory_vars",
                        default = False, help = "which variables to store as directories, only if tree" )
 
@@ -34,7 +37,10 @@ if __name__ == "__main__":
           db_name = i_arg
       full_name = os.path.realpath(db_name)
 #      path, out = os.path.split(full_name)
-      executor = ParameterEnsembleExecutor( full_name )
+      if options.dummy:
+          executor = ParameterEnsembleInputFilesGenerator( full_name )
+      else:
+          executor = ParameterEnsembleExecutor( full_name )
       
       executor.generate_tree( options.directory_vars )
 
