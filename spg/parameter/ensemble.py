@@ -305,8 +305,8 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
             self.execute_query( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
             all_d = [self.current_valuesset_id]
             all_d.extend( output )
-            print self.output_column, all_d
-            cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
+#            print self.output_column, all_d
+            cc = 'INSERT INTO results (values_set_id, %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
             self.execute_query( cc )
             
 
