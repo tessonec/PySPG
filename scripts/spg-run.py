@@ -36,17 +36,20 @@ if __name__ == "__main__":
       else:
           db_name = i_arg
       full_name = os.path.realpath(db_name)
-#      path, out = os.path.split(full_name)
+      path, out = os.path.split(full_name)
       if options.dummy:
           executor = ParameterEnsembleInputFilesGenerator( full_name )
       else:
           executor = ParameterEnsembleExecutor( full_name )
+      if options.tree:
+          executor.generate_tree( options.directory_vars )
       
-      executor.generate_tree( options.directory_vars )
 
       for values in executor:
           executor.launch_process()
-          
+      
+      if options.tree:
+          os.chdir(path)
           #      parser.init_db()
 #          parser.fill_status(repeat = options.repeat )
 
