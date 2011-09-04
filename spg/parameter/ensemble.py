@@ -289,39 +289,47 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
             if not os.path.exists(dir): os.makedirs(dir)
             os.chdir(dir)
         configuration_filename = "input_%.8d.dat"%(self.current_run_id)
+        output_filename = "input_%.8d.dat"%(self.current_run_id)
         fconf = open(configuration_filename,"w")
         
         for k in self.values.keys():
             print >> fconf, k, utils.replace_in_string(self.values[k], self.values) 
         fconf.close()
         
-        cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
+        cmd = "%s/%s -i %s > %s"%(BINARY_PATH, self.command, configuration_filename, output_filename )
         os.system(cmd)
         ret_code = 0
 #        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
 #        proc.wait()
  #       ret_code = proc.returncode
- #       output = [i.strip() for i in proc.stdout.readline().split()]
+        output = [i.strip() for i in open(output_filename).readline().split()]
         os.remove(configuration_filename)
+        os.remove(output_filename)
         if self.directory_vars:
             os.chdir(pwd)
-        if ret_code == 0:
+#        if ret_code == 0:
             
-            self.execute_query( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
-#            all_d = [self.current_valuesset_id]
-#            all_d.extend( output )
+        all_d = [self.current_valuesset_id]
+        all_d.extend( output )
 #            print self.output_column, all_d
-#            cc = 'INSERT INTO results (values_set_id, %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
- #           self.execute_query( cc )
+        cc = 'INSERT INTO results (values_set_id, %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
+        flog = open(self.full_name.replace("sqlite", "log"), "aw") 
+        print >> flog, "%.8d: %s --> %s"%(self.current_valuesset_id, self.values, output)
+
+        try:
+            self.execute_query( cc )
+            self.execute_query( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )           
+        except:
+            self.execute_query( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
+
             
 
-        else:
+#        else:
             #:::~ status can be either 
             #:::~    'N': not run
             #:::~    'R': running
             #:::~    'D': successfully run (done)
             #:::~    'E': run but with non-zero error code
-            self.execute_query( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
         
 #       self.connection.commit()
 
