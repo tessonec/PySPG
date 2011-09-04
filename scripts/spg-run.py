@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 
-from spg.parameter import ParameterExecutor
+from spg.parameter import ParameterEnsembleExecutor
 from spg import BINARY_PATH
 
 
@@ -34,7 +34,7 @@ if __name__ == "__main__":
           db_name = i_arg
       full_name = os.path.realpath(db_name)
 #      path, out = os.path.split(full_name)
-      executor = ParameterExecutor( full_name )
+      executor = ParameterEnsembleExecutor( full_name )
       
       executor.generate_tree( options.directory_vars )
 
