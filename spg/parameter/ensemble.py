@@ -93,7 +93,7 @@ class ParameterEnsemble:
 
 
     def reset(self):     
-        self.execute_query( 'UPDATE run_status SET status ="R" WHERE id >0 '  )
+        self.execute_query( 'UPDATE run_status SET status ="N" WHERE id>0 '  )
 
     def next(self):
         query = "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join( ["v.%s"%i for i in self.entities] )  +"WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
