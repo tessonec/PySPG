@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 
-from spg.parameter import ParameterEnsembleExecutor
+from spg.parameter import ParameterEnsembleExecutor, ParameterEnsembleInputFilesGenerator
 from spg import BINARY_PATH
 
 
