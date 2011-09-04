@@ -296,10 +296,12 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
         fconf.close()
         
         cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
-        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
-        proc.wait()
-        ret_code = proc.returncode
-        output = [i.strip() for i in proc.stdout.readline().split()]
+        os.system(cmd)
+        ret_code = 0
+#        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
+#        proc.wait()
+ #       ret_code = proc.returncode
+ #       output = [i.strip() for i in proc.stdout.readline().split()]
         os.remove(configuration_filename)
         if self.directory_vars:
             os.chdir(pwd)
