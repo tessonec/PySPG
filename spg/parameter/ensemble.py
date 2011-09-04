@@ -303,7 +303,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
         if ret_code == 0:
             
             self.execute_query( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )
-            all_d = [self.current_variables_id]
+            all_d = [self.current_valuesset_id]
             all_d.extend( output )
             cc = 'INSERT INTO results ( %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
             self.execute_query( cc )
