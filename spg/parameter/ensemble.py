@@ -466,7 +466,7 @@ class ResultsDBQuery(ParameterEnsemble):
             else:  
                 query = "%s %s GROUP BY v.id"%(query, restrict_cols)
         query=query.replace("''", "'").replace("'\"", "'")
-        print query
+#        print query
         return self.table_from_query(query)        
 
 
