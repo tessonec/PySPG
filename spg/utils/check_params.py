@@ -58,7 +58,6 @@ def import_backends(infile):
 
 def load_parameters(prog_name, in_file):
     """ Loads a parameter dataset"""
-    
     if prog_name[:2] == "ct" and prog_name[3] == "-" :  prog_name = prog_name[4:]
 
     prog_name, ext = os.path.splitext(prog_name)
@@ -69,8 +68,10 @@ def load_parameters(prog_name, in_file):
         if family == "flag":
             ret[k] = False
         elif family == "val":
-            
-            ret[k] = eval("%s('%s')"%(var_type, default))
+            if var_type == "str":
+                ret[k] =  default
+            else:
+                ret[k] = eval("%s('%s')"%(var_type, default))
         elif family == "choice":
             ret[k] = eval("%s('%s')"%(var_type, default[0]))
     for line in open(in_file):
@@ -87,7 +88,10 @@ def load_parameters(prog_name, in_file):
             ret[key] = True
         elif family == "val":
  #           print k, "%s(%s)"%(var_type, vec[1])
-            ret[key] = eval("%s('%s')"%(var_type, vec[1]))
+            if var_type == "str":
+                ret[key] =  vec[1]
+            else:
+                ret[key] = eval("%s('%s')"%(var_type, vec[1]))
 #            print ret[k]
         elif family == "choice":
             if vec[1] in default:

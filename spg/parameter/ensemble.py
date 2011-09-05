@@ -289,9 +289,9 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
             if not os.path.exists(dir): os.makedirs(dir)
             os.chdir(dir)
         configuration_filename = "input_%.8d.dat"%(self.current_run_id)
-        output_filename = "input_%.8d.dat"%(self.current_run_id)
-        fconf = open(configuration_filename,"w")
-        
+        output_filename = "output_%.8d.dat"%(self.current_run_id)
+        print configuration_filename
+        fconf = open(configuration_filename,"w")        
         for k in self.values.keys():
             print >> fconf, k, utils.replace_in_string(self.values[k], self.values) 
         fconf.close()
@@ -454,18 +454,19 @@ class ResultsDBQuery(ParameterEnsemble):
           
         query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id "%(var_cols, out_cols)
         #:::~ This command was needed only because of a mistake in the id stores in the results table
+        restrict_cols = ""
         if restrict_to_values:
             restrict_cols = " AND ".join(["v.%s = '%s'"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
             if restrict_cols :
                 restrict_cols = "AND %s"%restrict_cols 
-            query = "%s  %s "%(query, restrict_cols)
-            if not raw_data :
-                if restrict_by_val:  
-                    if var_cols:
-                        query = "%s  GROUP BY %s"%(query, var_cols.strip(", "))
-                else:  
-                    query = "%s %s GROUP BY v.id"%(query, restrict_cols)
-#        print query
+        query = "%s  %s "%(query, restrict_cols)
+        if not raw_data :
+            if restrict_by_val:
+                query = "%s  GROUP BY %s"%(query, var_cols.strip(", "))
+            else:  
+                query = "%s %s GROUP BY v.id"%(query, restrict_cols)
+        query=query.replace("''", "'").replace("'\"", "'")
+        print query
         return self.table_from_query(query)        
 
 

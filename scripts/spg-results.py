@@ -34,13 +34,13 @@ class ResultCommandParser(BaseDBCommandParser):
         BaseDBCommandParser.__init__(self, EnsembleConstructor = ResultsDBQuery)
         self.prompt = "| spg-results :::~ "
         
-        self.possible_keys = set( [ "table_depth", "expand_dirs", "raw_data", "split_colums", "restrict_by_val", "prefix", "n_rows", "plot_x_label", "plot_y_label", "plot_x_scale", "plot_y_scale", "plot_x_min", "plot_x_max", "plot_y_min", "plot_y_max"] )
+        self.possible_keys = set( [ "table_depth", "expand_dirs", "raw_data", "split_colums", "restrict_by_val", "prefix", "n_rows", "plot_x_label", "plot_y_label", "plot_x_scale", "plot_y_scale", "plot_x_min", "plot_x_max", "plot_y_min", "plot_y_max", "split_columns"] )
         self.output_column = []
         self.table_depth = 1
         self.n_rows = 3
         self.expand_dirs = True 
         self.raw_data = False
-        self.split_colums = False
+        self.split_columns = False
         self.restrict_by_val = False # was True
         self.prefix = "output_"
 
@@ -67,14 +67,17 @@ class ResultCommandParser(BaseDBCommandParser):
         os.chdir( self.current_param_db.path )
         
   
-    def do_save_table(c):
+    def do_save_table(self,c):
        """saves the table of values"""
        for i in self.current_param_db:
          if self.split_columns:
            for column in self.output_column:
-              gen_d = utils.generate_string(i, self.separated_vars, joining_string = "/" )
-              gen_s = utils.generate_string(i, self.coalesced_vars, joining_string = "_" )
-              output_fname = "%s/%s-%s-%s.dat"%(gen_d, self.prefix, column, gen_s)
+              gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
+              if gen_d :  gen_d+= "/"
+              gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
+              output_fname = "%s%s-%s-%s.dat"%(gen_d, self.prefix, column, gen_s)
+              output_fname = output_fname.replace("_-","_")
+              output_fname = output_fname.replace("-.",".")
               d,f = os.path.split(output_fname)
               if d != "" and not os.path.exists(d): os.makedirs(d)
               data = self.current_param_db.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
@@ -82,15 +85,19 @@ class ResultCommandParser(BaseDBCommandParser):
          else:
            data = self.current_param_db.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
           
-           gen_d = utils.generate_string(i, self.separated_vars, joining_string = "/" )
-           gen_s = utils.generate_string(i, self.coalesced_vars, joining_string = "_" )
-           output_fname = "%s/%s-%s.dat"%(gen_d, self.prefix, gen_s)
+           gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
+           if gen_d :  gen_d+= "/"
+               
+           gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
+           output_fname = "%s%s-%s.dat"%(gen_d, self.prefix, gen_s)
+           output_fname = output_fname.replace("-.",".")
+           output_fname = output_fname.replace("_-","_")
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
            np.savetxt( output_fname, data)
 
 
-    def __plot():
+    def __plot(self):
         try:
             self.dict_of_params = utils.load_config( "%s/spg-conf/%s.params"%(CONFIG_DIR, self.current_param_db.command[4:-3] ), "texlabel" )
         except: self.dict_of_params = {}
@@ -106,7 +113,9 @@ class ResultCommandParser(BaseDBCommandParser):
             fig_label = utils.generate_string(i_restrict, self.current_param_db.separated_vars, separator = "=", joining_string = " " )
             if not self.figures.has_key(fig_label):
                 self.figures[ fig_label ] = PyplotGraphicsUnit(fig_label, self.n_rows, len(self.output_column) )
+                
                 for column in self.output_column:
+                    print  column, self.n_rows, len(self.output_column)
                     self.figures[ fig_label ].add_subplot(column)
                     self.figures[ fig_label ].subplots[column].x_label = self.current_param_db.variables[-1]
                     self.figures[ fig_label ].subplots[column].y_label = column
@@ -213,7 +222,7 @@ class ResultCommandParser(BaseDBCommandParser):
         print "  + variables = %s "%( ", ".join(self.current_param_db.variables ) )
         print "  + entities = %s "%( ", ".join(self.current_param_db.entities ) )
         print "  + columns = %s "%( ", ".join(self.current_param_db.output_column ) )
-        print "  + split_colums = %s / expand_dirs = %s / raw_data = %s"%(self.split_colums, self.expand_dirs, self.raw_data)
+        print "  + split_columns = %s / expand_dirs = %s / raw_data = %s"%(self.split_columns, self.expand_dirs, self.raw_data)
         print "  + structure = %s - %s - %s / restrict_by_val = %s"%(self.current_param_db.separated_vars, self.current_param_db.coalesced_vars, self.current_param_db.in_table_vars, self.restrict_by_val)
 
 

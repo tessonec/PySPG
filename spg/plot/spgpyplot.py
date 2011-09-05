@@ -66,7 +66,7 @@ class PyplotGraphicsUnit(GraphicsUnit):
         
     def add_subplot(self, subplot_name):
         pos = 1 + len(self.subplots )
-   #     print subplot_name, pos
+        print subplot_name, self.n_rows,  self.n_cols,pos
         obj = self.figure.add_subplot(self.n_rows,  self.n_cols, pos)
         
         GraphicsUnit.add_subplot( self, subplot_name, plot_unit = PyplotUnit( plot_object = obj ) )

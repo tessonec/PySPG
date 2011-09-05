@@ -45,7 +45,7 @@ class GraphicsUnit:
             return ( 1,n_plots )
         
         n_cols = n_plots/float(n_rows)
-        n_cols = (int(n_cols) +1) if (n_cols - int(n_cols) > 0.5 ) else int(n_cols) 
+        n_cols = (int(n_cols) +1) if (n_cols - int(n_cols) > 0. ) else int(n_cols) 
         return (n_cols,n_rows)
 
     
