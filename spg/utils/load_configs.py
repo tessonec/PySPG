@@ -4,6 +4,9 @@ Created on Aug 30, 2011
 @author: tessonec
 '''
 
+from ConfigParser import ConfigParser
+import os.path 
+
 
 def load_config(config_name, key):
     ret  = {}
@@ -18,3 +21,14 @@ def load_config(config_name, key):
                 ret[ v[0] ] =  kpv[ 1 ].strip()
     return ret
     
+    
+    
+def get_root_directory():
+    ret = os.path.expanduser( "~/opt" )
+    try:
+        cp = ConfigParser( os.path.expanduser("~/.spg/config") )
+        cp.get("Global", "root_dir")
+    except:
+        pass
+    
+    return os.path.expanduser(ret)

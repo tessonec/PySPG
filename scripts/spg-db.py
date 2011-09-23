@@ -34,7 +34,8 @@ class DBCommandParser(BaseDBCommandParser):
         i_arg, db_name = self.translate_name(i_arg)
         if self.master_db.result_dbs.has_key( db_name ):
             utils.newline_msg("WRN", "results db '%s' already registered"%self.shorten_name( db_name ), 2)
-            return 
+            os.remove(db_name)
+            self.do_remove(i_arg) 
 
         self.current_param_db = ParameterEnsemble( db_name, init_db = False ) 
         if len(c) >1: self.do_set( ":".join( c[1:] ) )

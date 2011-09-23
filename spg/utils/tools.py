@@ -108,7 +108,8 @@ def parse_to_dict(string, allowed_keys = None):
                     ret[k] = False
                 else:
                     ret[k] = v
-    return ret       
+    return ret
+
 
 #v = eevaluate_stringexp({x}+{y_3})",d)
 #print get_variables("exp({x}+{y_3})",d)

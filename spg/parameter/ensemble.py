@@ -84,6 +84,7 @@ class ParameterEnsemble:
         fa = self.execute_query("PRAGMA table_info(results)")
         self.output_column = [ i[1] for i in fa ]
         self.output_column = self.output_column[2:]
+        self.directory_vars = self.variables[:-1]
 #        self.__close_db()
 
 
@@ -115,7 +116,9 @@ class ParameterEnsemble:
 
     def create_trees(self):
 #        self.__connect_db()
+        if not self.directory_vars: return False
         ret = self.execute_query_fetchone("SELECT * FROM entities WHERE name LIKE 'store_%'")
+        
 #        self.__close_db()
         return ret is not None
 
@@ -285,7 +288,8 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
            
     def launch_process(self):
         pwd = os.path.abspath(".")
-        if self.directory_vars or self.create_trees():
+        if self.create_trees():
+            
             dir = utils.generate_string(self.values,self.directory_vars, joining_string = "/")
             if not os.path.exists(dir): os.makedirs(dir)
             os.chdir(dir)

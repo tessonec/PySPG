@@ -9,7 +9,7 @@ import copy
 
 from spg import CONFIG_DIR
 
-from tools import newline_msg
+from tools import newline_msg, evaluate_string
 
 
 def import_backends(infile):
@@ -134,19 +134,19 @@ def consistency(exec_file, miparser):
                 consistent_param = False
             elif var_type in set(["float","double"]): 
                 try: 
-                    float(val) 
+                    float( evaluate_string(val, miparser ) ) 
                 except:
                     newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
                     consistent_param = False
             elif var_type in set(["int","unsigned", "long int", "long"]): 
                 try: 
-                    int(val) 
+                    int( evaluate_string(val, miparser) ) 
                 except:
                     newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
                     consistent_param = False
             elif var_type == "string":
                 try: 
-                    str(val) 
+                    str( evaluate_string(val, miparser) ) 
                 except:
                     newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
                     consistent_param = False
