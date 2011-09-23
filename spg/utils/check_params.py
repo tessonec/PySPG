@@ -121,24 +121,26 @@ def consistency(exec_file, miparser):
         it = copy.copy( el )
         family, var_type, default = possible_lines[it.name]
      #   print  family, var_type, default, 
-        
+#        print it.name
         values = [ i for i in it ]
         if len(values) == 0:
             values = it.data
         for val in values:
-            
             if family == "flag" : 
                 newline_msg("VAL", "flag can not contain a value")
             elif family == "choice" and str(val) not in default: 
                 newline_msg("VAL", "choice value '%s' not recognised: possible values: %s"%(val, default))
                 consistent_param = False
             elif var_type in set(["float","double"]): 
+            #    print it.name, var_type, val, evaluate_string(val, miparser)  
                 try: 
                     float( evaluate_string(val, miparser ) ) 
                 except:
                     newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
                     consistent_param = False
-            elif var_type in set(["int","unsigned", "long int", "long"]): 
+            elif var_type in set(["int","unsigned", "long int", "long"]):
+                # print it.name, var_type, val, "---", 
+                
                 try: 
                     int( evaluate_string(val, miparser) ) 
                 except:
@@ -146,7 +148,7 @@ def consistency(exec_file, miparser):
                     consistent_param = False
             elif var_type == "string":
                 try: 
-                    str( evaluate_string(val, miparser) ) 
+                    str( val ) 
                 except:
                     newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
                     consistent_param = False

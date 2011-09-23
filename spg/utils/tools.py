@@ -65,12 +65,16 @@ def evaluate_string(string,val_dict):
     # regular expression explanation
     # r'\{(\w)\}' matches variable name: 
     st_out = string
-    for i_var in rx.findall(string):
-        #vars.add(i)
-        st_out = re.sub( r'\{%s\}'%i_var, str(val_dict[i_var]), st_out )
+    try:
+        for i_var in rx.findall(string):
+            st_out = re.sub( r'\{%s\}'%i_var, str(val_dict[i_var]), st_out )
+        return eval( st_out) 
         #print st_out
-    return eval(st_out)
-
+    except:
+        try:
+            return eval(str( string) )
+        except:
+            return str(string) 
 
 
 def get_variables(string):

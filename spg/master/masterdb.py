@@ -72,8 +72,11 @@ class MasterDB:
                 self.result_dbs[full_name].weight = weight
                 
                 continue
-            new_db = self.EnsembleConstructor(full_name, id, weight, queue, status)
-            self.result_dbs[full_name] = new_db
+            try:
+                new_db = self.EnsembleConstructor(full_name, id, weight, queue, status)
+                self.result_dbs[full_name] = new_db
+            except:
+                self.result_dbs[full_name] = None
    
 
 
