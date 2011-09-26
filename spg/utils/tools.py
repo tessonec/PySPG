@@ -24,7 +24,7 @@ def replace_in_string(sss,dict_of_values):
     thisstr=str(sss)
     for varname in dict_of_values.keys():
         thisstr=thisstr.replace(
-                   "{{%s}}"%varname,
+                   "[%s]"%varname,
                    "%s"%( dict_of_values[varname] )
                 )
         thisstr=thisstr.replace(
@@ -61,14 +61,14 @@ def evaluate_string(string,val_dict):
     """evaluates an expression with the values given in the dictionary"""
     
     #fp = string # os.path.abspath(string)
-    rx = re.compile(r'\{([a-zA-Z]\w*)\}')
+    rx = re.compile(r'\[([a-zA-Z]\w*)\]')
     # regular expression explanation
     # r'\{(\w)\}' matches variable name: 
     st_out = string
     try:
         for i_var in rx.findall(string):
-            st_out = re.sub( r'\{%s\}'%i_var, str(val_dict[i_var]), st_out )
-        return eval( st_out) 
+            st_out = re.sub( r'\[%s\]'%i_var, str(val_dict[i_var]), st_out )
+        return eval( st_out ) 
         #print st_out
     except:
         try:

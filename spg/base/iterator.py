@@ -133,15 +133,72 @@ class IterOperator(Iterator):
         xact=self.xmin
 
         while((self.xmin>self.xmax) ^ (xact <= self.xmax) ): # ^ is xor in python !
-          lsTmp.append(xact)
-          xact=eval("%s%s%s"%(xact,it_type,self.xstep))
+            lsTmp.append(xact)
+            xact=eval("%s%s%s"%(xact,it_type,self.xstep))
        
         return lsTmp
 
+#:::~ ###################################################################
+#:::~ ###################################################################
+
+
+class IterMutable(Iterator):
+     """ this subclass generates the values for classes defined according to the rule
+      @var_name val_min val_max step
+      where @ is the operation defined for the data type. 
+      var_name is the variable name
+      val_min, val_max the bounds
+      step  the step
+      the actualization process runs according to actual_value = actual_value @ step
+     """
+    
+     def __init__(self, name, type, limit_commands, external_dict):
+       """ name: of the variable
+       type: operator to be used in the operation
+       limits: a 3-tuple with minimum, maximum and step values
+       """
+       self.name = name
+       self.limit_commands = limit_commands
+       self.external_dict = external_dict
+       self.type = type
+       self.data = None
+#       Iterator.__init__(self,name,data)
+
   
+     def _parse(self,it_type,limits):
+        self.xmin,self.xmax,self.xstep=limits
+        #xmin = eval(xmin)
+        #xmax = eval(xmax)
+        #xstep = eval(xstep)
+        #######################################
+        #   Block that raises exception in the case that iteration requested
+        #   do not reaches xmax
+
+        assert  abs(self.xmax-self.xmin) >  abs(self.xmax-eval("%s%s%s" %(self.xmin,it_type,self.xstep) ) ) , \
+             "on variable '%s': '%s%s%s' does not approach to %s "%(self.name, str(self.xmin),str(it_type),str(self.xstep),str(self.xmax))
+        #
+        #######################################
+
+        lsTmp=[]
+        xact=self.xmin
+
+        while((self.xmin>self.xmax) ^ (xact <= self.xmax) ): # ^ is xor in python !
+            lsTmp.append(xact)
+            xact=eval("%s%s%s"%(xact,it_type,self.xstep))
+       
+        return lsTmp
+
+
+     def reset(self):
+         self._parse()
+         super(IterMutable, self).reset()
+#:  
 
 #:::~ ###################################################################
 #:::~ ###################################################################
+
+
+
 #:::~ ###################################################################
 #:::~ ###################################################################
 #:::~ ###################################################################
