@@ -1,0 +1,9 @@
+signal_period:label =  T\ss:texlabel = $T_s$
+alpha:label =  \f{Symbol}\l{.15}a:texlabel = $\alpha$
+diversity:label =  \f{Symbol}\l{.15}q:texlabel = $\theta$
+diversity_var:label =  \f{Symbol}\l{.15}Dq:texlabel = $\Delta\theta$
+signal_ampl:label =  \f{Times-Italic}a\s1:texlabel = $A$
+cost:label =  \f{Times-Italic}C:texlabel = $C$
+reward:label =  \f{Times-Italic}r:texlabel = $r$
+size:label =  \f{Times-Italic}N:texlabel = $N$
+epsilon:label =  \f{Symbol}\l{.15}e:texlabel = $\epsilon$
