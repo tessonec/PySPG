@@ -1,0 +1,13 @@
+1) copy  these two directories into your home. 
+2) add to your .bashrc these lines
+
+PATH=~/opt/bin:$PATH
+PYTHONPATH=$PYTHONPATH:~/opt/lib/
+
+export  PATH PYTHONPATH 
+
+
+3) restart your shell
+4) type "make install" from within the spg directory (one up from the location of this directory)
+
+
