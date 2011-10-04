@@ -4,6 +4,7 @@
 import sys
 import os.path
 import copy
+import optparse
 #from math import *
 
 
@@ -56,11 +57,22 @@ def import_backends(infile):
 
 
 
-def load_parameters(prog_name, in_file):
+def load_parameters(argv):
     """ Loads a parameter dataset"""
+    
+    prog_name = os.path.split(argv[0])[-1]
     if prog_name[:2] == "ct" and prog_name[3] == "-" :  prog_name = prog_name[4:]
 
     prog_name, ext = os.path.splitext(prog_name)
+        
+    default_input_file = open("%s/spg-conf/%s.in"%(CONFIG_DIR, prog_name)  ).readline().strip()
+    
+    
+    parser = optparse.OptionParser()
+    parser.add_option("--input", '-i', type="string", action='store', dest="input_file",
+                        default = default_input_file , help = "Input file parameter" )
+    options, args = parser.parse_args()
+    
     possible_lines = import_backends("%s/spg-conf/%s.ct"%(CONFIG_DIR,prog_name))
     ret = {}
     for k in possible_lines.keys():
@@ -74,7 +86,8 @@ def load_parameters(prog_name, in_file):
                 ret[k] = eval("%s('%s')"%(var_type, default))
         elif family == "choice":
             ret[k] = eval("%s('%s')"%(var_type, default[0]))
-    for line in open(in_file):
+            
+    for line in open(options.input_filename):
         line = line.strip()
         if not line: continue
         if line[0] == "#": continue
