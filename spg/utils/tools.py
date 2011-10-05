@@ -81,14 +81,15 @@ def replace_values(string,val_dict, output_type = "str"):
     """evaluates an expression with the values given in the dictionary. The output type can be specified"""
     
     #fp = string # os.path.abspath(string)
-    rx_s = re.compile(r'\[([a-zA-Z0-9_]\w*)\]')
-    rx_c = re.compile(r'\{([a-zA-Z0-9_}\w*)\]')
+    rx_s = re.compile(r'\[([a-zA-Z]\w*)\]')
+    rx_c = re.compile(r'\{([a-zA-Z}\w*)\]')
     # regular expression explanation
     # r'\{(\w)\}' matches variable name: 
     st_out = string
     try:
         for i_var in rx_s.findall(string):
             st_out = re.sub( r'\[%s\]'%i_var, str( val_dict[i_var] ), st_out )
+            
         for i_var in rx_c.findall(string):
             st_out = re.sub( r'\{%s\}'%i_var, str( val_dict[i_var] ), st_out )
         return eval( "%s(%s)"%(output_type, st_out) ) 
@@ -104,7 +105,7 @@ def get_variables(string):
     """gets all the variable names from a string"""
     
     #fp = string # os.path.abspath(string)
-    rx = re.compile(r'\{([a-zA-Z0-9_]\w*)\}')
+    rx = re.compile(r'\{([a-zA-Z]\w*)\}')
     # regular expression explanation
     # r'\{(\w)\}' matches variable name: 
     return rx.findall(string)
