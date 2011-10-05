@@ -74,9 +74,9 @@ class EnsembleBuilder(MultIteratorParser):
         elements = "INSERT INTO values_set ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i in self.names ] ), ", ".join( "?" for i in self.names ) )
 
         self.possible_varying_ids = []
-        i_try = 0
+      #  i_try = 0
         for i in self:
-                self.cursor.execute( elements, [ utils.evaluate_string(self[i], self)  for i in self.names] )
+                self.cursor.execute( elements, [ utils.replace_values(self[i], self)  for i in self.names] )
                 self.possible_varying_ids.append(self.cursor.lastrowid)
         self.connection.commit()
               
