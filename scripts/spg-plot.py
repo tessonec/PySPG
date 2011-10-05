@@ -1,10 +1,8 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Jul 11 11:37:27 2011
+'''
+Created on Oct 5, 2011
 
-@author: Claudio Tessone - <tessonec@ethz.ch>
-"""
+@author: tessonec
+'''
 
 from spg import VAR_PATH, RUN_DIR, CONFIG_DIR
 import spg.utils as utils
@@ -27,7 +25,8 @@ import os, os.path
 import fnmatch
 
 
-class ResultCommandParser(BaseDBCommandParser):
+
+class PlotCommandParser(BaseDBCommandParser):
     """Results command handler"""
 
     def __init__(self):
@@ -96,8 +95,62 @@ class ResultCommandParser(BaseDBCommandParser):
            if d != "" and not os.path.exists(d): os.makedirs(d)
            np.savetxt( output_fname, data)
 
+
+    def __plot(self):
+        try:
+            self.dict_of_params = utils.load_config( "%s/spg-conf/%s.params"%(CONFIG_DIR, self.current_param_db.command[4:-3] ), "texlabel" )
+        except: self.dict_of_params = {}
+        try:
+            self.dict_of_stdout = utils.load_config( "%s/spg-conf/%s.stdout"%(CONFIG_DIR, self.current_param_db.command[4:-3] ), "texlabel" )
+        except: self.dict_of_stdout = {}
+#        for oc in self.figures.keys():
+#             plt.close( self.figures[oc] )
+        plt.clf() 
+        self.figures = {}
+        
+        for i_restrict in self.current_param_db:
+            fig_label = utils.generate_string(i_restrict, self.current_param_db.separated_vars, separator = "=", joining_string = " " )
+            if not self.figures.has_key(fig_label):
+                self.figures[ fig_label ] = PyplotGraphicsUnit(fig_label, self.n_rows, len(self.output_column) )
+                
+                for column in self.output_column:
+                    print  column, self.n_rows, len(self.output_column)
+                    self.figures[ fig_label ].add_subplot(column)
+                    self.figures[ fig_label ].subplots[column].x_label = self.current_param_db.variables[-1]
+                    self.figures[ fig_label ].subplots[column].y_label = column
+                    self.figures[ fig_label ].subplots[column].x_scale = self.plot_x_scale
+                    self.figures[ fig_label ].subplots[column].y_scale = self.plot_y_scale
+                    self.figures[ fig_label ].subplots[column].x_range = (self.plot_x_min, self.plot_x_max)
+                    self.figures[ fig_label ].subplots[column].y_range = (self.plot_y_min, self.plot_y_max)
+                    self.figures[ fig_label ].subplots[column].refresh_style()
+                    if self.dict_of_stdout.has_key(column):
+                        self.figures[ fig_label ].subplots[column].plot_object.set_ylabel( "$%s$"%self.dict_of_stdout[column] )
+                    else:
+                        self.figures[ fig_label ].subplots[column].plot_object.set_ylabel( "$%s$"%column )
+                    if self.dict_of_params.has_key(self.current_param_db.in_table_vars[0] ):
+                        self.figures[ fig_label ].subplots[column].plot_object.set_xlabel( "$%s$"%self.dict_of_params[ self.current_param_db.in_table_vars[0] ] )
+                    else:
+                        self.figures[ fig_label ].subplots[column].plot_object.set_xlabel( "$%s$"%self.current_param_db.in_table_vars[0] )
+                        
+            for column in self.output_column:#            self.figures[column] = plt.figure()
+                curve_label = utils.generate_string(i_restrict, self.current_param_db.coalesced_vars, separator = "=", joining_string = " " )
+                data = self.current_param_db.result_table(restrict_to_values = i_restrict, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
+#                print data
+                self.figures[fig_label].subplots[column].add_curve( curve_label, data[:,0], data[:,1] )
                 
 
+    def do_plot(self, c):
+        """plots variables as a function of a parameter"""
+        self.__plot()
+        plt.show()
+#        self.figures.clear()
+#        for column in self.output_column:
+#            self.figures[column] = plt.figure()
+#            axes = self.figures[column].add_subplot(1,1,1)
+#            for i in self.current_param_db:
+#                data = self.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
+#                axes.plot( data, 'o' )
+              
     def do_setup_vars_table(self,c):
         """sets up the table's independent columns"""
         if not self.current_param_db:
@@ -211,61 +264,9 @@ class ResultCommandParser(BaseDBCommandParser):
 
 
 if __name__ == '__main__':
-    cmd_line = ResultCommandParser()
+    cmd_line = PlotCommandParser()
     if len(sys.argv) == 1:
         cmd_line.cmdloop()
     else:
         cmd_line.onecmd(" ".join(sys.argv[1:]))
         
-
-
-#
-#if __name__ == "__main__":
-#    opts, args = parse_command_line()
-#    
-#    for iarg in args:
-#    
-#       db_name = os.path.abspath( iarg )
-#    
-#       rq = ResultsDBQuery(db_name)
-#       output_cols = rq.output_column[1:]
-#       
-#       
-#       if opts.coalesce is not None:
-#          rq.coalesce = opts.coalesce.split(",")
-#       elif opts.table_depth is not None:
-#          rq.coalesce = rq.variables[:-opts.table_depth]
-#       for i in rq:
-#         if opts.split_columns:
-#           for column in output_cols:
-#              data = rq.result_table(restrict_to_values = i, raw_data = opts.raw_data, restrict_by_val = opts.by_val, output_column = [column] )
-#              if not opts.expand_dirs:
-#                 gen_s = generate_string(i, rq.coalesce )
-#                 output_fname = "%s_%s-%s.dat"%(opts.prefix, column,gen_s )
-#              else:
-#                 gen_s = generate_string(i, rq.coalesce, joining_string = "/" )
-#                 output_fname = "%s/%s-%s.dat"%(gen_s, opts.prefix  , column)
-#              d,f = os.path.split(output_fname)
-#              if d != "" and not os.path.exists(d):
-#                os.makedirs(d)
-#              n.savetxt( output_fname, data)
-#         else:
-#           data = rq.result_table(restrict_to_values = i, raw_data = opts.raw_data, restrict_by_val = opts.by_val)
-#          
-#           if not opts.expand_dirs:
-#              gen_s = generate_string(i, rq.coalesce )
-#              output_fname = "%s-%s.dat"%(opts.prefix, gen_s )
-#           else:
-#              gen_s = generate_string(i, rq.coalesce, joining_string = "/" )
-#              
-#              output_fname = "%s/%s.dat"%(gen_s, opts.prefix  )
-#           d,f = os.path.split(output_fname)
-#           if d != "" and not os.path.exists(d):
-#              os.makedirs(d)
-#           n.savetxt( output_fname, data)
-#             
-  #  r1 = rq.result_table("ordprm_kuramoto")
-  #  n.savetxt("ordprm_kuramoto",r1)
-    
-  #  r2 = rq.full_result_table()
-  #  n.savetxt("output.dat",r2) 
