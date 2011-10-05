@@ -57,11 +57,11 @@ def parameters_from_string(string):
     return ret
 
 
-def evaluate_string(string,val_dict):
+def evaluate_string(string,val_dict, eval_into = None):
     """evaluates an expression with the values given in the dictionary"""
     
     #fp = string # os.path.abspath(string)
-    rx = re.compile(r'\[([a-zA-Z]\w*)\]')
+    rx = re.compile(r'\[([a-zA-Z0-9_]\w*)\]')
     # regular expression explanation
     # r'\{(\w)\}' matches variable name: 
     st_out = string
@@ -77,11 +77,34 @@ def evaluate_string(string,val_dict):
             return str(string) 
 
 
+def replace_values(string,val_dict, output_type = "str"):
+    """evaluates an expression with the values given in the dictionary. The output type can be specified"""
+    
+    #fp = string # os.path.abspath(string)
+    rx_s = re.compile(r'\[([a-zA-Z0-9_]\w*)\]')
+    rx_c = re.compile(r'\{([a-zA-Z0-9_}\w*)\]')
+    # regular expression explanation
+    # r'\{(\w)\}' matches variable name: 
+    st_out = string
+    try:
+        for i_var in rx_s.findall(string):
+            st_out = re.sub( r'\[%s\]'%i_var, str( val_dict[i_var] ), st_out )
+        for i_var in rx_c.findall(string):
+            st_out = re.sub( r'\{%s\}'%i_var, str( val_dict[i_var] ), st_out )
+        return eval( "%s(%s)"%(output_type, st_out) ) 
+        #print st_out
+    except:
+        try:
+            return eval(str( string) )
+        except:
+            return str(string) 
+
+
 def get_variables(string):
     """gets all the variable names from a string"""
     
     #fp = string # os.path.abspath(string)
-    rx = re.compile(r'\{([a-zA-Z]\w*)\}')
+    rx = re.compile(r'\{([a-zA-Z0-9_]\w*)\}')
     # regular expression explanation
     # r'\{(\w)\}' matches variable name: 
     return rx.findall(string)
