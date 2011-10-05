@@ -4,6 +4,7 @@
 import sys
 import os.path
 import copy
+import optparse
 #from math import *
 
 
@@ -54,55 +55,18 @@ def import_backends(infile):
     
     return ret
 
-
-
-def load_parameters(prog_name, in_file):
-    """ Loads a parameter dataset"""
-    if prog_name[:2] == "ct" and prog_name[3] == "-" :  prog_name = prog_name[4:]
-
-    prog_name, ext = os.path.splitext(prog_name)
-    possible_lines = import_backends("%s/spg-conf/%s.ct"%(CONFIG_DIR,prog_name))
-    ret = {}
-    for k in possible_lines.keys():
-        (family, var_type, default)  = possible_lines[k]
-        if family == "flag":
-            ret[k] = False
-        elif family == "val":
-            if var_type == "str":
-                ret[k] =  default
-            else:
-                ret[k] = eval("%s('%s')"%(var_type, default))
-        elif family == "choice":
-            ret[k] = eval("%s('%s')"%(var_type, default[0]))
-    for line in open(in_file):
-        line = line.strip()
-        if not line: continue
-        if line[0] == "#": continue
-        vec = line.split() 
-        key = vec[0]
-        if not possible_lines.has_key(key):
-            newline_msg("ERR", "key '%s' not understood"%key)
-            sys.exit(2)
-        (family, var_type, default)  = possible_lines[key]
-        if family == "flag":
-            ret[key] = True
-        elif family == "val":
- #           print k, "%s(%s)"%(var_type, vec[1])
-            if var_type == "str":
-                ret[key] =  vec[1]
-            else:
-                ret[key] = eval("%s('%s')"%(var_type, vec[1]))
-#            print ret[k]
-        elif family == "choice":
-            if vec[1] in default:
-                ret[key] = eval("%s('%s')"%(var_type, default[0]))
-            else:
-                newline_msg("ERR", "value '%s' not among possible values for '': %s"%(vec[1],key,default))
-                sys.exit(2)
-        #print ret
-                
-        
-    return ret
+############################################################################################################
+############################################################################################################
+############################################################################################################
+############################################################################################################
+############################################################################################################
+############################################################################################################
+############################################################################################################
+############################################################################################################
+############################################################################################################
+############################################################################################################
+############################################################################################################
+############################################################################################################
 
 
 def consistency(exec_file, miparser):
@@ -120,7 +84,7 @@ def consistency(exec_file, miparser):
     #    print el.name, 
         it = copy.copy( el )
         family, var_type, default = possible_lines[it.name]
-     #   print  family, var_type, default, 
+#   print  family, var_type, default, 
 #        print it.name
         values = [ i for i in it ]
         if len(values) == 0:

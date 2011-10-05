@@ -4,6 +4,9 @@ Created on Aug 30, 2011
 @author: tessonec
 '''
 
+from tools import * 
+from check_params import *
+
 from ConfigParser import ConfigParser
 import os.path 
 
@@ -32,3 +35,82 @@ def get_root_directory():
         pass
     
     return os.path.expanduser(ret)
+
+
+
+
+
+
+class Parameters(dict):
+    def __init__(self):
+        pass
+        
+    def __str__(self):
+        ret = ""
+        for k in self.__dict__:
+            ret += "%.16s = %s"%(k,self.__dict__[k])
+        return ret
+
+
+
+def load_parameters(argv):
+    """ Loads a parameter dataset"""
+    
+    prog_name = os.path.split(argv[0])[-1]
+    if prog_name[:2] == "ct" and prog_name[3] == "-" :  prog_name = prog_name[4:]
+
+    prog_name, ext = os.path.splitext(prog_name)
+        
+    default_input_file = open("%s/spg-conf/%s.in"%(CONFIG_DIR, prog_name)  ).readline().strip()
+    
+    
+    parser = optparse.OptionParser()
+    parser.add_option("--input", '-i', type="string", action='store', dest="input_file",
+                        default = default_input_file , help = "Input file parameter" )
+    options, args = parser.parse_args()
+    
+    possible_lines = import_backends("%s/spg-conf/%s.ct"%(CONFIG_DIR,prog_name))
+    ret = Parameters()
+    
+    for k in possible_lines.keys():
+        (family, var_type, default)  = possible_lines[k]
+        if family == "flag":
+            ret[k] = False
+        elif family == "val":
+            if var_type == "str":
+                ret[k] =  default
+            else:
+                ret[k] = eval("%s('%s')"%(var_type, default))
+        elif family == "choice":
+            ret[k] = eval("%s('%s')"%(var_type, default[0]))
+            
+    for line in open(options.input_filename):
+        line = line.strip()
+        if not line: continue
+        if line[0] == "#": continue
+        vec = line.split() 
+        key = vec[0]
+        if not possible_lines.has_key(key):
+            newline_msg("ERR", "key '%s' not understood"%key)
+            sys.exit(2)
+        (family, var_type, default)  = possible_lines[key]
+        if family == "flag":
+            ret[key] = True
+        elif family == "val":
+ #           print k, "%s(%s)"%(var_type, vec[1])
+            if var_type == "str":
+                ret[key] =  vec[1]
+            else:
+                ret[key] = eval("%s('%s')"%(var_type, vec[1]))
+#            print ret[k]
+        elif family == "choice":
+            if vec[1] in default:
+                ret[key] = eval("%s('%s')"%(var_type, default[0]))
+            else:
+                newline_msg("ERR", "value '%s' not among possible values for '': %s"%(vec[1],key,default))
+                sys.exit(2)
+        #print ret
+                
+        
+    return ret
+
