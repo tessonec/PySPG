@@ -82,7 +82,7 @@ def replace_values(string,val_dict, output_type = "str"):
     
     #fp = string # os.path.abspath(string)
     rx_s = re.compile(r'\[([a-zA-Z]\w*)\]')
-    rx_c = re.compile(r'\{([a-zA-Z}\w*)\]')
+    rx_c = re.compile(r'\{([a-zA-Z\}\w*)\]')
     # regular expression explanation
     # r'\{(\w)\}' matches variable name: 
     st_out = string
