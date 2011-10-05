@@ -32,10 +32,36 @@ class DBCommandParser(BaseDBCommandParser):
         c = c.split()
         i_arg = c[0]
         i_arg, db_name = self.translate_name(i_arg)
-        if self.master_db.result_dbs.has_key( db_name ):
-            utils.newline_msg("WRN", "results db '%s' already registered"%self.shorten_name( db_name ), 2)
-            os.remove(db_name)
-            self.do_remove(i_arg) 
+#        if self.master_db.result_dbs.has_key( db_name ):
+#            utils.newline_msg("WRN", "results db '%s' already registered"%self.shorten_name( db_name ), 2)
+#            os.remove(db_name)
+#            self.do_remove(i_arg) 
+
+        self.current_param_db = ParameterEnsemble( db_name, init_db = False ) 
+        if len(c) >1: self.do_set( ":".join( c[1:] ) )
+
+        parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name  )
+        parser.init_db(  )
+        parser.fill_status(repeat = self.current_param_db.repeat ) 
+        self.master_db.update_result_db( self.current_param_db )
+        self.current_param_db.id = self.master_db.cursor.lastrowid
+        self.master_db.initialise_result_dbs()
+
+
+    def do_reinit(self, c):
+        """build PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
+        Generates a new database out of a parameters.dat"""
+        c = c.split()
+        i_arg = c[0]
+        i_arg, db_name = self.translate_name(i_arg)
+        if not os.path.exists(db_name):
+            utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not reinit it" )
+            return
+        
+        #if self.master_db.result_dbs.has_key( db_name ):
+       #     utils.newline_msg("WRN", "results db '%s' already registered"%self.shorten_name( db_name ), 2)
+        os.remove(db_name)
+        self.do_remove(i_arg) 
 
         self.current_param_db = ParameterEnsemble( db_name, init_db = False ) 
         if len(c) >1: self.do_set( ":".join( c[1:] ) )
@@ -85,7 +111,7 @@ class DBCommandParser(BaseDBCommandParser):
     def do_clean_all(self, c):
         """cleans the results database by setting all into N"""
         if self.current_param_db:
-            self.current_param_db.execute_query('UPDATE run_status SET status = "N" WHERE id>0 ')
+            self.current_param_db.execute_query('UPDATE run_status SET status = "N"  ')
 
     def do_remove(self, c):
         """removes one results database from the registered ones"""
