@@ -77,12 +77,13 @@ def evaluate_string(string,val_dict, eval_into = None):
             return str(string) 
 
 
-def replace_values(string,val_dict, output_type = "str"):
+def replace_values(string,val_dict, output_type = None):
     """evaluates an expression with the values given in the dictionary. The output type can be specified"""
     
     #fp = string # os.path.abspath(string)
     rx_s = re.compile(r'\[([a-zA-Z]\w*)\]')
-    rx_c = re.compile(r'\{([a-zA-Z\}\w*)\]')
+    
+    rx_c = re.compile(r'\{([a-zA-Z]\w*)\}')
     # regular expression explanation
     # r'\{(\w)\}' matches variable name: 
     st_out = string
@@ -91,8 +92,14 @@ def replace_values(string,val_dict, output_type = "str"):
             st_out = re.sub( r'\[%s\]'%i_var, str( val_dict[i_var] ), st_out )
             
         for i_var in rx_c.findall(string):
-            st_out = re.sub( r'\{%s\}'%i_var, str( val_dict[i_var] ), st_out )
-        return eval( "%s(%s)"%(output_type, st_out) ) 
+            st_out = re.sub( r'\{%s\}'%i_var, "%s-%s"%(i_var, str( val_dict[i_var] ) ), st_out )
+        
+        try:
+#            print string, st_out
+            return eval( "%s(%s)"%(output_type, st_out) )
+        except: 
+            print eval( st_out )
+            return eval( st_out )
         #print st_out
     except:
         try:
