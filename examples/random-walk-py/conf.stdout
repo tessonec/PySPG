@@ -1,6 +1,2 @@
-centralisation:help = Network centralisation:label = \f{1}C:texlabel = ${\mathcal C}$
-centralisation2:help = Network centralisation2:label = \f{1}C:texlabel = ${\mathcal C}$
-n_edges:help = Number of edges:label = \f{1}E:texlabel = ${\mathcal E}$
-distance:help = average path length:label = \f{1}L:texlabel = ${\mathcal L}$
-max_degree:help = maximum degree:label = \f{1}d\smax:texlabel = $d_{max}$
-density:help = Network density:label = \f{1}d:texlabel = $d$
+final_position:help = sinal position:texlabel = $X$
+squared_displacement:help = squared displacement:texlabel = $S$

@@ -1,11 +1,5 @@
-choice:str:model:"MODEL_DECAY":network growth model
-choice:str:initial_condition:"EMPTY","HALF","FULL":network initial state
-val:int:size:100:network size
-val:int:filter_time:0:how many iterations are made to warm up
-val:int:simulation_time:1000:how many iterations are done
-val:float:alpha:1.:parameter alpha
-val:float:zeta:0.:link decay rate
-flag:store_adj_matrix:whether to store the adj_matrix
-val:str:store_adj_matrix_filename:"adj_matrix.dat":filename to store the adj_matrix
-flag:store_dynamics:whether to store the adj_matrix
-val:str:store_dynamics_filename:"dynamics.dat":filename to store the dynamics
+choice:string:model:"UNBIASED","BIASED","MODEL2":model type
+val:double:D:1.0:diffusion coefficient
+val:double:drift:0.0:drift coefficient
+val:long:filter_timesteps:0:filtering time equalts this times ts
+val:long:simulation_timesteps:100:fnumber of timesteps in the simulation
