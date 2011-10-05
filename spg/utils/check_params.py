@@ -104,7 +104,6 @@ def consistency(exec_file, miparser):
                     consistent_param = False
             elif var_type in set(["int","unsigned", "long int", "long"]):
                 # print it.name, var_type, val, "---", 
-                
                 try: 
                     int( evaluate_string(val, miparser) ) 
                 except:

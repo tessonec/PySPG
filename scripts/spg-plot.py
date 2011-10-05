@@ -66,36 +66,6 @@ class PlotCommandParser(BaseDBCommandParser):
         os.chdir( self.current_param_db.path )
         
   
-    def do_save_table(self,c):
-       """saves the table of values"""
-       for i in self.current_param_db:
-         if self.split_columns:
-           for column in self.output_column:
-              gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
-              if gen_d :  gen_d+= "/"
-              gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
-              output_fname = "%s%s-%s-%s.dat"%(gen_d, self.prefix, column, gen_s)
-              output_fname = output_fname.replace("_-","_")
-              output_fname = output_fname.replace("-.",".")
-              d,f = os.path.split(output_fname)
-              if d != "" and not os.path.exists(d): os.makedirs(d)
-              data = self.current_param_db.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
-              np.savetxt( output_fname, data)
-         else:
-           data = self.current_param_db.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
-          
-           gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
-           if gen_d :  gen_d+= "/"
-               
-           gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
-           output_fname = "%s%s-%s.dat"%(gen_d, self.prefix, gen_s)
-           output_fname = output_fname.replace("-.",".")
-           output_fname = output_fname.replace("_-","_")
-           d,f = os.path.split(output_fname)
-           if d != "" and not os.path.exists(d): os.makedirs(d)
-           np.savetxt( output_fname, data)
-
-
     def __plot(self):
         try:
             self.dict_of_params = utils.load_config( "%s/spg-conf/%s.params"%(CONFIG_DIR, self.current_param_db.command[4:-3] ), "texlabel" )
@@ -223,10 +193,6 @@ class PlotCommandParser(BaseDBCommandParser):
         print "  + columns = %s "%( ", ".join(self.current_param_db.output_column ) )
         print "  + split_columns = %s / expand_dirs = %s / raw_data = %s"%(self.split_columns, self.expand_dirs, self.raw_data)
         print "  + structure = %s - %s - %s / restrict_by_val = %s"%(self.current_param_db.separated_vars, self.current_param_db.coalesced_vars, self.current_param_db.in_table_vars, self.restrict_by_val)
-
-
-
-        
 
 
 ##########################################################################################

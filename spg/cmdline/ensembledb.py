@@ -62,7 +62,6 @@ class BaseDBCommandParser(cmd.Cmd):
         return   
         
     def filter_db_list(self, ls = None, filter = None):
-
         if ls == None:
             ls = self.master_db.result_dbs.keys()
         ret = [ self.shorten_name(i) for i in ls ]
@@ -95,7 +94,7 @@ class BaseDBCommandParser(cmd.Cmd):
                             if f.startswith(text)
                             ]
         return completions
-        
+
     def do_ls(self, c):
         """lists the databases already registered in the master database and the possible ones found in the current directory"""
 
@@ -117,7 +116,6 @@ class BaseDBCommandParser(cmd.Cmd):
             print " --- cwd dbs"
             for i in sorted( ls_res_db  ):
                 print "     : %s "%self.shorten_name(i)
-             
                 
     def do_load(self,c):
         """loads one of the registered databases from the master"""
