@@ -16,27 +16,6 @@ import random as rnd
 import optparse, sys, os
 
 
-def get_centralisation(gr):
-  
-
-  gr2 = ig.Graph()
-
-  md = max( gr.degree() )
-  #print md,
-  for j in range( 1, md+1 ):
-    gr2.add_edges( (0,j) )
-
-  cen1 = numpy.array( gr.eigenvector_centrality() )
-  cen2 = numpy.array( gr2.eigenvector_centrality() )
-  #print cen1, cen2
-  cen0 = max(cen1)
-  ac = numpy.sum( cen0 - cen1 )
-
-  cen0 = max(cen2)
-  ac2 = numpy.sum( cen0 - cen2 )
-
-
-  return ac / ac2, numpy.sum(cen1)/ float( md )
 
 
 
@@ -160,13 +139,8 @@ class ModelDecay:
 if __name__ == "__main__":
     
 
-    parser = optparse.OptionParser()
-    parser.add_option("--input", '-i', type="string", action='store', dest="input_file",
-                        default = "in.centr", help = "Input file parameter" )
-    options, args = parser.parse_args()
-    prog_name = os.path.split(sys.argv[0])[-1]
-    parameters = utils.load_parameters(prog_name, options.input_file)
     
+    parameters = utils.load_parameters(sys.argv)
     utils.newline_msg("INF", "parameters: %s"%parameters )
 
     if parameters['store_dynamics']:
