@@ -7,8 +7,8 @@ from math import *
 
 def generate_string(values, var_list, separator = "-", joining_string = "_"):
     """Replaces a list of variables with its value into a string"""
-    print values, var_list
-    thisstr = separator.join( [
+#    print values, var_list
+    thisstr = joining_string.join( [
                          "%s%s%s"%(k, separator, values[k] )
                          for k in var_list if k
                      ] )
