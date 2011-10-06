@@ -103,7 +103,12 @@ class BaseDBCommandParser(cmd.Cmd):
             print " --- registered dbs" 
             for i in sorted( ls_res_db  ):
                 #print "%5d: %s"%(i_id, i_name)
-                curr_db = self.master_db.result_dbs[i]
+                # :::~FIXME workaround for non-existing dbs 
+                try:
+                    curr_db = self.master_db.result_dbs[i]
+                except:
+                    continue
+                if not curr_db: continue
                 try:
                     print "%5d: %s (%5.5f)"%(curr_db.id, self.shorten_name( curr_db.full_name ), curr_db.weight )
                 except:
