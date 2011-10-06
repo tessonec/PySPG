@@ -57,7 +57,7 @@ class ParameterAtom:
         sel = param_ens.execute_query("SELECT name FROM entities ORDER BY id")
         self.entities = [ i[0] for i in sel ]
         
-        sel = param_ens.execute_query("SELECT name FROM entities ORDER BY id WHERE varies = 1")
+        sel = param_ens.execute_query("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
         self.variables = [ i[0] for i in sel ]
 
         res = param_ens.execute_query_fetchone(
