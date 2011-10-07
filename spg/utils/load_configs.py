@@ -42,15 +42,18 @@ def get_root_directory():
 
 
 class Parameters(dict):
-    def __init__(self):
-        pass
-        
+    # :::~ class that allows to take the values as items
+     
+    # :::~ http://stackoverflow.com/questions/1325673/python-how-to-add-property-to-a-class-dynamically
+    __getattr__= dict.__getitem__
+    __setattr__= dict.__setitem__
+    __delattr__= dict.__delitem__
+            
     def __str__(self):
         ret = ""
-        for k in self.__dict__:
-            ret += "%.16s = %s"%(k,self.__dict__[k])
+        for k in self.keys():
+            ret += "%s = %s\n"%(k,self[k])
         return ret
-
 
 
 def load_parameters(argv):
