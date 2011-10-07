@@ -296,7 +296,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
             os.chdir(dir)
         configuration_filename = "input_%.8d.dat"%(self.current_run_id)
         output_filename = "output_%.8d.dat"%(self.current_run_id)
-        print configuration_filename
+    #   print configuration_filename
         fconf = open(configuration_filename,"w")        
         for k in self.values.keys():
             print >> fconf, k, utils.replace_in_string(self.values[k], self.values) 

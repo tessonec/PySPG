@@ -46,7 +46,7 @@ if __name__ == "__main__":
       
 
       for values in executor:
-          print values
+      #    print values
           executor.launch_process()
       
       if options.tree:
