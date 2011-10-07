@@ -65,10 +65,14 @@ class BaseDBCommandParser(cmd.Cmd):
         if ls == None:
             ls = self.master_db.result_dbs.keys()
         ret = [ self.shorten_name(i) for i in ls ]
-        if filter:
-            ret = fnmatch.filter(ret, filter) 
+        try:
+            int(filter)
+            return [self.get_db_from_cmdline(filter)]
+        except:
+            if filter:
+                ret = fnmatch.filter(ret, filter) 
               
-        return sorted( [ self.lengthen_name( i ) for i in ret ] )
+            return sorted( [ self.lengthen_name( i ) for i in ret ] )
 
     def get_db_from_cmdline(self, c):
         """it returns the db name (or None) of a database identified either from its id or """
