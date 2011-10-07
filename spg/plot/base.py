@@ -5,26 +5,37 @@ Created on Aug 29, 2011
 '''
 
 
-class Figure:
+
+class Curve:
     def __init__(self, values):
-        self.values = values
+        self.values = values.copy()
+        self.style = ""
+        self.curve    
+
+        
+    
+class Panel:
+    def __init__(self, values, CurveConstructor = Curve):
+        self.values = values.copy()
+        self.curves = {}
+
+        self.Curve = CurveConstructor
+
+
+class Figure:
+    def __init__(self, values, PanelConstructor = Panel, CurveConstructor = Curve):
+        self.values = values.copy()
         self.panels = {}
         self.orientation = ""
         self.geometry = ""
+        self.Panel = PanelConstructor
+        self.Curve = CurveConstructor
         
-    def add_panel(self, name):
-    
-class Panel:
-    def __init__(self):
-        self.values = values
-        self.curves = {}
-
-
-class Curve:
-    def __init__(self):
-        self.values = values
-        self.style = ""
-        self.curve    
+    def add_panel(self, values):
+        self.panels[ values ] = 
+        
+        
+    def get_panel(self, values):
     
 #        
 #
