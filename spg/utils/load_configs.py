@@ -65,7 +65,7 @@ def load_parameters(argv):
     
     
     parser = optparse.OptionParser()
-    parser.add_option("--input", '-i', type="string", action='store', dest="input_file",
+    parser.add_option("--input", '-i', type="string", action='store', dest="input_filename",
                         default = default_input_file , help = "Input file parameter" )
     options, args = parser.parse_args()
     
