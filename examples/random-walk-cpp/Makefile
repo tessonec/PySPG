@@ -11,7 +11,7 @@ FORTRAN         = gfortran
 CC              = gcc
 LD              = g++
 CTT             = ~/opt/bin/ctt.py
-LDFLAGS         = -L${BASEDIR}/lib -lm -ldranxor -lwrappers  -lgauges -lgenerator -lnetworks -lstochastic -lutil -linteraction -lmeasures -lmcsys -ldynsys
+LDFLAGS         = -L${BASEDIR}/lib -lm -ldranxor
 RM              = rm
 SHELL           = /bin/bash
 INCLUDES        = -I${BASEDIR}/include
@@ -20,12 +20,16 @@ EXEPREFIX       = ctx-
 OBJS            = base.o main.o 
 
 .PHONY: clean all install
+.PRECIOUS: base.cxx
+
 
 
 all:  ${EXEPREFIX}${TARGET}${EXEEXT}
 
 install:
 	install ${EXEPREFIX}${TARGET}${EXEEXT} ${BASEDIR}/bin
+	
+	mkdir -p ${BASEDIR}/etc/spg-conf
 	install -T -m 0644 conf.in ${BASEDIR}/etc/spg-conf/${TARGET}.in
 	install -T -m 0644 conf.stdout ${BASEDIR}/etc/spg-conf/${TARGET}.stdout
 	install -T -m 0644 conf.params ${BASEDIR}/etc/spg-conf/${TARGET}.params
