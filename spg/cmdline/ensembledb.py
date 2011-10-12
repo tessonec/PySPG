@@ -57,7 +57,7 @@ class BaseDBCommandParser(cmd.Cmd):
         try:
             param_name, db_name = self.translate_name(c)
         except: 
-            utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not reinit it" )
+#            utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not load it" )
             return
 
         if os.path.exists( db_name ):
