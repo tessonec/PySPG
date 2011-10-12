@@ -93,8 +93,9 @@ class DBCommandParser(BaseDBCommandParser):
         """registers a given results database into the master database"""
         c = c.split()
         i_arg = c[0]
-        i_arg, db_name = self.translate_name(i_arg)
-        if self.master_db.result_dbs.has_key( db_name ):
+        try: 
+            i_arg, db_name = self.translate_name(i_arg)
+        except:
             utils.newline_msg("WRN", "results db '%s' already registered"%self.shorten_name( db_name ), 2)
             return 
 
