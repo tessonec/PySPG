@@ -79,6 +79,7 @@ class DBCommandParser(BaseDBCommandParser):
         self.master_db.initialise_result_dbs()
 
     def complete_init(self, text, line, begidx, endidx):    
+        
         completions = fnmatch.filter( os.listdir("."), "results*.sqlite" )
         completions.extend( fnmatch.filter( os.listdir("."), "parameters*.dat" ) )
         if text:

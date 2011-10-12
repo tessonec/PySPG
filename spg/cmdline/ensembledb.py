@@ -100,14 +100,14 @@ class BaseDBCommandParser(cmd.Cmd):
                 utils.newline_msg("WRN", "database '%s' is not registered, loading it anyhow"%self.shorten_name(db_name))
         return None
 
-    def complete(self, text):    
-        completions = self.master_db.result_dbs.keys()
-        if text:
-            completions = [ f
-                            for f in completions
-                            if f.startswith(text)
-                            ]
-        return completions
+#    def complete(self, text):    
+#        completions = self.master_db.result_dbs.keys()
+#        if text:
+#            completions = [ f
+#                            for f in completions
+#                            if f.startswith(text)
+#                            ]
+#        return completions
 
     def do_ls(self, c):
         """lists the databases already registered in the master database and the possible ones found in the current directory"""
