@@ -39,7 +39,8 @@ class BaseDBCommandParser(cmd.Cmd):
             full_name = self.lengthen_name(full_name)
         if not os.path.exists(full_name):
             utils.newline_msg("ERR","database '%s' does not exist"%st)
-            sys.exit(2)
+            return None
+        
         path, st = os.path.split(full_name)
         if ".sqlite" in st:
             par_name = st.replace("results","").replace(".sqlite","")
@@ -53,8 +54,12 @@ class BaseDBCommandParser(cmd.Cmd):
     def update_active_result_db(self, c):
         c = c.strip()
         if not c: return 
+        try:
+            param_name, db_name = self.translate_name(c)
+        except: 
+            utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not reinit it" )
+            return
 
-        param_name, db_name = self.translate_name(c)
         if os.path.exists( db_name ):
             self.current_param_db = ParameterEnsemble( db_name )
         elif os.path.exists( param_name ) and not os.path.exists( db_name ):
@@ -82,7 +87,12 @@ class BaseDBCommandParser(cmd.Cmd):
             if filtered:
                 return filtered[0] 
         except:
-            foo, db_name = self.translate_name(c)
+            try:
+                foo, db_name = self.translate_name(c)
+            except: 
+                utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not reinit it" )
+                return
+            
             if self.master_db.result_dbs.has_key(db_name):
                 return self.master_db.result_dbs[db_name]
             else:

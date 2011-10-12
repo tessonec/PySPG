@@ -31,7 +31,11 @@ class DBCommandParser(BaseDBCommandParser):
         Generates a new database out of a parameters.dat"""
         c = c.split()
         i_arg = c[0]
-        i_arg, db_name = self.translate_name(i_arg)
+        try:
+            i_arg, db_name = self.translate_name(i_arg)
+        except: 
+            utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not reinit it" )
+            return
 #        if self.master_db.result_dbs.has_key( db_name ):
 #            utils.newline_msg("WRN", "results db '%s' already registered"%self.shorten_name( db_name ), 2)
 #            os.remove(db_name)
@@ -53,8 +57,9 @@ class DBCommandParser(BaseDBCommandParser):
         Generates a new database out of a parameters.dat"""
         c = c.split()
         i_arg = c[0]
-        i_arg, db_name = self.translate_name(i_arg)
-        if not os.path.exists(db_name):
+        try:
+            i_arg, db_name = self.translate_name(i_arg)
+        except: 
             utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not reinit it" )
             return
         
