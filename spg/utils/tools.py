@@ -118,6 +118,13 @@ def get_variables(string):
 
 
 def parse_to_dict(string, allowed_keys = None):
+    """parses a string into a dictionary. Blanks or colons can be used as separator.
+    The function attempts to guess the type, otherwise a string is assigned.
+    allowed_keys gives the possible list of keys that will be accepted by the parsing. Otherwise None is returned """
+    #:::~ FIXME: Convoluted code
+    
+    string = ":".join( string.split() )
+    
     ret = {}
     for i in string.split(":"):
         try:

@@ -126,7 +126,8 @@ class DBCommandParser(BaseDBCommandParser):
             
 
     def do_remove(self, c):
-        """removes some results databases (can be filtered through regular expressions) from the list of registered dbs"""
+        """removes some results.sqlite databases (can be filtered through regular expressions, or by id) from the list of registered dbs"""
+        #:::~ OK, as of 13.10.11
         if not c:
             ls_res_db = [ self.current_param_db.full_name ]
         else:
@@ -141,12 +142,15 @@ class DBCommandParser(BaseDBCommandParser):
             del self.master_db.result_dbs[i]
         self.master_db.synchronise_master()
  
-    def complete_remove(self, text, line, begidx, endidx):
-        return self.complete(text)
+  #  def complete_remove(self, text, line, begidx, endidx):
+         #:::~ FIXME: doesn't work. Why?
+  #      return self.complete(text)
     
     def do_set(self, c):
-        """sets a VAR1=VALUE1[:VAR2=VALUE2]
-        sets a value in the currently loaded database """
+        """sets some values  in the currently loaded database
+        the syntax is   VAR1=VALUE1[:VAR2=VALUE2]
+        sets a value 
+        if the argument is help, the possible keys are presented """
         if c == "help":
             print utils.newline_msg("HELP", " possible_keys = %s"%self.possible_keys )
             return 
