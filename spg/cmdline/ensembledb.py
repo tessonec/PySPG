@@ -69,11 +69,14 @@ class BaseDBCommandParser(cmd.Cmd):
     def filter_db_list(self, ls = None, filter = None):
         if ls == None:
             ls = self.master_db.result_dbs.keys()
-        ret = [ self.shorten_name(i) for i in ls ]
+            
         try:
-            int(filter)
-            return [self.get_db_from_cmdline(filter)]
+            id = int(filter)
+            rdb = self.master_db.result_dbs
+            filtered = [ x for x in ls if rdb.has_key(x) and rdb[x] is not None and rdb[x].id == id  ]
+            return filtered
         except:
+            ret = [ self.shorten_name(i) for i in ls ]
             if filter:
                 ret = fnmatch.filter(ret, filter) 
               
@@ -83,15 +86,16 @@ class BaseDBCommandParser(cmd.Cmd):
         """it returns the db name (or None) of a database identified either from its id or """
         try: 
             id = int(c)
-            filtered = filter(lambda x: x.id == id, self.master_db.result_dbs.values() )
-            if filtered:
-                return filtered[0] 
+            rdb = self.master_db.result_dbs
+            filtered = [ rdb[x] for x in rdb.keys() if rdb[x] is not None and rdb[x].id == id  ]
+            if filtered: return filtered[0] 
+            else: return None
         except:
             try:
                 foo, db_name = self.translate_name(c)
             except: 
-                utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not reinit it" )
-                return
+                utils.newline_msg("ERR", "results db '%s' doesn't exist."%c )
+                return 
             
             if self.master_db.result_dbs.has_key(db_name):
                 return self.master_db.result_dbs[db_name]

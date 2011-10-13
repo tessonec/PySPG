@@ -106,22 +106,27 @@ class DBCommandParser(BaseDBCommandParser):
         self.master_db.update_result_db( self.current_param_db )
         self.current_param_db.id = self.master_db.cursor.lastrowid
         self.master_db.initialise_result_dbs()
-        print " *--- registered '%s'with id=%d  "%(   self.current_param_db.full_name, self.current_param_db.id )
+        print " *--- registered '%s' with id=%d  "%(   self.current_param_db.full_name, self.current_param_db.id )
         
 
     def do_clean(self, c):
-        """cleans the results database by setting the R into N"""
-        if self.current_param_db:
-            self.current_param_db.execute_query('UPDATE run_status SET status = "N" WHERE status ="R"')
+        """cleans the currently loaded results.sqlite database
+           if not arguments are given  sets all the rows in run_status with status R, E to N
+           if the argument is "all" sets all the rows in run_status to N  """
+        #:::~ OK, as of 13.10.11
 
-
-    def do_clean_all(self, c):
-        """cleans the results database by setting all into N"""
-        if self.current_param_db:
+        if not self.current_param_db: 
+            utils.newline_msg("WRN", "current db not set... skipping")
+            return 
+                
+        if c == "all":
             self.current_param_db.execute_query('UPDATE run_status SET status = "N"  ')
+        else :
+            self.current_param_db.execute_query('UPDATE run_status SET status = "N" WHERE status ="R" OR status ="E" ')
+            
 
     def do_remove(self, c):
-        """removes one results database from the registered ones"""
+        """removes some results databases (can be filtered through regular expressions) from the list of registered dbs"""
         if not c:
             ls_res_db = [ self.current_param_db.full_name ]
         else:
@@ -142,6 +147,10 @@ class DBCommandParser(BaseDBCommandParser):
     def do_set(self, c):
         """sets a VAR1=VALUE1[:VAR2=VALUE2]
         sets a value in the currently loaded database """
+        if c == "help":
+            print utils.newline_msg("HELP", " possible_keys = %s"%self.possible_keys )
+            return 
+            
         if not self.current_param_db: 
             utils.newline_msg("WRN", "current db not set... skipping")
             return 

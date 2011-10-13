@@ -123,6 +123,10 @@ class ResultCommandParser(BaseDBCommandParser):
     def do_set(self, c):
         """sets a VAR1=VALUE1[:VAR2=VALUE2]
         sets a value in the currently loaded database """
+
+        if c == "help":
+            print utils.newline_msg("HELP", " possible_keys = %s"%self.possible_keys )
+            return 
         
         if not self.current_param_db: 
             utils.newline_msg("WRN", "current db not set... skipping")
