@@ -17,26 +17,27 @@ def generate_string(values, var_list, separator = "-", joining_string = "_"):
 
 
 
-
-def replace_in_string(sss,dict_of_values):
-    """replaces -within in a string- a dictionary of values"""
-
-    thisstr=str(sss)
-    for varname in dict_of_values.keys():
-        thisstr=thisstr.replace(
-                   "[%s]"%varname,
-                   "%s"%( dict_of_values[varname] )
-                )
-        thisstr=thisstr.replace(
-                   "{%s}"%varname,
-                   "%s-%s"%( varname, dict_of_values[varname] )
-                )
-    return thisstr
+# :::~ DEPRACTED FUNCTION, it is duplicated functionality from replace_values
+#def replace_in_string(sss,dict_of_values):
+#    """replaces -within in a string- a dictionary of values"""
+#
+#    thisstr=str(sss)
+#    for varname in dict_of_values.keys():
+#        thisstr=thisstr.replace(
+#                   "[%s]"%varname,
+#                   "%s"%( dict_of_values[varname] )
+#                )
+#        thisstr=thisstr.replace(
+#                   "{%s}"%varname,
+#                   "%s-%s"%( varname, dict_of_values[varname] )
+#                )
+#    return thisstr
 
 
 
 def parameters_from_string(string):
-    """guesses the values of the parameters from the string"""
+    """guesses the values of parameters  from the string the format is expected to be key-value.
+    values are expected to be numeric"""
 
     regexp = re.compile(r'([a-zA-Z]\w*)-([-+]?\d*\.?\d*){1,1}([Ee][+-]?\d+)?')
     # regular expression explanation
