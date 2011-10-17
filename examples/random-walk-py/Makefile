@@ -12,7 +12,7 @@ SCRIPT_NAME=random-walk
 
 install:
 	# scripts
-	install ctx-${SCRIPT_NAME}.py ${BINDIR}/
+	install cts-${SCRIPT_NAME}.py ${BINDIR}/
 	install -m 0644 base.ct ${CONFDIR}/${SCRIPT_NAME}.ct
 	install -m 0644 conf.stdout ${CONFDIR}/${SCRIPT_NAME}.stdout
 	install -m 0644 conf.params ${CONFDIR}/${SCRIPT_NAME}.params
