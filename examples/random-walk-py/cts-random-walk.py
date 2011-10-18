@@ -19,7 +19,7 @@ import sys
 
 class ModelRandomWalk:
     
-    def __init__(self, sz):
+    def __init__(self):
         self.X = 0
         self.S = 0
         self.D = 1
@@ -27,7 +27,7 @@ class ModelRandomWalk:
         
 
     def iterate(self):
-        self.pos_change = rnd.normalvariate(0, self.D) +  self.drift ; 
+        pos_change = rnd.normalvariate(0, self.D) +  self.drift ; 
         self.X +=pos_change
         self.S += pos_change*pos_change 
 

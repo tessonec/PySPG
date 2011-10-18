@@ -1,5 +1,5 @@
-choice:string:model:"UNBIASED","BIASED","MODEL2":model type
-val:double:D:1.0:diffusion coefficient
-val:double:drift:0.0:drift coefficient
-val:long:filter_timesteps:0:filtering time equalts this times ts
-val:long:simulation_timesteps:100:fnumber of timesteps in the simulation
+choice:str:model:"UNBIASED","BIASED","MODEL2":model type
+val:float:D:1.0:diffusion coefficient
+val:float:drift:0.0:drift coefficient
+val:int:filter_timesteps:0:filtering time equalts this times ts
+val:int:simulation_timesteps:100:fnumber of timesteps in the simulation
