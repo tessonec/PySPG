@@ -297,11 +297,15 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
         configuration_filename = "input_%.8d.dat"%(self.current_run_id)
         output_filename = "output_%.8d.dat"%(self.current_run_id)
     #   print configuration_filename
-        fconf = open(configuration_filename,"w")        
-        for k in self.values.keys():
-            print >> fconf, k, utils.replace_values(self.values[k], self.values) 
-        fconf.close()
-        
+        try:
+            fconf = open(configuration_filename,"w")
+            for k in self.values.keys():
+                print >> fconf, k, utils.replace_values(self.values[k], self.values) 
+                fconf.close()
+        except:
+              utils.newline_msg("WRN", "could not load '%s'"%configuration_filename)
+              return
+
         cmd = "%s/%s -i %s > %s"%(BINARY_PATH, self.command, configuration_filename, output_filename )
         os.system(cmd)
         ret_code = 0

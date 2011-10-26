@@ -35,8 +35,8 @@ class BaseDBCommandParser(cmd.Cmd):
         """translates the parameters filename and the  database name 
            into the other and viceversa (returns a duple: param_name, db_name)"""
         full_name = os.path.realpath( st )
-        if not os.path.exists(full_name):
-            full_name = self.lengthen_name(full_name)
+#        if not os.path.exists(full_name):
+#            full_name = self.lengthen_name(full_name)
         if not os.path.exists(full_name):
             utils.newline_msg("ERR","database '%s' does not exist"%st)
             return None
@@ -104,6 +104,7 @@ class BaseDBCommandParser(cmd.Cmd):
                 utils.newline_msg("WRN", "database '%s' is not registered, loading it anyhow"%self.shorten_name(db_name))
         return None
 
+# :::~ FIXME!: Hast to be implemented
 #    def complete(self, text):    
 #        completions = self.master_db.result_dbs.keys()
 #        if text:
@@ -153,9 +154,9 @@ class BaseDBCommandParser(cmd.Cmd):
         else:    
             utils.newline_msg("ERR", "db does not exist", 2)
 
-
-    def complete_load(self, text, line, begidx, endidx):
-        return self.complete(text)
+# :::~ FIXME!: Hast to be implemented
+#    def complete_load(self, text, line, begidx, endidx):
+#        return self.complete(text)
 
     def do_info(self, c):
         """prints the information of the results database """
@@ -191,6 +192,7 @@ class BaseDBCommandParser(cmd.Cmd):
         print output
 
     def do_cd(self,line):
+        """ Changes into a given directory """
         try:
             os.chdir(line)
         except:
