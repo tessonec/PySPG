@@ -56,6 +56,9 @@ class ParameterAtom:
         #:::~ get the names of the columns
         sel = param_ens.execute_query("SELECT name FROM entities ORDER BY id")
         self.entities = [ i[0] for i in sel ]
+        
+        sel = param_ens.execute_query("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
+        self.variables = [ i[0] for i in sel ]
 
         res = param_ens.execute_query_fetchone(
                     "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
@@ -144,7 +147,7 @@ class ParameterAtomExecutor(ParameterAtom):
         os.chdir(self.path)
 
         if self.create_tree():
-            dir_n = utils.generate_string(self.values, self.entities, joining_string = "/")
+            dir_n = utils.generate_string(self.values, self.variables, joining_string = "/")
             if not os.path.exists(dir_n): 
                 os.makedirs(dir_n)
             os.chdir(dir_n)
