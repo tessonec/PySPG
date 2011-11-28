@@ -297,14 +297,13 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
         configuration_filename = "input_%.8d.dat"%(self.current_run_id)
         output_filename = "output_%.8d.dat"%(self.current_run_id)
     #   print configuration_filename
-        try:
-            fconf = open(configuration_filename,"w")
-            for k in self.values.keys():
-                print >> fconf, k, utils.replace_values(self.values[k], self.values) 
-                fconf.close()
-        except:
-              utils.newline_msg("WRN", "could not load '%s'"%configuration_filename)
-              return
+        fconf = open(configuration_filename,"w")
+        for k in self.values.keys():
+            print >> fconf, k, utils.replace_values(self.values[k], self.values) 
+        fconf.close()
+        #except:
+        #      utils.newline_msg("WRN", "could not load '%s'"%configuration_filename)
+        #      return
 
         cmd = "%s/%s -i %s > %s"%(BINARY_PATH, self.command, configuration_filename, output_filename )
         os.system(cmd)
@@ -312,9 +311,13 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 #        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
 #        proc.wait()
  #       ret_code = proc.returncode
-        output = [i.strip() for i in open(output_filename).readline().split()]
-        os.remove(configuration_filename)
-        os.remove(output_filename)
+        try:
+            output = [i.strip() for i in open(output_filename).readline().split()]
+            os.remove(configuration_filename)
+            os.remove(output_filename)
+        except:
+            utils.newline_msg("WRN", "could not read '%s' -  may it be other process accessed it"%output_filename)
+            return
         if self.directory_vars:
             os.chdir(pwd)
 #        if ret_code == 0:
