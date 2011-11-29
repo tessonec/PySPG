@@ -155,7 +155,7 @@ class ParameterAtomExecutor(ParameterAtom):
 #      configuration_filename = "input_%s_%d.dat"%(self.db_name, self.current_run_id)
         fconf = open(configuration_filename,"w")
         for k in self.values.keys():
-            print >> fconf, k, utils.replace_in_string(self.values[k], self.values) 
+            print >> fconf, k, utils.replace_values(self.values[k], self.values) 
         fconf.close()
 
         cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )

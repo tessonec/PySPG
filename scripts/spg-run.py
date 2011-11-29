@@ -46,9 +46,9 @@ if __name__ == "__main__":
       
 
       for values in executor:
-          print values
-          executor.launch_process()
-      
+      #    print values
+              executor.launch_process()
+
       if options.tree:
           os.chdir(path)
       

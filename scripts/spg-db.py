@@ -31,7 +31,11 @@ class DBCommandParser(BaseDBCommandParser):
         Generates a new database out of a parameters.dat"""
         c = c.split()
         i_arg = c[0]
-        i_arg, db_name = self.translate_name(i_arg)
+        try:
+            i_arg, db_name = self.translate_name(i_arg)
+        except: 
+            utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not reinit it" )
+            return
 #        if self.master_db.result_dbs.has_key( db_name ):
 #            utils.newline_msg("WRN", "results db '%s' already registered"%self.shorten_name( db_name ), 2)
 #            os.remove(db_name)
@@ -53,8 +57,9 @@ class DBCommandParser(BaseDBCommandParser):
         Generates a new database out of a parameters.dat"""
         c = c.split()
         i_arg = c[0]
-        i_arg, db_name = self.translate_name(i_arg)
-        if not os.path.exists(db_name):
+        try:
+            i_arg, db_name = self.translate_name(i_arg)
+        except: 
             utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not reinit it" )
             return
         
@@ -74,6 +79,7 @@ class DBCommandParser(BaseDBCommandParser):
         self.master_db.initialise_result_dbs()
 
     def complete_init(self, text, line, begidx, endidx):    
+        
         completions = fnmatch.filter( os.listdir("."), "results*.sqlite" )
         completions.extend( fnmatch.filter( os.listdir("."), "parameters*.dat" ) )
         if text:
@@ -87,8 +93,9 @@ class DBCommandParser(BaseDBCommandParser):
         """registers a given results database into the master database"""
         c = c.split()
         i_arg = c[0]
-        i_arg, db_name = self.translate_name(i_arg)
-        if self.master_db.result_dbs.has_key( db_name ):
+        try: 
+            i_arg, db_name = self.translate_name(i_arg)
+        except:
             utils.newline_msg("WRN", "results db '%s' already registered"%self.shorten_name( db_name ), 2)
             return 
 
@@ -99,22 +106,28 @@ class DBCommandParser(BaseDBCommandParser):
         self.master_db.update_result_db( self.current_param_db )
         self.current_param_db.id = self.master_db.cursor.lastrowid
         self.master_db.initialise_result_dbs()
-        print " *--- registered '%s'with id=%d  "%(   self.current_param_db.full_name, self.current_param_db.id )
+        print " *--- registered '%s' with id=%d  "%(   self.current_param_db.full_name, self.current_param_db.id )
         
 
     def do_clean(self, c):
-        """cleans the results database by setting the R into N"""
-        if self.current_param_db:
-            self.current_param_db.execute_query('UPDATE run_status SET status = "N" WHERE status ="R"')
+        """cleans the currently loaded results.sqlite database
+           if not arguments are given  sets all the rows in run_status with status R, E to N
+           if the argument is "all" sets all the rows in run_status to N  """
+        #:::~ OK, as of 13.10.11
 
-
-    def do_clean_all(self, c):
-        """cleans the results database by setting all into N"""
-        if self.current_param_db:
+        if not self.current_param_db: 
+            utils.newline_msg("WRN", "current db not set... skipping")
+            return 
+                
+        if c == "all":
             self.current_param_db.execute_query('UPDATE run_status SET status = "N"  ')
+        else :
+            self.current_param_db.execute_query('UPDATE run_status SET status = "N" WHERE status ="R" OR status ="E" ')
+            
 
     def do_remove(self, c):
-        """removes one results database from the registered ones"""
+        """removes some results.sqlite databases (can be filtered through regular expressions, or by id) from the list of registered dbs"""
+        #:::~ OK, as of 13.10.11
         if not c:
             ls_res_db = [ self.current_param_db.full_name ]
         else:
@@ -129,12 +142,19 @@ class DBCommandParser(BaseDBCommandParser):
             del self.master_db.result_dbs[i]
         self.master_db.synchronise_master()
  
-    def complete_remove(self, text, line, begidx, endidx):
-        return self.complete(text)
+  #  def complete_remove(self, text, line, begidx, endidx):
+         #:::~ FIXME: doesn't work. Why?
+  #      return self.complete(text)
     
     def do_set(self, c):
-        """sets a VAR1=VALUE1[:VAR2=VALUE2]
-        sets a value in the currently loaded database """
+        """sets some values  in the currently loaded database
+        the syntax is   VAR1=VALUE1[:VAR2=VALUE2]
+        sets a value 
+        if the argument is help, the possible keys are presented """
+        if c == "help":
+            print utils.newline_msg("HELP", " possible_keys = %s"%self.possible_keys )
+            return 
+            
         if not self.current_param_db: 
             utils.newline_msg("WRN", "current db not set... skipping")
             return 

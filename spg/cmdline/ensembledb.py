@@ -35,11 +35,12 @@ class BaseDBCommandParser(cmd.Cmd):
         """translates the parameters filename and the  database name 
            into the other and viceversa (returns a duple: param_name, db_name)"""
         full_name = os.path.realpath( st )
-        if not os.path.exists(full_name):
-            full_name = self.lengthen_name(full_name)
+#        if not os.path.exists(full_name):
+#            full_name = self.lengthen_name(full_name)
         if not os.path.exists(full_name):
             utils.newline_msg("ERR","database '%s' does not exist"%st)
-            sys.exit(2)
+            return None
+        
         path, st = os.path.split(full_name)
         if ".sqlite" in st:
             par_name = st.replace("results","").replace(".sqlite","")
@@ -53,8 +54,12 @@ class BaseDBCommandParser(cmd.Cmd):
     def update_active_result_db(self, c):
         c = c.strip()
         if not c: return 
+        try:
+            param_name, db_name = self.translate_name(c)
+        except: 
+#            utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not load it" )
+            return
 
-        param_name, db_name = self.translate_name(c)
         if os.path.exists( db_name ):
             self.current_param_db = ParameterEnsemble( db_name )
         elif os.path.exists( param_name ) and not os.path.exists( db_name ):
@@ -64,21 +69,34 @@ class BaseDBCommandParser(cmd.Cmd):
     def filter_db_list(self, ls = None, filter = None):
         if ls == None:
             ls = self.master_db.result_dbs.keys()
-        ret = [ self.shorten_name(i) for i in ls ]
-        if filter:
-            ret = fnmatch.filter(ret, filter) 
+            
+        try:
+            id = int(filter)
+            rdb = self.master_db.result_dbs
+            filtered = [ x for x in ls if rdb.has_key(x) and rdb[x] is not None and rdb[x].id == id  ]
+            return filtered
+        except:
+            ret = [ self.shorten_name(i) for i in ls ]
+            if filter:
+                ret = fnmatch.filter(ret, filter) 
               
-        return sorted( [ self.lengthen_name( i ) for i in ret ] )
+            return sorted( [ self.lengthen_name( i ) for i in ret ] )
 
     def get_db_from_cmdline(self, c):
         """it returns the db name (or None) of a database identified either from its id or """
         try: 
             id = int(c)
-            filtered = filter(lambda x: x.id == id, self.master_db.result_dbs.values() )
-            if filtered:
-                return filtered[0] 
+            rdb = self.master_db.result_dbs
+            filtered = [ rdb[x] for x in rdb.keys() if rdb[x] is not None and rdb[x].id == id  ]
+            if filtered: return filtered[0] 
+            else: return None
         except:
-            foo, db_name = self.translate_name(c)
+            try:
+                foo, db_name = self.translate_name(c)
+            except: 
+                utils.newline_msg("ERR", "results db '%s' doesn't exist."%c )
+                return 
+            
             if self.master_db.result_dbs.has_key(db_name):
                 return self.master_db.result_dbs[db_name]
             else:
@@ -86,14 +104,15 @@ class BaseDBCommandParser(cmd.Cmd):
                 utils.newline_msg("WRN", "database '%s' is not registered, loading it anyhow"%self.shorten_name(db_name))
         return None
 
-    def complete(self, text):    
-        completions = self.master_db.result_dbs.keys()
-        if text:
-            completions = [ f
-                            for f in completions
-                            if f.startswith(text)
-                            ]
-        return completions
+# :::~ FIXME!: Hast to be implemented
+#    def complete(self, text):    
+#        completions = self.master_db.result_dbs.keys()
+#        if text:
+#            completions = [ f
+#                            for f in completions
+#                            if f.startswith(text)
+#                            ]
+#        return completions
 
     def do_ls(self, c):
         """lists the databases already registered in the master database and the possible ones found in the current directory"""
@@ -135,9 +154,9 @@ class BaseDBCommandParser(cmd.Cmd):
         else:    
             utils.newline_msg("ERR", "db does not exist", 2)
 
-
-    def complete_load(self, text, line, begidx, endidx):
-        return self.complete(text)
+# :::~ FIXME!: Hast to be implemented
+#    def complete_load(self, text, line, begidx, endidx):
+#        return self.complete(text)
 
     def do_info(self, c):
         """prints the information of the results database """
@@ -173,6 +192,7 @@ class BaseDBCommandParser(cmd.Cmd):
         print output
 
     def do_cd(self,line):
+        """ Changes into a given directory """
         try:
             os.chdir(line)
         except:

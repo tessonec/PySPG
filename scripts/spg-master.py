@@ -76,11 +76,14 @@ if __name__ == "__main__":
             if worker_diff > 0 :
                 print >> file_log,  "queue: %s seeded-killed = %d]"%(name, worker_diff)
                 
-            inline_msg("INF", "populate/harvest data.",indent = 2)
+            inline_msg("INF", "populate data for '%s'."%name,indent = 2)
             if not options.skip_init:
                 pex.seed_atoms( name )
-                seeded_atoms_ac.append(pex.seeded_atoms ) 
+                seeded_atoms_ac.append(pex.seeded_atoms )
+         
         if not options.skip_harvest:
+            inline_msg("INF", "harvest data..................",indent = 2)
+
             pex.harvest_atoms()
     
         inline_msg("INF", "syncing..................(s:%s - h:%d)"%(seeded_atoms_ac, pex.harvested_atoms), indent = 2)

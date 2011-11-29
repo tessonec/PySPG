@@ -30,7 +30,7 @@ class ResultCommandParser(BaseDBCommandParser):
         BaseDBCommandParser.__init__(self, EnsembleConstructor = ResultsDBQuery)
         self.prompt = "| spg-results :::~ "
         
-        self.possible_keys = set( [ "table_depth", "expand_dirs", "raw_data", "split_colums", "restrict_by_val", "prefix", "n_rows", "plot_x_label", "plot_y_label", "plot_x_scale", "plot_y_scale", "plot_x_min", "plot_x_max", "plot_y_min", "plot_y_max", "split_columns"] )
+        self.possible_keys = set( [ "table_depth", "expand_dirs", "raw_data", "split_colums", "restrict_by_val", "prefix", "n_rows","split_columns"] )
         self.output_column = []
         self.table_depth = 1
         self.n_rows = 3
@@ -123,6 +123,10 @@ class ResultCommandParser(BaseDBCommandParser):
     def do_set(self, c):
         """sets a VAR1=VALUE1[:VAR2=VALUE2]
         sets a value in the currently loaded database """
+
+        if c == "help":
+            print utils.newline_msg("HELP", " possible_keys = %s"%self.possible_keys )
+            return 
         
         if not self.current_param_db: 
             utils.newline_msg("WRN", "current db not set... skipping")

@@ -88,7 +88,9 @@ class QueueCommandParser(cmd.Cmd):
 
 
 
-    def do_clean_pool(cmd, name, params):
+    def do_clean_pool(self, cmd): 
+        """cleans all the hanging pickled input/output files"""
+        
         proc = Popen("rm -f %s/run/*"%VAR_PATH, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
         proc.wait()
         self.__update_queue_list()
