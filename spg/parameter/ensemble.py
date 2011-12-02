@@ -389,7 +389,10 @@ class ResultsDBQuery(ParameterEnsemble):
 
     def setup_output_table(self, conf):
         """which are the variables that are inside of the output file, orphaned variables are sent into the coalesced ones"""
-        in_table_vars = conf.split(",")
+        if conf.strip() != "" :
+            in_table_vars = conf.split(",")
+        else:
+            in_table_vars = []
         if set(in_table_vars).issubset( set(self.variables) ):
             self.in_table_vars = in_table_vars
             self.coalesced_vars = [ i for i in self.coalesced_vars if ( i not in self.in_table_vars ) ]
@@ -401,12 +404,16 @@ class ResultsDBQuery(ParameterEnsemble):
                 for i in orphaned: self.coalesced_vars.append(i)
             print "    structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
         else:
+            print in_table_vars, conf
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(in_table_vars)-set(self.variables) )
         
                 
     def setup_separated_output(self, conf):
         """Which variables are separated in different directories, orphaned variables are sent into the coalesced ones"""
-        separated = conf.split(",")
+        if conf.strip() != "" :
+            separated = conf.split(",")
+        else:
+            separated = []
         if set(separated).issubset( set(self.variables) ):
             self.separated_vars = separated
             self.coalesced_vars = [ i for i in self.coalesced_vars if ( i not in self.separated_vars )  ]
@@ -421,7 +428,10 @@ class ResultsDBQuery(ParameterEnsemble):
 
     def setup_coalesced_output(self, conf):
         """Which variables are coalesced into the same files, orphaned variables are sent into the separated ones"""
-        coalesced = conf.split(",")
+        if conf.strip() != "" :
+            coalesced = conf.split(",")
+        else:
+            coalesced = []
         if set(coalesced).issubset( set(self.variables) ):
             self.coalesced_vars = coalesced
             self.separated_vars = [ i for i in self.separated_vars if ( i not in self.coalesced_vars ) ]
