@@ -83,19 +83,27 @@ class ResultCommandParser(BaseDBCommandParser):
            if d != "" and not os.path.exists(d): os.makedirs(d)
            np.savetxt( output_fname, data)
 
-    def do_setup_vars_table(self,c):
-        """sets up the table's independent columns"""
+    def do_setup_vars_in_table(self,c):
+        """sets up the variables that output into the table as independent columns"""
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
         self.current_param_db.setup_output_table(c)
 
-    def do_setup_vars_splitted(self,c):
-        """sets up which variables are going to have a separated output"""
+    def do_setup_vars_separated(self,c):
+        """sets up which variables are going to have a separated directory"""
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
         self.current_param_db.setup_separated_output(c)
+
+    def do_setup_vars_coalesced(self,c):
+        """sets up which variables are coalesced into the same file"""
+        if not self.current_param_db:
+            utils.newline_msg("WRN", "current db not set... skipping")
+            return
+        self.current_param_db.setup_coalesced_output(c)
+        
 
     def do_setup_output_column(self,c):
         """sets which columns to generate output from"""

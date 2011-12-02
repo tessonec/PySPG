@@ -388,36 +388,46 @@ class ResultsDBQuery(ParameterEnsemble):
 
 
     def setup_output_table(self, conf):
-        try: 
-            i = int(conf)
-            in_table_vars = self.variables[-i:]
-        except:
-            if conf == "xy":
-                in_table_vars = self.variables[-1:]
-            if conf == "xyz":
-                in_table_vars = self.variables[-2:]
-            if conf == "xyzt":
-                in_table_vars = self.variables[-3:]
-            else:
-                in_table_vars = conf.split(",")
+        """which are the variables that are inside of the output file"""
+        in_table_vars = conf.split(",")
         if set(in_table_vars).issubset( set(self.variables) ):
             self.in_table_vars = in_table_vars
-            self.coalesced_vars = [ i for i in self.variables if ( i not in self.separated_vars ) and ( i not in self.in_table_vars ) ]
+            self.coalesced_vars = [ i for i in self.coalesced_vars if ( i not in self.in_table_vars ) ]
+            
+            
+            
+            self.separated_vars = [ i for i in self.separated_vars if ( i not in self.in_table_vars ) ]
+            
+            orphaned = set(self.variables) - set(self.separated_vars) - set( self.in_table_vars ) - set( self.coalesced_vars )
+            if len(orphaned) > 0:
+                utils.newline_msg("VAR", "orphaned variables '%s' added to separated variables")
+                for i in orphaned:
+                    self.separated_vars.append(i)
+            print "    structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
         else:
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(in_table_vars)-set(self.variables) )
         
                 
     def setup_separated_output(self, conf):
-        try: 
-            i = int(conf)
-            separated = self.variables[:i+1]
-        except:
-            separated = conf.split(",")
+        """Which variables are separated in different directories"""
+        separated = conf.split(",")
         if set(separated).issubset( set(self.variables) ):
             self.separated_vars = separated
             self.coalesced_vars = [ i for i in self.variables if ( i not in self.separated_vars ) and ( i not in self.in_table_vars ) ]
+            print "    structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
         else:
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(separated)-set(self.variables) )
+
+    def setup_coalesced_output(self, conf):
+        """Which variables are coalesced into the same files"""
+        coalesced = conf.split(",")
+        if set(coalesced).issubset( set(self.variables) ):
+            self.coalesced_vars = coalesced
+            self.separated_vars = [ i for i in self.variables if ( i not in self.coalesced ) and ( i not in self.in_table_vars ) ]
+            print "    structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
+        else:
+            utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(coalesced)-set(self.variables) )
+
 
 
     def clean_dict(self,dict_to_clean):
