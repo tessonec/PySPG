@@ -96,7 +96,11 @@ class DataExchanger(MasterDB):
         self.harvested_atoms  = len(ls_atoms)
         for i_d in ls_atoms:
             pd = ParameterAtom(i_d)
-            pd.load(src = 'run')
+            try:
+                pd.load(src = 'run')
+            except:
+                utils.newline_msg("WRN", "could not pickle '%s'...skipping"%i_d, 2)
+                continue
             a_db =self.result_dbs[pd.full_db_name]
             pd.dump_result_in_ensemble( a_db  )
 
