@@ -388,36 +388,62 @@ class ResultsDBQuery(ParameterEnsemble):
 
 
     def setup_output_table(self, conf):
-        try: 
-            i = int(conf)
-            in_table_vars = self.variables[-i:]
-        except:
-            if conf == "xy":
-                in_table_vars = self.variables[-1:]
-            if conf == "xyz":
-                in_table_vars = self.variables[-2:]
-            if conf == "xyzt":
-                in_table_vars = self.variables[-3:]
-            else:
-                in_table_vars = conf.split(",")
+        """which are the variables that are inside of the output file, orphaned variables are sent into the coalesced ones"""
+        if conf.strip() != "" :
+            in_table_vars = conf.split(",")
+        else:
+            in_table_vars = []
         if set(in_table_vars).issubset( set(self.variables) ):
             self.in_table_vars = in_table_vars
-            self.coalesced_vars = [ i for i in self.variables if ( i not in self.separated_vars ) and ( i not in self.in_table_vars ) ]
+            self.coalesced_vars = [ i for i in self.coalesced_vars if ( i not in self.in_table_vars ) ]
+            self.separated_vars = [ i for i in self.separated_vars if ( i not in self.in_table_vars ) ]
+            
+            orphaned = set(self.variables) - set(self.separated_vars) - set( self.in_table_vars ) - set( self.coalesced_vars )
+            if len(orphaned) > 0:
+                utils.newline_msg("VAR", "orphaned variables '%s' added to separated variables"%orphaned, indent=4)
+                for i in orphaned: self.coalesced_vars.append(i)
+            print "    structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
         else:
+            print in_table_vars, conf
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(in_table_vars)-set(self.variables) )
         
                 
     def setup_separated_output(self, conf):
-        try: 
-            i = int(conf)
-            separated = self.variables[:i+1]
-        except:
+        """Which variables are separated in different directories, orphaned variables are sent into the coalesced ones"""
+        if conf.strip() != "" :
             separated = conf.split(",")
+        else:
+            separated = []
         if set(separated).issubset( set(self.variables) ):
             self.separated_vars = separated
-            self.coalesced_vars = [ i for i in self.variables if ( i not in self.separated_vars ) and ( i not in self.in_table_vars ) ]
+            self.coalesced_vars = [ i for i in self.coalesced_vars if ( i not in self.separated_vars )  ]
+            self.in_table_vars = [ i for i in self.in_table_vars if ( i not in self.separated_vars )  ]
+            orphaned = set(self.variables) - set(self.separated_vars) - set( self.in_table_vars ) - set( self.coalesced_vars )
+            if len(orphaned) > 0:
+                utils.newline_msg("VAR", "orphaned variables '%s' added to separated variables"%orphaned, indent=4)
+                for i in orphaned: self.coalesced_vars.append(i)
+            print "    structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
         else:
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(separated)-set(self.variables) )
+
+    def setup_coalesced_output(self, conf):
+        """Which variables are coalesced into the same files, orphaned variables are sent into the separated ones"""
+        if conf.strip() != "" :
+            coalesced = conf.split(",")
+        else:
+            coalesced = []
+        if set(coalesced).issubset( set(self.variables) ):
+            self.coalesced_vars = coalesced
+            self.separated_vars = [ i for i in self.separated_vars if ( i not in self.coalesced_vars ) ]
+            self.in_table_vars = [ i for i in self.in_table_vars if ( i not in self.coalesced_vars ) ]
+            orphaned = set(self.variables) - set(self.separated_vars) - set( self.in_table_vars ) - set( self.coalesced_vars )
+            if len(orphaned) > 0:
+                utils.newline_msg("VAR", "orphaned variables '%s' added to separated variables"%orphaned, indent=4)
+                for i in orphaned: self.separated_vars.append(i)
+            print "    structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
+        else:
+            utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(coalesced)-set(self.variables) )
+
 
 
     def clean_dict(self,dict_to_clean):
@@ -443,14 +469,15 @@ class ResultsDBQuery(ParameterEnsemble):
    
         self.clean_dict(restrict_to_values)
 
-        
-        if len(self.in_table_vars) == 1:
+        if len(self.in_table_vars) == 0:
+            var_cols = ""
+        elif len(self.in_table_vars) == 1:
             var_cols = "v.%s, "%self.in_table_vars[0]
-        if len(self.in_table_vars) > 1:
+        elif len(self.in_table_vars) > 1:
             var_cols = "%s, "%",".join(["v.%s"%v for v in self.in_table_vars])
         if not output_column:
             output_column = self.output_column[:]
-            if "values_set_id" in output_column: 
+        if "values_set_id" in output_column: 
                 output_column.remove("values_set_id")
 
         out_cols = ""
