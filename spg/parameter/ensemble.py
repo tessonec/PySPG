@@ -424,8 +424,8 @@ class ResultsDBQuery(ParameterEnsemble):
         coalesced = conf.split(",")
         if set(coalesced).issubset( set(self.variables) ):
             self.coalesced_vars = coalesced
-            self.separated_vars = [ i for i in self.separated_vars if ( i not in self.coalesced ) ]
-            self.in_table_vars = [ i for i in self.in_table_vars if ( i not in self.coalesced ) ]
+            self.separated_vars = [ i for i in self.separated_vars if ( i not in self.coalesced_vars ) ]
+            self.in_table_vars = [ i for i in self.in_table_vars if ( i not in self.coalesced_vars ) ]
             orphaned = set(self.variables) - set(self.separated_vars) - set( self.in_table_vars ) - set( self.coalesced_vars )
             if len(orphaned) > 0:
                 utils.newline_msg("VAR", "orphaned variables '%s' added to separated variables"%orphaned, indent=4)
