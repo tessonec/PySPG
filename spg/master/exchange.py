@@ -40,6 +40,10 @@ class DataExchanger(MasterDB):
             self.normalising = 0.
             self.active_dbs = []
             for i in self.result_dbs.keys():
+                if self.result_dbs[i] == None:
+                    del self.result_dbs[i]
+                    utils.newline_msg("MSG", "removing db '%s' from the running list"%i)
+                    continue
                 if self.result_dbs[i].status == 'R':
                     self.normalising += self.result_dbs[ i ].weight
                     self.active_dbs.append( self.result_dbs[ i ] )
