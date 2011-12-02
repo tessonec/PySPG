@@ -30,11 +30,8 @@ class ResultCommandParser(BaseDBCommandParser):
         BaseDBCommandParser.__init__(self, EnsembleConstructor = ResultsDBQuery)
         self.prompt = "| spg-results :::~ "
         
-        self.possible_keys = set( [ "table_depth", "expand_dirs", "raw_data", "split_colums", "restrict_by_val", "prefix", "n_rows","split_columns"] )
+        self.possible_keys = set( [ "raw_data", "split_colums", "restrict_by_val", "prefix", "split_columns"] )
         self.output_column = []
-        self.table_depth = 1
-        self.n_rows = 3
-        self.expand_dirs = True 
         self.raw_data = False
         self.split_columns = False
         self.restrict_by_val = False # was True
@@ -155,8 +152,8 @@ class ResultCommandParser(BaseDBCommandParser):
         print "  + variables = %s "%( ", ".join(self.current_param_db.variables ) )
         print "  + entities = %s "%( ", ".join(self.current_param_db.entities ) )
         print "  + columns = %s "%( ", ".join(self.current_param_db.output_column ) )
-        print "  + split_columns = %s / expand_dirs = %s / raw_data = %s"%(self.split_columns, self.expand_dirs, self.raw_data)
-        print "  + structure = %s - %s - %s / restrict_by_val = %s"%(self.current_param_db.separated_vars, self.current_param_db.coalesced_vars, self.current_param_db.in_table_vars, self.restrict_by_val)
+        print "  + split_columns = %s  / raw_data = %s / restrict_by_val = %s"%(self.split_columns, self.raw_data, self.restrict_by_val)
+        print "  + vars (separated-coalesced-in_table) = %s - %s - %s "%(self.current_param_db.separated_vars, self.current_param_db.coalesced_vars, self.current_param_db.in_table_vars)
 
 
 if __name__ == '__main__':
