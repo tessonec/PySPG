@@ -74,7 +74,7 @@ class QueueCommandParser(cmd.Cmd):
         c = c.split()
         if len(c) == 1 and self.current_queue:
             max_jobs = int(c[0])
-            self.master_db.execute_query( 'UPDATE queues SET max_jobs= ? WHERE name = ?', max_jobs, self.current_queue  )        
+            self.master_db.execute_query( 'UPDATE queues SET max_jobs= ? WHERE name = ?', max_jobs, self.current_queue )
         elif len(c) == 2:
             re = c[0]
             max_jobs = int(c[1])

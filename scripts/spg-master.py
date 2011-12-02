@@ -45,8 +45,8 @@ if __name__ == "__main__":
     
     set_queueing_system( options.queue )
     
-    print >> file_log,  "starting session:  ", time.ctime()
-    print >> file_log,  "queueing system: %s"%options.queue
+    newline_msg("@@@", "starting session: %s"% time.ctime(), stream = file_log)
+    newline_msg("@@@", "queueing system: %s"%options.queue, stream = file_log)
     
     
     pex = DataExchanger(  )
@@ -61,8 +61,8 @@ if __name__ == "__main__":
         seeded_atoms_ac = []
         for (name, max_jobs) in ls_queues:
             if not all_queues.has_key(name):
-                newline_msg("INF", "initialising queue '%s'"%name,indent = 2)
-                print >> file_log,  "initialising queue: %s [max_jobs: %s]"%(name, max_jobs)
+                newline_msg("INF", "initialising queue '%s'[max_jobs: %s]"%(name, max_jobs),indent = 2)
+                newline_msg("INF", "initialising queue: '%s' [max_jobs: %s]"%(name, max_jobs), stream = file_log)
                 
                 if options.queue == "torque":
                     all_queues[name] = TorqueQueue(name, max_jobs)
@@ -83,16 +83,15 @@ if __name__ == "__main__":
          
         if not options.skip_harvest:
             inline_msg("INF", "harvest data..................",indent = 2)
-
             pex.harvest_atoms()
     
         inline_msg("INF", "syncing..................(s:%s - h:%d)"%(seeded_atoms_ac, pex.harvested_atoms), indent = 2)
-        print >> file_log, "atoms: seeded= %s - harvested= %d"%(seeded_atoms_ac, pex.harvested_atoms)
-        file_log.flush()
+        newline_msg("INF", "syncing (s:%s - h:%d)"%(seeded_atoms_ac, pex.harvested_atoms), stream = file_log)
         
         if not options.skip_sync:
             pex.synchronise_master()
       
         newline_msg("INF", "sleep %s"%options.sleep,indent = 2)
+
         if options.sleep < 0:  sys.exit(0)
         time.sleep(options.sleep)
