@@ -469,14 +469,15 @@ class ResultsDBQuery(ParameterEnsemble):
    
         self.clean_dict(restrict_to_values)
 
-        
-        if len(self.in_table_vars) == 1:
+        if len(self.in_table_vars) == 0:
+            var_cols = ""
+        elif len(self.in_table_vars) == 1:
             var_cols = "v.%s, "%self.in_table_vars[0]
-        if len(self.in_table_vars) > 1:
+        elif len(self.in_table_vars) > 1:
             var_cols = "%s, "%",".join(["v.%s"%v for v in self.in_table_vars])
         if not output_column:
             output_column = self.output_column[:]
-            if "values_set_id" in output_column: 
+        if "values_set_id" in output_column: 
                 output_column.remove("values_set_id")
 
         out_cols = ""
