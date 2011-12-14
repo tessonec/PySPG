@@ -56,8 +56,9 @@ class Parameters(dict):
         return ret
 
 
+
 def load_parameters(argv):
-    """ Loads a parameter dataset"""
+    """ Loads a parameter dataset. other_params is an array of tuples (cmd_line_arg, type, dest, default, help) """
     
     prog_name = os.path.split(argv[0])[-1]
     if prog_name[:2] == "ct" and prog_name[3] == "-" :  prog_name = prog_name[4:]
@@ -70,6 +71,7 @@ def load_parameters(argv):
     parser = optparse.OptionParser()
     parser.add_option("--input", '-i', type="string", action='store', dest="input_filename",
                         default = default_input_file , help = "Input file parameter" )
+    
     options, args = parser.parse_args()
     
     possible_lines = import_backends("%s/spg-conf/%s.ct"%(CONFIG_DIR,prog_name))
@@ -114,6 +116,4 @@ def load_parameters(argv):
                 sys.exit(2)
         #print ret
                 
-        
     return ret
-
