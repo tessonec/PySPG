@@ -16,6 +16,7 @@ install:
 	install scripts/spg-master.py ${BINDIR}
 	install scripts/spg-worker.py ${BINDIR}
 	install scripts/spg-results.py ${BINDIR}
+	install scripts/spg-get_parameters.py ${BINDIR}
 	mkdir -p ${LIBDIR}
 	# library (base)
 	install -m 0644 spg/__init__.py ${LIBDIR}
