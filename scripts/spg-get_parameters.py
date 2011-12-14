@@ -18,23 +18,17 @@ import sys
 
 def load_parameters(argv):
     """ Loads a parameter dataset. other_params is an array of tuples (cmd_line_arg, type, dest, default, help) """
-    
-    parser = optparse.OptionParser()
 
-    
+    parser = optparse.OptionParser()
     parser.add_option("--input", '-i', type="string", action='store', dest="input_filename",
                         default = default_input_file , help = "Input file parameter" )
     parser.add_option("--parameter", '-p', type="string", action='store', dest="parameters",
                         default = default_input_file , help = "Set of parameters (comma separated, no blanks) to be printed, from the " )
-
-    
         
     options, args = parser.parse_args()
-    
     set_of_parameters = options.parameters.split(",") 
-    
     dict_of_vals = {}
-    
+
     for line in open(options.input_filename):
         line = line.strip()
         if not line: continue
@@ -49,8 +43,6 @@ def load_parameters(argv):
         else:
             utils.newline_msg("ERR", "line '%s' does not contain a pair of values, nor a flag " %(line) )
             return
-    
-
 
     ret = ""
     
@@ -59,8 +51,6 @@ def load_parameters(argv):
             utils.newline_msg("ERR", "requested parameter '%s' not in input file " %(i) )
             return
         ret += dict_of_vals[i]
-            
-            
 
     return ret
 
