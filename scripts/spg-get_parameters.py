@@ -7,7 +7,7 @@ Created on Sep 21, 2011
 
 
 import spg.utils as utils 
-
+import optparse
 
 import math as m
 import random as rnd
@@ -21,9 +21,9 @@ def load_parameters(argv):
 
     parser = optparse.OptionParser()
     parser.add_option("--input", '-i', type="string", action='store', dest="input_filename",
-                        default = default_input_file , help = "Input file parameter" )
+                        default = "in.dat" , help = "Input file parameter" )
     parser.add_option("--parameter", '-p', type="string", action='store', dest="parameters",
-                        default = default_input_file , help = "Set of parameters (comma separated, no blanks) to be printed, from the " )
+                        default = "" , help = "Set of parameters (comma separated, no blanks) to be printed, from the " )
         
     options, args = parser.parse_args()
     set_of_parameters = options.parameters.split(",") 
@@ -50,7 +50,7 @@ def load_parameters(argv):
         if i not in dict_of_vals.keys():
             utils.newline_msg("ERR", "requested parameter '%s' not in input file " %(i) )
             return
-        ret += dict_of_vals[i]
+        ret += "%s\t"%dict_of_vals[i]
 
     return ret
 
