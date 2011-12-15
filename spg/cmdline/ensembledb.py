@@ -25,6 +25,19 @@ class BaseDBCommandParser(cmd.Cmd):
         self.master_db =  MasterDB(EnsembleConstructor = EnsembleConstructor)
 
 
+    def parse_command_line(self, st):
+        """returns command the flags set under a command and the arguments"""
+        cmd = []
+        flags = set()
+        
+        
+        for ic in st.strip().split():
+            if ic[0] == "-":
+                flags.add( ic.strip("-") )
+            cmd.append( ic )
+        
+        return flags, cmd
+
     def shorten_name(self, st):
         return os.path.relpath(st,RUN_DIR)
 

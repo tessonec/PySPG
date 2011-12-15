@@ -27,56 +27,37 @@ class DBCommandParser(BaseDBCommandParser):
 
 
     def do_init(self, c):
-        """build PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
-        Generates a new database out of a parameters.dat"""
-        c = c.split()
-        i_arg = c[0]
-        try:
-            i_arg, db_name = self.translate_name(i_arg)
-        except: 
-            utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not reinit it" )
-            return
-#        if self.master_db.result_dbs.has_key( db_name ):
-#            utils.newline_msg("WRN", "results db '%s' already registered"%self.shorten_name( db_name ), 2)
-#            os.remove(db_name)
-#            self.do_remove(i_arg) 
-
-        self.current_param_db = ParameterEnsemble( db_name, init_db = False ) 
-        if len(c) >1: self.do_set( ":".join( c[1:] ) )
-
-        parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name  )
-        parser.init_db(  )
-        parser.fill_status(repeat = self.current_param_db.repeat ) 
-        self.master_db.update_result_db( self.current_param_db )
-        self.current_param_db.id = self.master_db.cursor.lastrowid
-        self.master_db.initialise_result_dbs()
-
-
-    def do_reinit(self, c):
-        """build PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
-        Generates a new database out of a parameters.dat"""
-        c = c.split()
-        i_arg = c[0]
-        try:
-            i_arg, db_name = self.translate_name(i_arg)
-        except: 
-            utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not reinit it" )
-            return
+        """init [-flag ...] PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
+        Generates a new database out of a parameters.dat
+        FLAGS::: -skip-master: the new results.sqlite is created, but gets not registered in master
+                 -purge:       deletes the results.sqlite db, if it already existed 
+        """
         
-        #if self.master_db.result_dbs.has_key( db_name ):
-       #     utils.newline_msg("WRN", "results db '%s' already registered"%self.shorten_name( db_name ), 2)
-        os.remove(db_name)
-        self.do_remove(i_arg) 
+        flags,c = self.parse_command_line(c)
+        i_arg = c[0]
+        
+        try:
+            i_arg, db_name = self.translate_name(i_arg)
+        except: 
+            utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not init it" )
+            return
 
-        self.current_param_db = ParameterEnsemble( db_name, init_db = False ) 
+        if "purge" in flags:
+            os.remove(db_name)
+            self.do_remove(i_arg) 
+
+        self.current_param_db = ParameterEnsemble( db_name, init_db = False )
+         
         if len(c) >1: self.do_set( ":".join( c[1:] ) )
 
         parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name  )
         parser.init_db(  )
         parser.fill_status(repeat = self.current_param_db.repeat ) 
-        self.master_db.update_result_db( self.current_param_db )
-        self.current_param_db.id = self.master_db.cursor.lastrowid
-        self.master_db.initialise_result_dbs()
+        if not "skip-master" in  flags:
+            self.master_db.update_result_db( self.current_param_db )
+            self.current_param_db.id = self.master_db.cursor.lastrowid
+            self.master_db.initialise_result_dbs()
+
 
     def complete_init(self, text, line, begidx, endidx):    
         
@@ -110,16 +91,18 @@ class DBCommandParser(BaseDBCommandParser):
         
 
     def do_clean(self, c):
-        """cleans the currently loaded results.sqlite database
+        """clean [-flag ...] PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
            if not arguments are given  sets all the rows in run_status with status R, E to N
-           if the argument is "all" sets all the rows in run_status to N  """
+           FLAGS::: -all: sets all the rows in run_status to N  """
         #:::~ OK, as of 13.10.11
 
+        flags,c = self.parse_command_line(c)
+        
         if not self.current_param_db: 
             utils.newline_msg("WRN", "current db not set... skipping")
             return 
                 
-        if c == "all":
+        if "all" in flags:
             self.current_param_db.execute_query('UPDATE run_status SET status = "N"  ')
         else :
             self.current_param_db.execute_query('UPDATE run_status SET status = "N" WHERE status ="R" OR status ="E" ')
@@ -147,11 +130,15 @@ class DBCommandParser(BaseDBCommandParser):
   #      return self.complete(text)
     
     def do_set(self, c):
-        """sets some values  in the currently loaded database
-        the syntax is   VAR1=VALUE1[:VAR2=VALUE2]
-        sets a value 
-        if the argument is help, the possible keys are presented """
-        if c == "help":
+        """set  VAR1=VALUE1[:VAR2=VALUE2]
+        sets some values in the currently loaded database
+        FLAGS::: -help, the possible keys are printed """
+        
+        
+        flags, c = self.parse_command_line(c)
+        c = c[0]
+        
+        if "help" in flags:
             print utils.newline_msg("HELP", " possible_keys = %s"%self.possible_keys )
             return 
             
