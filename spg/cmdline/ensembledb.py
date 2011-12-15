@@ -128,7 +128,8 @@ class BaseDBCommandParser(cmd.Cmd):
 #        return completions
 
     def do_ls(self, c):
-        """lists the databases already registered in the master database and the possible ones found in the current directory"""
+        """ls REGEXP|DB_ID
+        lists the databases already registered in the master database and the possible ones found in the current directory"""
 
         ls_res_db = self.filter_db_list( filter = c ) 
         if ls_res_db: 
@@ -155,7 +156,8 @@ class BaseDBCommandParser(cmd.Cmd):
                 print "     : %s "%self.shorten_name(i)
                 
     def do_load(self,c):
-        """loads one of the registered databases from the master"""
+        """load DB_NAME|DB_ID 
+        loads one of the registered databases from the master"""
         c = c.split()
         if len(c) >1:
             utils.newline_msg("ERR", "only one db can be loaded at a time", 2)
@@ -172,7 +174,8 @@ class BaseDBCommandParser(cmd.Cmd):
 #        return self.complete(text)
 
     def do_info(self, c):
-        """prints the information of the results database """
+        """info REGEXP 
+        prints the information of the results databases, filtered by a regular expression, or its id """
         if not c:
             if not self.current_param_db:
                 return
