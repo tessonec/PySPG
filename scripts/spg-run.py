@@ -2,7 +2,7 @@
 
 
 from spg.parameter import ParameterEnsembleExecutor, ParameterEnsembleInputFilesGenerator
-from spg import BINARY_PATH
+from spg import BINARY_PATH, ROOT_DIR
 
 
 import os, os.path
@@ -24,7 +24,14 @@ if __name__ == "__main__":
     parser.add_option("-d","--directory-var", action='store', type = "string", dest="directory_vars",
                        default = False, help = "which variables to store as directories, only if tree" )
 
+    parser.add_option("--root", action='store', type = "string", dest="root_dir",
+                       default = False, help = "whether to change the global RUN_DIR environment variable" )    
+
     options, args = parser.parse_args()
+    
+    if options.root_dir:
+        ROOT_DIR = os.path.abspath(options.root_dir)
+        
     
     if len(args) == 0:
         args = ["results.sqlite"]
