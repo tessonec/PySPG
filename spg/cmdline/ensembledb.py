@@ -34,7 +34,8 @@ class BaseDBCommandParser(cmd.Cmd):
         for ic in st.strip().split():
             if ic[0] == "-":
                 flags.add( ic.strip("-") )
-            cmd.append( ic )
+            else:
+                cmd.append( ic )
         
         return flags, cmd
 

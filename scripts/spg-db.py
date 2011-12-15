@@ -34,6 +34,7 @@ class DBCommandParser(BaseDBCommandParser):
         """
         
         flags,c = self.parse_command_line(c)
+      #  print flags, c
         i_arg = c[0]
         
         try:
