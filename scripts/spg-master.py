@@ -108,7 +108,7 @@ if __name__ == "__main__":
         if not options.skip_sync:
             pex.synchronise_master()
       
-        newline_msg("INF", "sleep %s"%options.sleep,indent = 2)
+        newline_msg("INF", "[%d] sleep %s"%(harvests_without_results, options.sleep),indent = 2)
 
         if options.sleep < 0:  sys.exit(0)
         time.sleep(options.sleep)
