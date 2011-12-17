@@ -100,6 +100,7 @@ if __name__ == "__main__":
             harvests_without_results = 0
         
         if options.kill_workers_after and harvests_without_results > options.kill_workers_after :
+             inline_msg("WRN", "killing workers", indent = 2)
              for (name, max_jobs) in ls_queues:
                 all_queues[name].kill_workers()
             
