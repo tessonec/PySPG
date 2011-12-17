@@ -38,7 +38,7 @@ if __name__ == "__main__":
                             help = "do not initialise files" )
     parser.add_option("--skip-sync", action='store_true', dest="skip_sync",
                             help = "do not sync dbs" )
-    parser.add_option("--kill-workers", action='store', default = False, dest="kill_workers_after",
+    parser.add_option("--kill-workers", action='store', default = False, dest="kill_workers_after", type = "int",
                             help = "kills workers if no results after ARG harvests (sounds dictatorial, but does exactly this)" )
 
     options, args = parser.parse_args()
