@@ -1,5 +1,5 @@
-version_number = '3.0.2'
-release_date = '23 Sep 2011'
+version_number = '3.2.4'
+release_date = '02 Dec 2011'
 
 from base.iterator import *
 from base.parser   import *

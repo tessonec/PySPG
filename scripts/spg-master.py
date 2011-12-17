@@ -38,6 +38,8 @@ if __name__ == "__main__":
                             help = "do not initialise files" )
     parser.add_option("--skip-sync", action='store_true', dest="skip_sync",
                             help = "do not sync dbs" )
+    parser.add_option("--kill-workers", action='store', default = False, dest="kill_workers_after",
+                            help = "kills workers if no results after ARG harvests (sounds dictatorial, but does exactly this)" )
 
     options, args = parser.parse_args()
     
@@ -51,13 +53,17 @@ if __name__ == "__main__":
     
     pex = DataExchanger(  )
     pex.max_atoms_to_seed = options.populate
-
+ 
+    
+    harvests_without_results = 0
     all_queues = {}
+    
     while True:
         ls_queues  = pex.execute_query("SELECT name, max_jobs FROM queues WHERE status = 'R'")
         tbr_queues = set( all_queues.keys() ) - set( [i for (i,j) in ls_queues] )
         for q in tbr_queues:
             all_queues[q].kill_processes()
+
         seeded_atoms_ac = []
         for (name, max_jobs) in ls_queues:
             if not all_queues.has_key(name):
@@ -88,6 +94,15 @@ if __name__ == "__main__":
         inline_msg("INF", "syncing..................(s:%s - h:%d)"%(seeded_atoms_ac, pex.harvested_atoms), indent = 2)
         newline_msg("INF", "syncing (s:%s - h:%d)"%(seeded_atoms_ac, pex.harvested_atoms), stream = file_log)
         
+        if pex.harvested_atoms == 0:
+            harvests_without_results += 1
+        else:
+            harvests_without_results = 0
+        
+        if options.kill_workers_after and harvests_without_results > options.kill_workers_after :
+             for (name, max_jobs) in ls_queues:
+                all_queues[name].kill_workers()
+            
         if not options.skip_sync:
             pex.synchronise_master()
       

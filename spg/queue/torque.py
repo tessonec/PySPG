@@ -20,16 +20,15 @@ class TorqueQueue(Queue):
 
     def kill_workers( self, n_jobs = None):
     #    print "killing workers: ", n_jobs
-        if not n_jobs: 
-            for i in self.workers:
-                cmd = "qdel %s"%(i)
-                proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
-                proc.wait()
+        if n_jobs:
+            workers_to_kill = self.workers[:n_jobs]
         else:
-            for i in self.workers[:n_jobs]:
-                cmd = "qdel %s"%(i)
-                proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
-                proc.wait()
+            workers_to_kill = self.workers
+            
+        for i in workers_to_kill:
+            cmd = "qdel %s"%(i)
+            proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
+            proc.wait()
 #            self.master_db.execute("DELETE FROM running WHERE job_id = ?" , i)
 
     def update_worker_info(self):  # These are the spg-worker instances in the queueing system
