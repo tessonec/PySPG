@@ -104,6 +104,7 @@ class DataExchanger(MasterDB):
                 pd.load(src = 'run')
             except:
                 utils.newline_msg("WRN", "could not pickle '%s'...skipping"%i_d, 2)
+                os.system("rm -f %s/run/%s"%(VAR_PATH,i_d))
                 continue
             a_db =self.result_dbs[pd.full_db_name]
             pd.dump_result_in_ensemble( a_db  )
