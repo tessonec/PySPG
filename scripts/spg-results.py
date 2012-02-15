@@ -53,6 +53,10 @@ class ResultCommandParser(BaseDBCommandParser):
   
     def do_save_table(self,c):
        """saves the table of values"""
+       
+       
+       flags,c = self.parse_command_line(c)
+       
        for i in self.current_param_db:
          if self.split_columns:
            for column in self.output_column:
@@ -62,6 +66,7 @@ class ResultCommandParser(BaseDBCommandParser):
               output_fname = "%s%s-%s-%s.dat"%(gen_d, self.prefix, column, gen_s)
               output_fname = output_fname.replace("_-","_")
               output_fname = output_fname.replace("-.",".")
+              output_fname = output_fname.replace("_.",".")
               d,f = os.path.split(output_fname)
               if d != "" and not os.path.exists(d): os.makedirs(d)
               data = self.current_param_db.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
