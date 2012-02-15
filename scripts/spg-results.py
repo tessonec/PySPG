@@ -83,29 +83,28 @@ class ResultCommandParser(BaseDBCommandParser):
               if d != "" and not os.path.exists(d): os.makedirs(d)
               output_file = open(output_fname , open_type)
               if "header" in flags:
-                  
                   output_file.write(  self.current_param_db.table_header( [column] ) )
                   output_file.flush()
-              
+
               data = self.current_param_db.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
-              
+
               np.savetxt( output_file, data)
          else:
            data = self.current_param_db.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
 
            gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
-           if gen_d :  gen_d+= "/"
+           if gen_d:  gen_d+= "/"
 
            gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
            output_fname = utils.fix_filename( "%s%s-%s.dat"%(gen_d, self.prefix, gen_s) )
-              
+
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
            output_file = open(output_fname , open_type)
            if "header" in flags:
                  output_file.write(  self.current_param_db.table_header( self.output_column ) )
                  output_file.flush()
-           np.savetxt( output_fname, data)
+           np.savetxt( output_file, data )
 
     def do_setup_vars_in_table(self,c):
         """sets up the variables that output into the table as independent columns"""

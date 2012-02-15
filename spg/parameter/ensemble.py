@@ -517,7 +517,7 @@ class ResultsDBQuery(ParameterEnsemble):
             output_column = self.output_column[:]
         if "values_set_id" in output_column: 
             output_column.remove("values_set_id")
-
+        print var_cols+"\t"+"\t".join(output_column)+"\n"
         return var_cols+"\t"+"\t".join(output_column)+"\n"
           
 
