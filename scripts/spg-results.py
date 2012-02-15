@@ -51,13 +51,6 @@ class ResultCommandParser(BaseDBCommandParser):
         os.chdir( self.current_param_db.path )
 
 
-    def fix_output_fname(self, output_fname):
-           output_fname = output_fname.replace("-.",".")
-           output_fname = output_fname.replace("_-","_")
-           output_fname = output_fname.replace("_.",".")
-
-           return output_fname
-  
     def do_save_table(self,c):
        """save_table [-flag1 -flag2] 
           saves the table values in ascii format
