@@ -49,10 +49,21 @@ class ResultCommandParser(BaseDBCommandParser):
         self.output_column = self.current_param_db.output_column[:]
         
         os.chdir( self.current_param_db.path )
-        
+
+
+    def fix_output_fname(self, output_fname):
+           output_fname = output_fname.replace("-.",".")
+           output_fname = output_fname.replace("_-","_")
+           output_fname = output_fname.replace("_.",".")
+
+           return output_fname
   
     def do_save_table(self,c):
-       """saves the table of values"""
+       """save_table [-flag1 -flag2] 
+          saves the table values in ascii format
+          FLAGS::: -head:        the first row is the column name
+                   -append:      appends the output, instead of rewriting the file        
+       """
        
        
        flags,c = self.parse_command_line(c)
@@ -63,10 +74,7 @@ class ResultCommandParser(BaseDBCommandParser):
               gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
               if gen_d :  gen_d+= "/"
               gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
-              output_fname = "%s%s-%s-%s.dat"%(gen_d, self.prefix, column, gen_s)
-              output_fname = output_fname.replace("_-","_")
-              output_fname = output_fname.replace("-.",".")
-              output_fname = output_fname.replace("_.",".")
+              output_fname = self.fix_output_fname(  "%s%s-%s-%s.dat"%(gen_d, self.prefix, column, gen_s) )
               d,f = os.path.split(output_fname)
               if d != "" and not os.path.exists(d): os.makedirs(d)
               data = self.current_param_db.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
@@ -78,9 +86,7 @@ class ResultCommandParser(BaseDBCommandParser):
            if gen_d :  gen_d+= "/"
                
            gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
-           output_fname = "%s%s-%s.dat"%(gen_d, self.prefix, gen_s)
-           output_fname = output_fname.replace("-.",".")
-           output_fname = output_fname.replace("_-","_")
+           output_fname = self.fix_output_fname( "%s%s-%s.dat"%(gen_d, self.prefix, gen_s) )
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
            np.savetxt( output_fname, data)
