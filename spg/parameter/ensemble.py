@@ -510,6 +510,18 @@ class ResultsDBQuery(ParameterEnsemble):
         return self.table_from_query(query)        
 
 
+    def table_header(self, output_column = []):
+   
+        var_cols = "\t".join( self.in_table_vars )
+        if not output_column:
+            output_column = self.output_column[:]
+        if "values_set_id" in output_column: 
+            output_column.remove("values_set_id")
+
+        return var_cols+"\t"+"\t".join(output_column)+"\n"
+          
+
+
     def __iter__(self):
 #        self.__connect_db()
         vars_to_separate = self.separated_vars[:]

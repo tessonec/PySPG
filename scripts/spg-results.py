@@ -61,12 +61,16 @@ class ResultCommandParser(BaseDBCommandParser):
     def do_save_table(self,c):
        """save_table [-flag1 -flag2] 
           saves the table values in ascii format
-          FLAGS::: -head:        the first row is the column name
+          FLAGS::: -header:        the first row is the column name
                    -append:      appends the output, instead of rewriting the file        
        """
        
        
        flags,c = self.parse_command_line(c)
+       if "append" in flags:
+          open_type = "aw"
+       else:
+          open_type = "w" 
        
        for i in self.current_param_db:
          if self.split_columns:
@@ -74,21 +78,31 @@ class ResultCommandParser(BaseDBCommandParser):
               gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
               if gen_d :  gen_d+= "/"
               gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
-              output_fname = self.fix_output_fname(  "%s%s-%s-%s.dat"%(gen_d, self.prefix, column, gen_s) )
+              output_fname = utils.fix_filename(  "%s%s-%s-%s.dat"%(gen_d, self.prefix, column, gen_s) )
               d,f = os.path.split(output_fname)
               if d != "" and not os.path.exists(d): os.makedirs(d)
+              output_file = open(output_fname , open_type)
+              if "header" in flags:
+                 output_file.write(  self.current_param_db.table_header( [column] ) )
+              
+              
               data = self.current_param_db.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
-              np.savetxt( output_fname, data)
+              
+              np.savetxt( output_file, data)
          else:
            data = self.current_param_db.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
-          
+
            gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
            if gen_d :  gen_d+= "/"
-               
+
            gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
-           output_fname = self.fix_output_fname( "%s%s-%s.dat"%(gen_d, self.prefix, gen_s) )
+           output_fname = utils.fix_filename( "%s%s-%s.dat"%(gen_d, self.prefix, gen_s) )
+              
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
+           output_file = open(output_fname , open_type)
+           if "header" in flags:
+                 output_file.write(  self.current_param_db.table_header( self.output_column ) )
            np.savetxt( output_fname, data)
 
     def do_setup_vars_in_table(self,c):

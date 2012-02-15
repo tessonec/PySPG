@@ -13,6 +13,9 @@ def generate_string(values, var_list, separator = "-", joining_string = "_"):
                          for k in var_list if k
                      ] )
 
+    return fix_filename( thisstr ) 
+
+def fix_filename(thisstr):
     replacements = [("'",""),('"',""),("-.","."),("_-","_"),("_.",".")]
 
     for v1,v2 in replacements:
