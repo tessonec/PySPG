@@ -29,14 +29,17 @@ if __name__ == "__main__":
                             default = 5 , help = "waiting time in case of a lack of new parameters" )
      parser.add_option("--queue", type="string", action='store', dest="queue",
                             default = "default" , help = "name of the queue this worker lives in" )
+     parser.add_option("--type", type="string", action='store', dest="type",
+                            default = None , help = "the type of the queue - use 'base' for stand-alone based" )
 
      options, args = parser.parse_args()
-     queue_type = get_queueing_system()
-
-     
+     if not options.type:
+       queue_type = get_queueing_system()
+     else:
+       queue_type = options.queue
 
      if queue_type == "base":
-         queue_name = opt_queue
+         queue_name = options.queue
      elif queue_type == "torque":
          queue_name =  torque.get_queue_name()
      print "queue_type =",queue_type, " ///// queue_name",queue_name
