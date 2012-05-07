@@ -36,7 +36,7 @@ if __name__ == "__main__":
      if not options.type:
        queue_type = get_queueing_system()
      else:
-       queue_type = options.queue
+       queue_type = options.type
 
      if queue_type == "base":
          queue_name = options.queue
