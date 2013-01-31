@@ -1,0 +1,12 @@
+
+
+***** Different termination (not based on number of runs, but on convergence criteria)
+
+****  Several (configurable) tables saved on results.sqlite
+
+***   More efficient data harvesting
+
+***   Output can be arbitrarily large and efficient
+
+    
+
