@@ -13,9 +13,26 @@ import spg.utils.check_params as check_params
 from spg.base import MultIteratorParser, IterConstant
 #from base.iterator import *
 
+from spg import database_version
+
 import sys
 import sqlite3 as sql
 
+class SPGConflictingValue(Exception):
+    """Raised when the DB has a value different from the one that should be set
+
+    Attributes:
+        key      -- 
+        previous -- value found in the DB
+        current  -- value attempted to be set in the DB
+    """
+
+    def __init__(self, key, previous, value):
+        self.key = key
+        self.previous = previous
+        self.value = value
+
+        utils.newline_msg("ERR","conflict in %s name (in db '%s', in param '%s')"%(key, previous, value ))
 
 
 class EnsembleBuilder(MultIteratorParser):
@@ -30,23 +47,42 @@ class EnsembleBuilder(MultIteratorParser):
                 
         self.connection =  sql.connect(db_name, timeout = timeout)
         self.cursor = self.connection.cursor()
+        
+    def check_and_insert_information(self, key, expected_value):
+        # :::~ Check whether the data found in the database and expected, coincides
+        # :::~ Returns a duple, whether they matched and the found value
+        
+        self.cursor.execute( "SELECT value FROM information WHERE key = '?'", (key) )
+        prev_val = self.cursor.fetchone()
+                
+        if prev_val :
+            if prev_val[0] != expected_value:
+                
+                raise SPGConflictingValue(key, prev_val, expected_value)
+        else:
+            self.cursor.execute("INSERT INTO information (key,value) VALUES (?,?)",(key,expected_value))
+#            self.connection.commit()
+        
+        
 
     def init_db(self):
-        #:::~ Table with the name of the executable
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS executable "
-                            "(id INTEGER PRIMARY KEY, name CHAR(64))"
+        
+        #:::~ Table with the information related to the database
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS information "
+                            "(id INTEGER PRIMARY KEY, key CHAR(64), value CHAR(128))"
                             )
-        self.cursor.execute( "SELECT name FROM executable " )
-        prev_val = self.cursor.fetchone()
         
-        
-        if prev_val :
-            if prev_val[0] != self.command:
-                utils.newline_msg("ERR","conflict in executable name (in db '%s', in param '%s')"%(prev_val, self.command))
-        else:
-            self.cursor.execute("INSERT INTO executable (name) VALUES (?)",(self.command,))
-            self.connection.commit()
+        try:        
+            self.check_and_insert_information('version', database_version)
+        except:
+            sys.exit(1)
 
+        try:
+            self.check_and_insert_information('command', self.command )
+        except:
+            sys.exit(1)
+        
+        
         #:::~ Table with the defined entities
         self.cursor.execute("CREATE TABLE IF NOT EXISTS entities "
                             "(id INTEGER PRIMARY KEY, name CHAR(64), varies INTEGER)"
