@@ -48,14 +48,14 @@ class EnsembleBuilder(MultIteratorParser):
         self.connection =  sql.connect(db_name, timeout = timeout)
         self.cursor = self.connection.cursor()
         
-    def check_and_insert_information(self, key, expected_value):
+    def check_and_insert_information(self, key, expected_value, do_not_compare = False):
         # :::~ Check whether the data found in the database and expected, coincides
-        # :::~ Returns a duple, whether they matched and the found value
+        # :::~ if expected_value is None, 
         
         self.cursor.execute( "SELECT value FROM information WHERE key = '?'", (key) )
         prev_val = self.cursor.fetchone()
                 
-        if prev_val :
+        if prev_val and expected_value is not None:
             if prev_val[0] != expected_value:
                 
                 raise SPGConflictingValue(key, prev_val, expected_value)
@@ -104,7 +104,7 @@ class EnsembleBuilder(MultIteratorParser):
             
         self.connection.commit()
 
-        elements = "CREATE TABLE IF NOT EXISTS values_set (id INTEGER PRIMARY KEY,  %s )"%( ", ".join([ "%s CHAR(64)"%i for i in self.names ] ) )
+        elements = "CREATE TABLE IF NOT EXISTS values_set (id INTEGER PRIMARY KEY,  %s )"%( ", ".join([ "%s CHAR(64) UNIQUE"%i for i in self.names ] ) )
         self.cursor.execute(elements)
         
         elements = "INSERT INTO values_set ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i in self.names ] ), ", ".join( "?" for i in self.names ) )
