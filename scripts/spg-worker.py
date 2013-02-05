@@ -11,7 +11,7 @@ from spg import VAR_PATH
 
 
 import optparse
-import os, time
+import os, time, sys
     
 EXE_TIMEOUT = 60*10 # in seconds
 
@@ -61,4 +61,6 @@ if __name__ == "__main__":
 #       utils.newline_msg("INF","<<<<< %s - %s - %s "%(pex.in_name , pex.current_run_id, pex.current_valuesset_id))
         pex.launch_process("%s.dat"%next_file)
         pex.dump()
-
+        
+        if options.sleep == 0:
+            sys.exit(0)

@@ -8,10 +8,11 @@ class Queue:
     queue_type = "base" 
     
     
-    def __init__(self, name, max_workers):
+    def __init__(self, name, max_workers, workers_sleep = 5):
         self.name = name
         self.max_workers = max_workers
         self.workers= []
+        self.workers_sleep = workers_sleep 
 
 
     def normalise_workers(self):
@@ -29,7 +30,7 @@ class Queue:
     def spawn_workers( self, new_jobs ):
         """How many processes to populate"""
         for i in range(new_jobs):
-            cmd = ["%s/spg-worker.py"%BINARY_PATH, "--queue=%s"%self.name]
+            cmd = ["%s/spg-worker.py"%BINARY_PATH, "--queue=%s"%self.name, "--sleep=%s"%self.workers_sleep]
 #            proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
             proc = Popen(cmd, stdin = PIPE, stdout = PIPE, stderr = PIPE )
             self.workers.append(proc)

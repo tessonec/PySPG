@@ -40,6 +40,8 @@ if __name__ == "__main__":
                             help = "do not sync dbs" )
     parser.add_option("--kill-workers", action='store', default = False, dest="kill_workers_after", type = "int",
                             help = "kills workers if no results after ARG harvests (sounds dictatorial, but does exactly this)" )
+    parser.add_option("--workers-sleep", action='store', default = 5, dest="workers_sleep", type = "int",
+                            help = "Workers sleeping time. If set to 0, the workers die after one run" )
 
     options, args = parser.parse_args()
     
@@ -71,16 +73,16 @@ if __name__ == "__main__":
                 newline_msg("INF", "initialising queue: '%s' [max_jobs: %s]"%(name, max_jobs), stream = file_log)
                 
                 if options.queue == "torque":
-                    all_queues[name] = TorqueQueue(name, max_jobs)
+                    all_queues[name] = TorqueQueue(name, max_jobs, workers_sleep = options.workers_sleep)
                 else:
-                    all_queues[name] = Queue(name, max_jobs)
+                    all_queues[name] = Queue(name, max_jobs, workers_sleep = options.workers_sleep)
             else:
                 all_queues[name].jobs = max_jobs
 
             all_queues[name].update_worker_info()
             worker_diff  = all_queues[name].normalise_workers()
             if worker_diff > 0 :
-                print >> file_log,  "queue: %s seeded-killed = %d]"%(name, worker_diff)
+                newline_msg("INF",  "queue: %s seeded-killed = %d]"%(name, worker_diff), stream = file_log)
                 
             inline_msg("INF", "populate data for '%s'."%name,indent = 2)
             if not options.skip_init:
