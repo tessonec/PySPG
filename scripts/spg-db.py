@@ -44,13 +44,16 @@ class DBCommandParser(BaseDBCommandParser):
             return
 
         if "purge" in flags:
-            os.remove(db_name)
+            try:
+                os.remove(db_name)
+            except:
+                utils.newline_msg("WRN", "db '%s' could not be removed... skipping"%db_name)  
             self.do_remove(i_arg) 
 
         self.current_param_db = ParameterEnsemble( db_name, init_db = False )
          
         if len(c) >1: self.do_set( ":".join( c[1:] ) )
-
+        
         parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name  )
         parser.init_db(  )
         parser.fill_status(repeat = self.current_param_db.repeat ) 

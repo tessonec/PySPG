@@ -89,7 +89,7 @@ class ParameterEnsemble:
         self.output_column = [ i[1] for i in fa ]
         self.output_column = self.output_column[2:]
         self.directory_vars = self.variables[:-1]
-#        self.__close_db()
+        self.__close_db()
 
 
 
@@ -408,7 +408,7 @@ class ResultsDBQuery(ParameterEnsemble):
                 for i in orphaned: self.coalesced_vars.append(i)
             print "    structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
         else:
-            print in_table_vars, conf
+        #    print in_table_vars, conf
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(in_table_vars)-set(self.variables) )
         
                 

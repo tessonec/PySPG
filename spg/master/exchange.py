@@ -39,9 +39,9 @@ class DataExchanger(MasterDB):
     def update_ensemble_list(self):
             self.normalising = 0.
             self.active_dbs = []
-            print "DataExchanger::update_ensemble_list", self.result_dbs.keys()
+     #      print "DataExchanger::update_ensemble_list", self.result_dbs.keys()
             for i in self.result_dbs.keys():
-                print "DE [---]",i, self.result_dbs[i] 
+     #           print "DE [---]",i, self.result_dbs[i] 
                 if self.result_dbs[i] == None:
                     del self.result_dbs[i]
                     utils.newline_msg("MSG", "removing db '%s' from the running list"%i)

@@ -48,39 +48,41 @@ class EnsembleBuilder(MultIteratorParser):
         self.connection =  sql.connect(db_name, timeout = timeout)
         self.cursor = self.connection.cursor()
         
-    def check_and_insert_information(self, key, expected_value, do_not_compare = False):
+    def check_and_insert_information(self, key, expected_value = None, do_not_compare = False):
         # :::~ Check whether the data found in the database and expected, coincides
         # :::~ if expected_value is None, 
         
-        self.cursor.execute( "SELECT value FROM information WHERE key = '?'", (key) )
+        self.cursor.execute( "SELECT value FROM information WHERE key = ?", (key,) )
         prev_val = self.cursor.fetchone()
-                
+     #   print "EnsembleBuilder::check_and_insert_information", key, expected_value, prev_val
         if prev_val and expected_value is not None:
             if prev_val[0] != expected_value:
                 
                 raise SPGConflictingValue(key, prev_val, expected_value)
         else:
             self.cursor.execute("INSERT INTO information (key,value) VALUES (?,?)",(key,expected_value))
-#            self.connection.commit()
+        self.connection.commit()
         
         
 
     def init_db(self):
-        
+   #     print "EnsembleBuilder::init_db"
         #:::~ Table with the information related to the database
         self.cursor.execute("CREATE TABLE IF NOT EXISTS information "
                             "(id INTEGER PRIMARY KEY, key CHAR(64), value CHAR(128))"
                             )
         
-        try:        
-            self.check_and_insert_information('version', database_version)
-        except:
-            sys.exit(1)
+                
+        self.check_and_insert_information('version', database_version)
+        #except:
+        #    print "error1"
+        #    sys.exit(1)
 
-        try:
-            self.check_and_insert_information('command', self.command )
-        except:
-            sys.exit(1)
+#        try:
+        self.check_and_insert_information('command', self.command )
+ #       except:
+  #          print "error2"
+   #         sys.exit(1)
         
         
         #:::~ Table with the defined entities
@@ -104,12 +106,20 @@ class EnsembleBuilder(MultIteratorParser):
             
         self.connection.commit()
 
-        elements = "CREATE TABLE IF NOT EXISTS values_set (id INTEGER PRIMARY KEY,  %s )"%( ", ".join([ "%s CHAR(64) UNIQUE"%i for i in self.names ] ) )
+        elements = "CREATE TABLE IF NOT EXISTS values_set (id INTEGER PRIMARY KEY,  %s )"%( ", ".join([ "%s CHAR(64) "%i for i in self.names ] ) )
+        
         self.cursor.execute(elements)
         
         elements = "INSERT INTO values_set ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i in self.names ] ), ", ".join( "?" for i in self.names ) )
-
+        
         self.possible_varying_ids = []
+        
+        # :::~ (CT) Index creation code
+        for i in self.data:
+            if i.__class__ == IterConstant: continue
+            
+            self.cursor.execute( "CREATE INDEX idxvs_%s_id ON values_set (%s) "%(i.name,i.name) )
+        
       #  i_try = 0
         for i in self:
                 self.cursor.execute( elements, [ utils.replace_values(self[i], self)  for i in self.names] )

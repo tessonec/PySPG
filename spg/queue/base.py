@@ -56,7 +56,7 @@ class Queue:
 
     def update_worker_info(self):  # These are the spg-worker instances in the queueing system
         tbr = [ p for p in self.workers if p.poll() is not None]
-        print tbr
+      #  print "Queue::update_worker_info", tbr
         for proc in tbr:
             self.workers.remove(proc)
 

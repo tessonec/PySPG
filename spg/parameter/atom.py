@@ -52,7 +52,7 @@ class ParameterAtom:
         """ loads the next parameter atom from a parameter ensemble"""
         
         #:::~ Table with the name of the executable
-        (self.command, ) = param_ens.execute_query_fetchone( "SELECT name FROM executable " )
+        (self.command, ) = param_ens.execute_query_fetchone( "SELECT value FROM information WHERE key = 'command' " )
         #:::~ get the names of the columns
         sel = param_ens.execute_query("SELECT name FROM entities ORDER BY id")
         self.entities = [ i[0] for i in sel ]
