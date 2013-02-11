@@ -39,7 +39,9 @@ class DataExchanger(MasterDB):
     def update_ensemble_list(self):
             self.normalising = 0.
             self.active_dbs = []
+            print "DataExchanger::update_ensemble_list", self.result_dbs.keys()
             for i in self.result_dbs.keys():
+                print "DE [---]",i, self.result_dbs[i] 
                 if self.result_dbs[i] == None:
                     del self.result_dbs[i]
                     utils.newline_msg("MSG", "removing db '%s' from the running list"%i)
@@ -106,6 +108,9 @@ class DataExchanger(MasterDB):
                 utils.newline_msg("WRN", "could not pickle '%s'...skipping"%i_d, 2)
                 os.system("rm -f %s/run/%s"%(VAR_PATH,i_d))
                 continue
-            a_db =self.result_dbs[pd.full_db_name]
-            pd.dump_result_in_ensemble( a_db  )
-
+            
+            try:
+                a_db =self.result_dbs[pd.full_db_name]
+                pd.dump_result_in_ensemble( a_db  )
+            except KeyError:
+                utils.newline_msg("SKP", "database '%s' not registered anymore, skipping"%pd.full_db_name,2)

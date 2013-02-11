@@ -18,7 +18,7 @@ import numpy as n
 
 class ParameterEnsemble:
     
-    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = True):
+    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = False):
         self.full_name = full_name
         self.path, self.db_name = os.path.split(full_name)
 
@@ -73,7 +73,11 @@ class ParameterEnsemble:
         self.__connect_db()
         #:::~ Table with the name of the executable
 #        (self.command, ) = self.cursor.execute( "SELECT name FROM executable " ).fetchone()
-        (self.command, ) = self.execute_query_fetchone( "SELECT name FROM executable " )
+#        (self.command, ) = self.execute_query_fetchone( "SELECT name FROM executable " )
+        try:
+            (self.command, ) = self.execute_query_fetchone( "SELECT value FROM information WHERE key = 'command'" )
+        except:
+            self.command = None
         #:::~ get the names of the columns
         sel = self.execute_query("SELECT name FROM entities ORDER BY id")
         self.entities = [ i[0] for i in sel ]
@@ -281,7 +285,7 @@ class ParameterEnsemble:
 ################################################################################
 
 class ParameterEnsembleExecutor(ParameterEnsemble):
-    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = True):
+    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = False):
         ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  , init_db )
         self.generate_tree()
         self.directory_vars = self.variables[:]
@@ -350,7 +354,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 
 
 class ParameterEnsembleInputFilesGenerator(ParameterEnsemble):
-    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = True):
+    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = False):
         ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  , init_db )
         os.chdir(self.path)
            
@@ -380,7 +384,7 @@ class ParameterEnsembleInputFilesGenerator(ParameterEnsemble):
 ################################################################################
 
 class ResultsDBQuery(ParameterEnsemble):
-    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = True):
+    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = False):
         ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  , init_db )
         self.separated_vars = self.variables[:-2]
         self.coalesced_vars = self.variables[-2:-1]

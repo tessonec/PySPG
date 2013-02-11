@@ -93,7 +93,7 @@ if __name__ == "__main__":
             inline_msg("INF", "harvest data..................",indent = 2)
             pex.harvest_atoms()
     
-        inline_msg("INF", "syncing..................(s:%s - h:%d)"%(seeded_atoms_ac, pex.harvested_atoms), indent = 2)
+        newline_msg("INF", "syncing..................(s:%s - h:%d)"%(seeded_atoms_ac, pex.harvested_atoms), indent = 2)
         newline_msg("INF", "syncing (s:%s - h:%d)"%(seeded_atoms_ac, pex.harvested_atoms), stream = file_log)
         
         if pex.harvested_atoms == 0:
