@@ -39,9 +39,9 @@ class DataExchanger(MasterDB):
     def update_ensemble_list(self):
             self.normalising = 0.
             self.active_dbs = []
-     #      print "DataExchanger::update_ensemble_list", self.result_dbs.keys()
+       #     print "DataExchanger::update_ensemble_list", self.result_dbs.keys()
             for i in self.result_dbs.keys():
-     #           print "DE [---]",i, self.result_dbs[i] 
+       #         print "DE [---]",i, self.result_dbs[i], self.result_dbs[i].status 
                 if self.result_dbs[i] == None:
                     del self.result_dbs[i]
                     utils.newline_msg("MSG", "removing db '%s' from the running list"%i)
@@ -53,10 +53,12 @@ class DataExchanger(MasterDB):
 
 
     def pick_ensemble(self, queue_name):
-
+            
+     #       print "DataExchanger::pick_ensemble", queue_name, self.active_dbs
             ls_dbs = [ i for i in self.active_dbs 
                        if fnmatch.fnmatch(queue_name, i.queue)
                        ]
+      #      print queue_name, ls_dbs
             self.normalising = 0
             for i in ls_dbs:
                 self.normalising += i.weight

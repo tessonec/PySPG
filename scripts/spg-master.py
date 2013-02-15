@@ -69,7 +69,7 @@ if __name__ == "__main__":
         seeded_atoms_ac = []
         for (name, max_jobs) in ls_queues:
             if not all_queues.has_key(name):
-                newline_msg("INF", "initialising queue '%s'[max_jobs: %s]"%(name, max_jobs),indent = 2)
+                newline_msg("INF", "initialising queue: '%s'[max_jobs: %s]"%(name, max_jobs),indent = 2)
                 newline_msg("INF", "initialising queue: '%s' [max_jobs: %s]"%(name, max_jobs), stream = file_log)
                 
                 if options.queue == "torque":

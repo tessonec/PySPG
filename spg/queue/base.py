@@ -17,7 +17,7 @@ class Queue:
         
         self.ENVIRONMENT["SPG_QUEUE_TYPE"]=self.queue_type
         self.ENVIRONMENT["SPG_QUEUE_NAME"]=self.name
-        self.ENVIRONMENT["SPG_WORKERS_SLEEP"]=tr(workers_sleep)
+        self.ENVIRONMENT["SPG_WORKERS_SLEEP"]=str(workers_sleep)
 
 
     def normalise_workers(self):
