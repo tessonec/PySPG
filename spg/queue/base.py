@@ -1,7 +1,7 @@
 
 from subprocess import Popen, PIPE
 import sqlite3 as sql
-from spg import BINARY_PATH, VAR_PATH
+from spg import BINARY_PATH, VAR_PATH, SPG_HOME
 
 
 class Queue:
@@ -15,6 +15,7 @@ class Queue:
         self.workers= []
         self.workers_sleep = workers_sleep 
         
+        self.ENVIRONMENT["SPG_HOME"]=SPG_HOME
         self.ENVIRONMENT["SPG_QUEUE_TYPE"]=self.queue_type
         self.ENVIRONMENT["SPG_QUEUE_NAME"]=self.name
         self.ENVIRONMENT["SPG_WORKERS_SLEEP"]=str(workers_sleep)
@@ -35,9 +36,11 @@ class Queue:
     def spawn_workers( self, new_jobs ):
         """How many processes to populate"""
         for i in range(new_jobs):
-            cmd = ["%s/spg-worker.py"%BINARY_PATH, "--queue=%s"%self.name, "--sleep=%s"%self.workers_sleep]
+            cmd = ["%s/spg-worker.py"%BINARY_PATH]
+       #     print cmd
 #            proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
-            proc = Popen(cmd, stdin = PIPE, stdout = PIPE, stderr = PIPE, env = self.ENVIRONMENT )
+#            proc = Popen(cmd,  shell = True,stdin = PIPE, stdout = PIPE, stderr = PIPE, env = self.ENVIRONMENT )
+            proc = Popen(cmd,  shell = True, env = self.ENVIRONMENT )
             self.workers.append(proc)
 #            proc.wait()
 

@@ -1,19 +1,13 @@
 #!/usr/bin/python
 
 
-from spg.parameter import ParameterAtomExecutor
-from spg.queue import get_queueing_system
-import spg.queue.torque as torque
- 
-import spg.utils as utils
-from spg import VAR_PATH 
+
 
 
 
 import optparse
 import os, time, sys
     
-EXE_TIMEOUT = 60*10 # in seconds
 
 #process_id = int(os.environ['PBS_JOBID'].split(".")[0])
 #this_queue = os.environ['PBS_QUEUE']
@@ -52,6 +46,20 @@ if __name__ == "__main__":
 
      env = parse_environment( )
      try:
+         sys.path.append(env['HOME'])
+     except:
+         utils.newline_msg("WRN", "SPG_HOME environment variable was not found")
+         
+ #    print env
+     
+     from spg.parameter import ParameterAtomExecutor
+     from spg.queue import get_queueing_system
+     import spg.queue.torque as torque
+ 
+     import spg.utils as utils
+     from spg import VAR_PATH 
+     
+     try:
          queue_type = env[ "QUEUE_TYPE" ]
      except:
          utils.newline_msg("WRN", "QUEUE_TYPE could not be parsed, using 'base'")
@@ -68,8 +76,6 @@ if __name__ == "__main__":
      except:
          utils.newline_msg("WRN", "WORKERS_SLEEP could not be parsed, using '5'")
          sleep_time = 5
-
-
 
 
      while True:
