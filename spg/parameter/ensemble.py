@@ -384,7 +384,7 @@ class ParameterEnsembleInputFilesGenerator(ParameterEnsemble):
 ################################################################################
 
 class ResultsDBQuery(ParameterEnsemble):
-    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = False):
+    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = True):
         ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  , init_db )
         self.separated_vars = self.variables[:-2]
         self.coalesced_vars = self.variables[-2:-1]
