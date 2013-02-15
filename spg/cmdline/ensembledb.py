@@ -52,8 +52,9 @@ class BaseDBCommandParser(cmd.Cmd):
         """translates the parameters filename and the  database name 
            into the other and viceversa (returns a duple: param_name, db_name)"""
         full_name = os.path.realpath( st )
-#        if not os.path.exists(full_name):
-#            full_name = self.lengthen_name(full_name)
+        if not os.path.exists(full_name):
+            full_name = self.lengthen_name(full_name)
+#        print "::::::::", full_name   
         if not os.path.exists(full_name):
             utils.newline_msg("ERR","database '%s' does not exist"%st)
             return None

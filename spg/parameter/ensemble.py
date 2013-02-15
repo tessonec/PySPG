@@ -89,7 +89,7 @@ class ParameterEnsemble:
         self.output_column = [ i[1] for i in fa ]
         self.output_column = self.output_column[2:]
         self.directory_vars = self.variables[:-1]
-        self.__close_db()
+    #    self.__close_db()
 
 
 
