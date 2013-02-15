@@ -13,7 +13,7 @@ class TorqueQueue(Queue):
     def spawn_workers( self, new_jobs ):
    #     print "spawning workers: ", new_jobs
         for i in range(new_jobs):
-            cmd = "qsub -q %s %s/spg-worker.py --sleep=%s"%(self.name, BINARY_PATH, self.workers_sleep)
+            cmd = "qsub -q %s %s/spg-worker.py "%(self.name, BINARY_PATH)
 #            proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
             proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE, env = self.ENVIRONMENT )
 #            self.workers.append(proc)
