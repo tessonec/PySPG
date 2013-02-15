@@ -6,13 +6,18 @@ from spg import BINARY_PATH, VAR_PATH
 
 class Queue:
     queue_type = "base" 
-    
+    ENVIRONMENT = {}
+      
     
     def __init__(self, name, max_workers, workers_sleep = 5):
         self.name = name
         self.max_workers = max_workers
         self.workers= []
         self.workers_sleep = workers_sleep 
+        
+        self.ENVIRONMENT["SPG_QUEUE_TYPE"]=self.queue_type
+        self.ENVIRONMENT["SPG_QUEUE_NAME"]=self.name
+        self.ENVIRONMENT["SPG_WORKERS_SLEEP"]=workers_sleep
 
 
     def normalise_workers(self):
@@ -32,7 +37,7 @@ class Queue:
         for i in range(new_jobs):
             cmd = ["%s/spg-worker.py"%BINARY_PATH, "--queue=%s"%self.name, "--sleep=%s"%self.workers_sleep]
 #            proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
-            proc = Popen(cmd, stdin = PIPE, stdout = PIPE, stderr = PIPE )
+            proc = Popen(cmd, stdin = PIPE, stdout = PIPE, stderr = PIPE, env = self.ENVIRONMENT )
             self.workers.append(proc)
 #            proc.wait()
 
