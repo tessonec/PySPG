@@ -129,16 +129,20 @@ class EnsembleBuilder(MultIteratorParser):
         #if not commited:
         #    utils.newline_msg("ERR", "database didn't unlock, exiting")
           
-        self.number_of_columns = 0
-        for ic, iv in self.stdout_contents:
-            if iv["type"] == "xy":
-                self.number_of_columns += 1
-            if iv["type"] == "xydy":
-                self.number_of_columns += 2
+        for results_table in   self.stdout_contents.keys():
+            table_contents =  self.stdout_contents[ results_table ]
+            self.number_of_columns = 0
+            for ic, iv in table_contents:
+                if iv["type"] == "xy":
+                    self.number_of_columns += 1
+                if iv["type"] == "xydy":
+                    self.number_of_columns += 2
 
 
-        results = "CREATE TABLE IF NOT EXISTS results (id INTEGER PRIMARY KEY, values_set_id INTEGER,  %s , FOREIGN KEY(values_set_id) REFERENCES values_set(id))"%( ", ".join([ "%s CHAR(64)"%ic for ic, iv in self.stdout_contents ] ) )
-        self.cursor.execute(results)
+            results = "CREATE TABLE IF NOT EXISTS %s (id INTEGER PRIMARY KEY, values_set_id INTEGER,  %s , FOREIGN KEY(values_set_id) REFERENCES values_set(id))"%(results_table, ", ".join([ "%s CHAR(64)"%ic for ic, iv in self.stdout_contents ] ) )
+            
+            self.cursor.execute(results)
+            
         self.connection.commit()
         self.cursor.execute("CREATE TABLE IF NOT EXISTS run_status (id INTEGER PRIMARY KEY, values_set_id INTEGER, status CHAR(1), "
                             "FOREIGN KEY (values_set_id ) REFERENCES values_set(id) )")

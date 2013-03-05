@@ -143,13 +143,21 @@ def contents_in_output(exec_file):
     exec_file,ext=os.path.splitext(exec_file)
 
     cfgFile = "%s/spg-conf/%s.stdout"%(CONFIG_DIR,exec_file)
+    ret['results'] = []  # :::~ by default, results table is always created
+    
     for line in open(cfgFile):
         if len(line.strip()) == 0: continue
         l = [ i.strip() for i in line.split(":")]
-       
-        name = l[0]
+        
+        if l[0][0] == "@":
+            table = l.pop(0)[1:]
+        else:
+            table = "results"
+        
+        
+        name = l.pop(0)
         values = {"type":"xy"}
-        for o in l[1:]:
+        for o in l:
             k,v = o.split("=")
             k=k.strip()
             v=v.strip()
@@ -158,7 +166,7 @@ def contents_in_output(exec_file):
                 newline_msg("SYN","in column '%s', unrecognised key '%s'"%(name,k))
                 sys.exit(1)
             values[k]=v
-        ret.append((name,values))    
+        ret[table].append((name,values))    
        
     return ret 
    

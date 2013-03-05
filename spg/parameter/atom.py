@@ -100,11 +100,12 @@ class ParameterAtom:
             except:
                 param_ens.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
             flog = open(self.full_db_name.replace("sqlite", "log"), "aw") 
-            print >> flog, "{%s} %s: ret=%s -- %s,%s -- %s" % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output)
+            utils.newline_msg( "INF",  "{%s} %s: ret=%s -- %s,%s -- %s" % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output) , stream = flog )
+            
             try:
-                print >> flog, self.stderr
+                utils.newline_msg( "cerr", self.stderr, indent = 1 , stream = flog)
             except:
-                print >> flog, "NO_STDERR" 
+                utils.newline_msg( "WRN", "NO_STDERR", stream = flog) 
             flog.close()
                   
         else:
@@ -116,11 +117,11 @@ class ParameterAtom:
             param_ens.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
              
             flog = open(self.full_db_name.replace("sqlite", "log"), "aw") 
-            print >> flog, "{%s} %s: ret=%s -- %s,%s -- %s" % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output)
+            utils.newline_msg( "INF",  "{%s} %s: ret=%s -- %s,%s -- %s" % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output) , stream = flog )
             try:
-                print >> flog, self.stderr
+                utils.newline_msg( "cerr", self.stderr, indent = 1 , stream = flog)
             except:
-                print >> flog, "NO_STDERR" 
+                utils.newline_msg( "WRN", "NO_STDERR", stream = flog) 
             flog.close()
             #self.connection.commit()
 
