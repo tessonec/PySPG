@@ -22,7 +22,7 @@ class MasterDB:
    #     print "MasterDB::__init__",self.result_dbs 
 
     def __init_db(self):
-    
+
         #:::~ status can be either 
         #:::~    'S': stopped
         #:::~    'R': running
@@ -31,19 +31,19 @@ class MasterDB:
                        "(id INTEGER PRIMARY KEY, full_name CHAR(256), path CHAR(256), db_name CHAR(256), status CHAR(1), total_values_set INTEGER, "
                        " total_combinations INTEGER, done_combinations INTEGER, running_combinations INTEGER, error_combinations INTEGER, "
                        " weight FLOAT, queue CHAR(64))")
-    
-        #:::~ status can be either 
+
+        #:::~ status can be either
         #:::~    'S': stopped
         #:::~    'R': running
         self.cursor.execute("CREATE TABLE IF NOT EXISTS queues "
                        "(id INTEGER PRIMARY KEY, name CHAR(64), max_jobs INTEGER, status CHAR(1))")
-    
+
         self.cursor.execute("CREATE TABLE IF NOT EXISTS running "
                        "(id INTEGER PRIMARY KEY, job_id CHAR(64), dbs_id INTEGER, params_id INTEGER)")
     
         self.cursor.execute("CREATE TABLE IF NOT EXISTS infiles "
                           "(id INTEGER PRIMARY KEY, last INTEGER)")
-        
+
         self.connection.commit()
 
     def execute_query(self, query, *args):

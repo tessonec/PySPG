@@ -2,7 +2,7 @@ from spg import utils
 from spg import BINARY_PATH, TIMEOUT
 
 #import os.path, os, sys
-import os
+import os, sys
 from subprocess import Popen, PIPE
 import sqlite3 as sql
 
@@ -68,6 +68,21 @@ class ParameterEnsemble:
         self.__close_db()
         return ret 
 
+    def parse_output_line(self,  output_line):
+        """ parses a line from output. Returns a tuple containing: table of output, column names of output,  output values to be inserted in table"""
+        output_columns = output_line.strip().split()
+        table_name = "results"
+        if output_columns[0][0] == "@":
+            table_name = output_columns[0][1:] 
+            output_columns.pop(0)
+        try:
+            output_column_names = [ i[1] for i in self.execute_query("PRAGMA table_info(%s)"%table_name) ]
+        except:
+            utils.newline_msg("ERR", "DB does not contain table named '%s'"%table_name)
+            sys.exit(1)
+        output_column_names = output_column_names[1:]
+
+        return table_name, output_column_names, output_columns 
 
     def init_db(self):
         self.__connect_db()
@@ -316,7 +331,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 #        proc.wait()
  #       ret_code = proc.returncode
         try:
-            output = [i.strip() for i in open(output_filename).readline().split()]
+            output = [ l for l in open(output_filename) ]
             os.remove(configuration_filename)
             os.remove(output_filename)
         except:
@@ -326,19 +341,17 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
             os.chdir(pwd)
 #        if ret_code == 0:
             
-        all_d = [self.current_valuesset_id]
-        all_d.extend( output )
-#            print self.output_column, all_d
-        cc = 'INSERT INTO results (values_set_id, %s) VALUES (%s) '%( ", ".join(self.output_column) , ", ".join([str(i) for i in all_d]) )
-        flog = open(self.full_name.replace("sqlite", "log"), "aw") 
-        print >> flog, "%.8d: %s --> %s"%(self.current_valuesset_id, self.values, output)
-
-        try:
-            self.execute_query( cc )
-            self.execute_query( 'UPDATE run_status SET status ="D" WHERE id = %d'%self.current_run_id )           
-        except:
-            self.execute_query( 'UPDATE run_status SET status ="E" WHERE id = %d'%self.current_run_id )
-
+        for line in output:
+            
+                table_name, output_column_names, output_columns = self.parse_output_line( line )
+            
+                cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(output_column_names) , ", ".join(["'%s'" % str(i) for i in output_columns ]))
+                
+                try:
+                    self.execute_query(cc)
+                    self.execute_query('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
+                except:
+                    self.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
             
 
 #        else:

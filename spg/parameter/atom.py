@@ -3,7 +3,7 @@ from spg import BINARY_PATH, VAR_PATH, TIMEOUT
 
 
 
-import os.path
+import os.path, sys
 import pickle 
 from subprocess import Popen, PIPE
 import sqlite3 as sql
@@ -83,22 +83,18 @@ class ParameterAtom:
     def dump_result_in_ensemble(self, param_ens):
         """ loads the next parameter atom from a parameter ensemble"""
 
-        #:::~ get the names of the outputs
-        fa = param_ens.execute_query("PRAGMA table_info(results)")
-        self.output_column = [ i[1] for i in fa ]
-        self.output_column = self.output_column[1:]
-#        utils.newline_msg("PRT","{%s} %s -- %s,%s -- %s"%( self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output) )
-#        print self.return_code 
         if self.return_code == 0:
-            all_d = [self.current_valuesset_id]
-            all_d.extend(self.output)
-            cc = 'INSERT INTO results (%s) VALUES (%s) ' % (", ".join(self.output_column) , ", ".join(["'%s'" % str(i) for i in all_d]))
-#             print cc, self.current_run_id 
-            try:
-                param_ens.execute_query(cc)
-                param_ens.execute_query('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
-            except:
-                param_ens.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
+            for line in self.output:
+            
+                table_name, output_column_names, output_columns = param_ens.parse_output_line( line )
+            
+                cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(output_column_names) , ", ".join(["'%s'" % str(i) for i in output_columns ]))
+                
+                try:
+                    param_ens.execute_query(cc)
+                    param_ens.execute_query('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
+                except:
+                    param_ens.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
             flog = open(self.full_db_name.replace("sqlite", "log"), "aw") 
             utils.newline_msg( "INF",  "{%s} %s: ret=%s -- %s,%s -- %s" % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output) , stream = flog )
             
@@ -172,8 +168,8 @@ class ParameterAtomExecutor(ParameterAtom):
 #        print self.current_run_id, self.current_variables_id, self.entities, configuration_filename
         self.return_code = proc.wait()
     #    print self.return_code 
-        self.output = [i.strip() for i in proc.stdout.readline().split()]
-        self.stderr = "\n".join([i.strip() for i in proc.stderr.readline().split()])
+        self.output = "\n".join( [i.strip() for i in proc.stdout.readline().split()] )
+        self.stderr = "\n".join( [i.strip() for i in proc.stderr.readline().split()] )
 #        self.return_code = 0
 #        self.output = ""
         os.remove(configuration_filename)

@@ -168,6 +168,8 @@ def parse_to_dict(string, allowed_keys = None):
     return ret
 
 
+
+
 #v = eevaluate_stringexp({x}+{y_3})",d)
 #print get_variables("exp({x}+{y_3})",d)
 ##st='/home/tessonec/running/alpha_max_20312_3424-0.5_size-100/beta-324.3242_gamma--90.2E-4.234_fjs-1E-4.dat'
