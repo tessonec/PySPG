@@ -154,7 +154,9 @@ def contents_in_output(exec_file):
         else:
             table = "results"
         
-        
+        if table not in ret.keys():
+            ret[table] = []
+            
         name = l.pop(0)
         values = {"type":"xy"}
         for o in l:
