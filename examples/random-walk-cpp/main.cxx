@@ -35,6 +35,19 @@ int main(int argc, char *argv[])
   
   std::cout << X << "\t";
   std::cout << S << std::endl;
+
+  for(long i=0;i<  simulation_timesteps;i++){
+    double pos_change = sqrt( D ) * rt_rand_gaussian() +  drift ; 
+    X+=pos_change;
+    S += pos_change*pos_change; 
+  }
+  std::cout << X << "\t";
+  std::cout << S << std::endl;
+
+  std::cout << "@random  "<< X << "\t" << X*X << "\t";
+  std::cout <<  S << std::endl;
+
+
   return EXIT_SUCCESS;
 
 }

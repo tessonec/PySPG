@@ -52,5 +52,11 @@ if __name__ == "__main__":
     
     for i_iter in range(parameters.simulation_timesteps):
       system.iterate()
+    print system.X, system.S
+    for i_iter in range(parameters.simulation_timesteps):
+      system.iterate()
+    print system.X, system.S
 
     print system.X, system.S
+    print system.X, system.S
+    print "@random",  rnd.normalvariate(0, system.D), rnd.normalvariate(0, system.D), rnd.normalvariate(0, system.D)

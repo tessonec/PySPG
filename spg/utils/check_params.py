@@ -137,9 +137,9 @@ def contents_in_output(exec_file):
      repeat: how many columns are to be taken by the parser
      help: a string containing an explanation of the variable"""
      
-    possible_keys = set(["type","label","texlabel","help","scale","repeat"])
+    possible_keys = set(["type","label","texlabel","help","scale","repeat","datatype"])
     if exec_file[:2] == "ct" and exec_file[3] == "-" :  exec_file = exec_file[4:]
-    ret = []
+    ret = {}
     exec_file,ext=os.path.splitext(exec_file)
 
     cfgFile = "%s/spg-conf/%s.stdout"%(CONFIG_DIR,exec_file)
@@ -158,7 +158,7 @@ def contents_in_output(exec_file):
             ret[table] = []
             
         name = l.pop(0)
-        values = {"type":"xy"}
+        values = {"type":"xy","datatype":"float"}
         for o in l:
             k,v = o.split("=")
             k=k.strip()
@@ -168,6 +168,7 @@ def contents_in_output(exec_file):
                 newline_msg("SYN","in column '%s', unrecognised key '%s'"%(name,k))
                 sys.exit(1)
             values[k]=v
+
         ret[table].append((name,values))    
        
     return ret 

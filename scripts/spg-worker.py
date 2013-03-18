@@ -7,7 +7,8 @@
 
 import optparse
 import os, time, sys
-    
+
+
 
 #process_id = int(os.environ['PBS_JOBID'].split(".")[0])
 #this_queue = os.environ['PBS_QUEUE']
@@ -18,8 +19,10 @@ import os, time, sys
 def parse_environment():
   ret = {}
   for k in [ k for k in os.environ if k[0:4] == "SPG_"]:
-    ret[k[4:]] = os.environ[k]
-
+      ret[k[4:]] = os.environ[k]
+  if not ret.has_key("HOME"):
+      from spg import SPG_HOME
+      ret["HOME"] = SPG_HOME 
   return ret
 
 

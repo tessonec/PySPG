@@ -52,6 +52,7 @@ class ParameterAtom:
         """ loads the next parameter atom from a parameter ensemble"""
         
         #:::~ Table with the name of the executable
+
         (self.command, ) = param_ens.execute_query_fetchone( "SELECT value FROM information WHERE key = 'command' " )
         #:::~ get the names of the columns
         sel = param_ens.execute_query("SELECT name FROM entities ORDER BY id")
@@ -84,12 +85,14 @@ class ParameterAtom:
         """ loads the next parameter atom from a parameter ensemble"""
 
         if self.return_code == 0:
+     #       print self.output
             for line in self.output:
             
                 table_name, output_column_names, output_columns = param_ens.parse_output_line( line )
-            
-                cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(output_column_names) , ", ".join(["'%s'" % str(i) for i in output_columns ]))
                 
+                output_columns.insert(0, self.current_run_id)
+                cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(output_column_names) , ", ".join(["'%s'" % str(i) for i in output_columns ]))
+                #print cc
                 try:
                     param_ens.execute_query(cc)
                     param_ens.execute_query('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
@@ -156,6 +159,7 @@ class ParameterAtomExecutor(ParameterAtom):
         fconf.close()
 
         cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
+      #  print >> sys.stderr, "CMD::: ", cmd
         proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
 #     poll = proc.poll()
 #      while poll is None:
@@ -168,8 +172,14 @@ class ParameterAtomExecutor(ParameterAtom):
 #        print self.current_run_id, self.current_variables_id, self.entities, configuration_filename
         self.return_code = proc.wait()
     #    print self.return_code 
-        self.output = "\n".join( [i.strip() for i in proc.stdout.readline().split()] )
-        self.stderr = "\n".join( [i.strip() for i in proc.stderr.readline().split()] )
+        self.output =  [i.strip() for i in proc.stdout] 
+     #   print >> sys.stderr, "STDOUT",  self.output
+        self.stderr =  [i.strip() for i in proc.stderr] 
+    #    print >> sys.stderr, "STDERR",  self.stderr
 #        self.return_code = 0
 #        self.output = ""
-        os.remove(configuration_filename)
+
+
+
+
+       # os.remove(configuration_filename)

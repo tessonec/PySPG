@@ -138,9 +138,7 @@ class EnsembleBuilder(MultIteratorParser):
                 if iv["type"] == "xydy":
                     self.number_of_columns += 2
 
-
-            results = "CREATE TABLE IF NOT EXISTS %s (id INTEGER PRIMARY KEY, values_set_id INTEGER,  %s , FOREIGN KEY(values_set_id) REFERENCES values_set(id))"%(results_table, ", ".join([ "%s CHAR(64)"%ic for ic, iv in self.stdout_contents ] ) )
-            
+            results = "CREATE TABLE IF NOT EXISTS %s (id INTEGER PRIMARY KEY, values_set_id INTEGER,  %s , FOREIGN KEY(values_set_id) REFERENCES values_set(id))"%(results_table, ", ".join([ "%s %s"%(ic,iv["datatype"]) for ic, iv in table_contents ]) )
             self.cursor.execute(results)
             
         self.connection.commit()

@@ -1,2 +1,5 @@
-final_position:help = sinal position:texlabel = $X$
+final_position:help = final position:texlabel = $X$
 squared_displacement:help = squared displacement:texlabel = $S$
+@random:random1
+@random:random2
+@random:random3

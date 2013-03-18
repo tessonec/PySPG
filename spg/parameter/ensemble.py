@@ -72,6 +72,7 @@ class ParameterEnsemble:
         """ parses a line from output. Returns a tuple containing: table of output, column names of output,  output values to be inserted in table"""
         output_columns = output_line.strip().split()
         table_name = "results"
+    #    print ">>%s<<"%output_columns
         if output_columns[0][0] == "@":
             table_name = output_columns[0][1:] 
             output_columns.pop(0)
@@ -81,7 +82,8 @@ class ParameterEnsemble:
             utils.newline_msg("ERR", "DB does not contain table named '%s'"%table_name)
             sys.exit(1)
         output_column_names = output_column_names[1:]
-
+     #  print table_name, output_column_names, output_columns
+        
         return table_name, output_column_names, output_columns 
 
     def init_db(self):
