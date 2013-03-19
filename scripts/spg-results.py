@@ -30,16 +30,16 @@ class ResultCommandParser(BaseDBCommandParser):
         BaseDBCommandParser.__init__(self, EnsembleConstructor = ResultsDBQuery)
         self.prompt = "| spg-results :::~ "
         
-        self.possible_keys = set( [ "raw_data", "split_colums", "restrict_by_val", "prefix", "split_columns"] )
+        self.possible_keys = set( [ "raw_data", "split_colums", "restrict_by_val", "table", "split_columns"] )
         self.output_column = []
         self.raw_data = False
         self.split_columns = False
         self.restrict_by_val = False # was True
-        self.prefix = "output_"
+        self.table  = "results" # default value
 
         self.autoscale = None
 
-        self.figures = {}
+#        self.figures = {}
 #        self.values = {'repeat': 1, 'sql_retries': 1, 'timeout' : 60, 'weight': 1}
 #        self.doc_header = "default values: %s"%(self.values )
 
@@ -71,7 +71,7 @@ class ResultCommandParser(BaseDBCommandParser):
               gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
               if gen_d :  gen_d+= "/"
               gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
-              output_fname = utils.fix_filename(  "%s%s-%s-%s.dat"%(gen_d, self.prefix, column, gen_s) )
+              output_fname = utils.fix_filename(  "%s%s-%s-%s.dat"%(gen_d, self.table, column, gen_s) )
               d,f = os.path.split(output_fname)
               if d != "" and not os.path.exists(d): os.makedirs(d)
               output_file = open(output_fname , open_type)
@@ -89,7 +89,7 @@ class ResultCommandParser(BaseDBCommandParser):
            if gen_d:  gen_d+= "/"
 
            gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
-           output_fname = utils.fix_filename( "%s%s-%s.dat"%(gen_d, self.prefix, gen_s) )
+           output_fname = utils.fix_filename( "%s%s-%s.dat"%(gen_d, self.table, gen_s) )
 
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)

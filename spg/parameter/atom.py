@@ -89,7 +89,7 @@ class ParameterAtom:
             for line in self.output:
             
                 table_name, output_column_names, output_columns = param_ens.parse_output_line( line )
-                
+        #        print output_column_names
                 output_columns.insert(0, self.current_run_id)
                 cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(output_column_names) , ", ".join(["'%s'" % str(i) for i in output_columns ]))
                 #print cc

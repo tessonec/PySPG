@@ -42,28 +42,33 @@ class ParameterEnsemble:
         if init_db:
             self.init_db()
 
-    def __connect_db(self):
+        # :::~ Before they were in __connect_db(self)
         self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
         self.cursor = self.connection.cursor()
+
+    def __connect_db(self):
+        pass
+        #self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
+        #self.cursor = self.connection.cursor()
 
 
     def __close_db(self):
         self.connection.commit()
-        self.connection.close()
-        del self.cursor
-        del self.connection
+  #      self.connection.close()
+ #       del self.cursor
+   #     del self.connection
 
 
 
     def execute_query(self, query, *args):
-        self.__connect_db()
+  #      self.__connect_db()
         ret = [i for i in self.cursor.execute(query, args)]
         self.__close_db()
         return ret 
 
 
     def execute_query_fetchone(self, query, *args):
-        self.__connect_db()
+  #      self.__connect_db()
         ret = self.cursor.execute(query, args).fetchone()
         self.__close_db()
         return ret 
@@ -77,11 +82,11 @@ class ParameterEnsemble:
             table_name = output_columns[0][1:] 
             output_columns.pop(0)
         try:
-            output_column_names = [ i[1] for i in self.execute_query("PRAGMA table_info(%s)"%table_name) ]
+            output_column_names = [ i[0] for i in self.execute_query("SELECT column FROM output_tables WHERE name = '%s'"%(table_name)) ]
         except:
             utils.newline_msg("ERR", "DB does not contain table named '%s'"%table_name)
             sys.exit(1)
-        output_column_names = output_column_names[1:]
+        
      #  print table_name, output_column_names, output_columns
         
         return table_name, output_column_names, output_columns 
@@ -102,9 +107,16 @@ class ParameterEnsemble:
         sel = self.execute_query("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
         self.variables = [ i[0] for i in sel ]
         #:::~ get the names of the outputs
-        fa = self.execute_query("PRAGMA table_info(results)")
-        self.output_column = [ i[1] for i in fa ]
-        self.output_column = self.output_column[2:]
+        
+        self.output_column = {}
+        
+        table_names = [i[0] for i in self.execute_query("SELECT DISTINCT name from output_tables")]
+        for table in table_names:
+            fa = self.execute_query("SELECT column FROM output_tables WHERE name = '%s';"%table)
+            
+            self.output_column[table] = [ i[0] for i in fa ]
+          
+#        self.output_column = self.output_column[2:]
         self.directory_vars = self.variables[:-1]
     #    self.__close_db()
 
@@ -406,7 +418,7 @@ class ResultsDBQuery(ParameterEnsemble):
         self.in_table_vars =  self.variables[-1:]
 
 
-    def setup_output_table(self, conf):
+    def setup_output_vars(self, conf):
         """which are the variables that are inside of the output file, orphaned variables are sent into the coalesced ones"""
         if conf.strip() != "" :
             in_table_vars = conf.split(",")
@@ -427,7 +439,7 @@ class ResultsDBQuery(ParameterEnsemble):
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(in_table_vars)-set(self.variables) )
         
                 
-    def setup_separated_output(self, conf):
+    def setup_separated_vars(self, conf):
         """Which variables are separated in different directories, orphaned variables are sent into the coalesced ones"""
         if conf.strip() != "" :
             separated = conf.split(",")
@@ -445,7 +457,7 @@ class ResultsDBQuery(ParameterEnsemble):
         else:
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(separated)-set(self.variables) )
 
-    def setup_coalesced_output(self, conf):
+    def setup_coalesced_vars(self, conf):
         """Which variables are coalesced into the same files, orphaned variables are sent into the separated ones"""
         if conf.strip() != "" :
             coalesced = conf.split(",")
@@ -484,7 +496,7 @@ class ResultsDBQuery(ParameterEnsemble):
 
 
 
-    def result_table(self, restrict_to_values = {}, raw_data = False, restrict_by_val = False, output_column = []):
+    def result_table(self, table = "results", restrict_to_values = {}, raw_data = False, restrict_by_val = False, output_column = []):
    
         self.clean_dict(restrict_to_values)
 
@@ -495,7 +507,7 @@ class ResultsDBQuery(ParameterEnsemble):
         elif len(self.in_table_vars) > 1:
             var_cols = "%s, "%",".join(["v.%s"%v for v in self.in_table_vars])
         if not output_column:
-            output_column = self.output_column[:]
+            output_column = self.output_column[table][:]
         if "values_set_id" in output_column: 
                 output_column.remove("values_set_id")
 
@@ -511,7 +523,7 @@ class ResultsDBQuery(ParameterEnsemble):
             elif len(output_column) > 1:
                 out_cols = " %s"%",".join(["r.%s"%v for v in output_column])
           
-        query = "SELECT %s %s FROM results AS r, values_set AS v WHERE r.values_set_id = v.id "%(var_cols, out_cols)
+        query = "SELECT %s %s FROM %s AS r, values_set AS v WHERE r.values_set_id = v.id "%(var_cols, out_cols, table)
         #:::~ This command was needed only because of a mistake in the id stores in the results table
         restrict_cols = ""
         if restrict_to_values:
@@ -529,14 +541,14 @@ class ResultsDBQuery(ParameterEnsemble):
         return self.table_from_query(query)        
 
 
-    def table_header(self, output_column = []):
+    def table_header(self, table='results',output_column = []):
    
         var_cols = "\t".join( self.in_table_vars )
         if not output_column:
-            output_column = self.output_column[:]
+            output_column = self.output_column[table][:]
         if "values_set_id" in output_column: 
             output_column.remove("values_set_id")
-        print var_cols+"\t"+"\t".join(output_column)+"\n"
+  #      print var_cols+"\t"+"\t".join(output_column)+"\n"
         return var_cols+"\t"+"\t".join(output_column)+"\n"
           
 
