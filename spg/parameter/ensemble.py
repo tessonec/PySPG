@@ -38,7 +38,7 @@ class ParameterEnsemble:
         self.queue = queue
         self.status = status
         self.repeat = repeat
-        
+       # print init_db
         if init_db:
             self.init_db()
 
@@ -47,28 +47,29 @@ class ParameterEnsemble:
         self.cursor = self.connection.cursor()
 
     def __connect_db(self):
-        pass
-        #self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
-        #self.cursor = self.connection.cursor()
+       # pass
+        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
+        self.cursor = self.connection.cursor()
+         
 
 
     def __close_db(self):
         self.connection.commit()
-  #      self.connection.close()
- #       del self.cursor
-   #     del self.connection
+        self.connection.close()
+        del self.cursor
+        del self.connection
 
 
 
     def execute_query(self, query, *args):
-  #      self.__connect_db()
+        self.__connect_db()
         ret = [i for i in self.cursor.execute(query, args)]
         self.__close_db()
         return ret 
 
 
     def execute_query_fetchone(self, query, *args):
-  #      self.__connect_db()
+        self.__connect_db()
         ret = self.cursor.execute(query, args).fetchone()
         self.__close_db()
         return ret 
@@ -92,14 +93,20 @@ class ParameterEnsemble:
         return table_name, output_column_names, output_columns 
 
     def init_db(self):
-        self.__connect_db()
+    
+  #      self.__connect_db()
+    
+        
         #:::~ Table with the name of the executable
 #        (self.command, ) = self.cursor.execute( "SELECT name FROM executable " ).fetchone()
 #        (self.command, ) = self.execute_query_fetchone( "SELECT name FROM executable " )
-        try:
-            (self.command, ) = self.execute_query_fetchone( "SELECT value FROM information WHERE key = 'command'" )
-        except:
-            self.command = None
+        #try:
+  ###      print ":::init_db"
+        (self.command, ) = self.execute_query_fetchone( "SELECT value FROM information WHERE key = 'command'" )
+        #except:
+        #    self.command = None
+        
+        
         #:::~ get the names of the columns
         sel = self.execute_query("SELECT name FROM entities ORDER BY id")
         self.entities = [ i[0] for i in sel ]
@@ -111,6 +118,7 @@ class ParameterEnsemble:
         self.output_column = {}
         
         table_names = [i[0] for i in self.execute_query("SELECT DISTINCT name from output_tables")]
+     ###   print table_names
         for table in table_names:
             fa = self.execute_query("SELECT column FROM output_tables WHERE name = '%s';"%table)
             
@@ -118,7 +126,8 @@ class ParameterEnsemble:
           
 #        self.output_column = self.output_column[2:]
         self.directory_vars = self.variables[:-1]
-    #    self.__close_db()
+  ###      print self.output_column
+   #     self.__close_db()
 
 
 

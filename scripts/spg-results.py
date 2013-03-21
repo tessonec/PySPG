@@ -46,7 +46,7 @@ class ResultCommandParser(BaseDBCommandParser):
     def do_load(self,c):
         """loads a results_database"""
         BaseDBCommandParser.do_load(self, c)
-        self.output_column = self.current_param_db.output_column[:]
+        self.output_column = self.current_param_db.output_column['results'][:]
         
         os.chdir( self.current_param_db.path )
 
@@ -79,11 +79,11 @@ class ResultCommandParser(BaseDBCommandParser):
                   output_file.write(  self.current_param_db.table_header( [column] ) )
                   output_file.flush()
 
-              data = self.current_param_db.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
+              data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
 
               np.savetxt( output_file, data)
          else:
-           data = self.current_param_db.result_table(restrict_to_values = i, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
+           data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
 
            gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
            if gen_d:  gen_d+= "/"
@@ -127,8 +127,8 @@ class ResultCommandParser(BaseDBCommandParser):
             utils.newline_msg("WRN", "current db not set... skipping")
             return
         c = c.split(",")
-        if not set(c).issubset(  self.current_param_db.output_column ):
-            utils.newline_msg("ERR", "the column(s) is (are) not in the output: %s"%( set(c) - set(  self.current_param_db.output_column )) )
+        if not set(c).issubset(  self.current_param_db.output_column[self.table] ):
+            utils.newline_msg("ERR", "the column(s) is (are) not in the output: %s"%( set(c) - set(  self.current_param_db.output_column[self.table] )) )
         self.output_column = c
 
     def do_set_as_var(self,c):
@@ -149,7 +149,7 @@ class ResultCommandParser(BaseDBCommandParser):
         sets a value in the currently loaded database """
 
         if c == "help":
-            print utils.newline_msg("HELP", " possible_keys = %s"%self.possible_keys )
+            utils.newline_msg("HELP", " possible_keys = %s"%self.possible_keys )
             return 
         
         if not self.current_param_db: 
@@ -160,6 +160,11 @@ class ResultCommandParser(BaseDBCommandParser):
         if not ret: 
             return
         for k in ret.keys():
+            if k == "table":
+                 if ret[k] not in self.current_param_db.output_column.keys():
+                     utils.newline_msg("ERR", "table '%s' not among the ones found in the DB: (%s)"%(ret[k], ", ".join(self.current_param_db.output_column.keys())) )
+                     return
+                 self.output_column = self.current_param_db.output_column[ ret[k] ][:]
             self.__dict__[k] = ret[k]
 
     def do_conf(self,c):
@@ -170,7 +175,9 @@ class ResultCommandParser(BaseDBCommandParser):
         print " -- db: %s"%( self.shorten_name( self.current_param_db.full_name ) )
         print "  + variables = %s "%( ", ".join(self.current_param_db.variables ) )
         print "  + entities = %s "%( ", ".join(self.current_param_db.entities ) )
-        print "  + columns = %s "%( ", ".join(self.current_param_db.output_column ) )
+        
+        print "  + table   = %s (tables found: %s) "%(self.table, ", ".join(self.current_param_db.output_column.keys())) 
+        print "  + columns = %s "%( ", ".join( self.current_param_db.output_column[self.table]  ) )
         print "  + split_columns = %s  / raw_data = %s / restrict_by_val = %s"%(self.split_columns, self.raw_data, self.restrict_by_val)
         print "  + vars (separated-coalesced-in_table) = %s - %s - %s "%(self.current_param_db.separated_vars, self.current_param_db.coalesced_vars, self.current_param_db.in_table_vars)
 

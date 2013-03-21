@@ -61,7 +61,7 @@ class PlotCommandParser(BaseDBCommandParser):
     def do_load(self,c):
         """loads a results_database"""
         BaseDBCommandParser.do_load(self, c)
-        self.output_column = self.current_param_db.output_column[:]
+        self.output_column = self.current_param_db.output_column['results'][:]
         
         os.chdir( self.current_param_db.path )
         

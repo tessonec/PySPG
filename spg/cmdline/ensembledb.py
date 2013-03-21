@@ -1,6 +1,9 @@
 #!/usr/bin/python
 
 import cmd
+import re
+
+
 
 import spg.utils as utils
 from spg.parameter import ParameterEnsemble
@@ -89,22 +92,24 @@ class BaseDBCommandParser(cmd.Cmd):
         if ls == None:
             ls = self.master_db.result_dbs.keys()
             
-        try:
+     #   try:
+        if  re.match("^\d+?$", filter): #:::~ Is filter an integer???
             id = int(filter)
             rdb = self.master_db.result_dbs
             filtered = [ x for x in ls if rdb.has_key(x) and rdb[x] is not None and rdb[x].id == id  ]
             return filtered
-        except:
-#            ret = [ self.shorten_name(i) for i in ls ]
-            if filter:
-#                ret = fnmatch.filter(ret, filter)
+      #  except:
+        #:::~  It is not an integer 
+        ret = [ self.shorten_name(i) for i in ls ]
+        if filter:
+####                ret = fnmatch.filter(ret, filter)
                 ret = fnmatch.filter(ls, filter)
-            else:
+        else:
                 ret = ls                 
-#            print ret
-#            return sorted( [ os.path.realpath( self.lengthen_name( i ) ) for i in ret ] )
-        #    return sorted( [ os.path.realpath( self.lengthen_name( i ) ) for i in ret ] )
-            return sorted( ret )
+   #     print ret
+###            return sorted( [ os.path.realpath( self.lengthen_name( i ) ) for i in ret ] )
+        ##    return sorted( [ os.path.realpath( self.lengthen_name( i ) ) for i in ret ] )
+        return sorted( ret )
 
     def get_db_from_cmdline(self, c):
         """it returns the db name (or None) of a database identified either from its id or """
@@ -143,7 +148,7 @@ class BaseDBCommandParser(cmd.Cmd):
         lists the databases already registered in the master database and the possible ones found in the current directory"""
     #    print self.filter_db_list(), self.master_db.result_dbs
         ls_res_db = self.filter_db_list( filter = c ) 
-        
+    ###    print ls_res_db, self.master_db.result_dbs
         if ls_res_db: 
             print " --- registered dbs" 
             for i in sorted( ls_res_db  ):
@@ -153,7 +158,8 @@ class BaseDBCommandParser(cmd.Cmd):
                 curr_db = self.master_db.result_dbs[i]
               #  except:
               #      continue
-                if not curr_db: continue
+    #            if not curr_db: continue
+    ###            print " %5d: %s (%5.5f)"%(curr_db.id, self.shorten_name( curr_db.full_name ) , curr_db.weight )
                 try:
                     print "%5d: %s (%5.5f)"%(curr_db.id, self.shorten_name( curr_db.full_name ) , curr_db.weight )
                 except:

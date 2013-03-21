@@ -64,8 +64,8 @@ class MasterDB:
         else:  
             res = self.cursor.execute("SELECT id, full_name, weight, queue, status FROM dbs ")
         vec = [i for i in res]
-   #     print "MasterDB::initialise_result_dbs",vec
-        
+     #   print "MasterDB::initialise_result_dbs",vec
+     #   print self.result_dbs.keys()
         for (id, full_name, weight, queue, status) in vec:
             if full_name in self.result_dbs.keys():
                 self.result_dbs[full_name].id = id
@@ -74,11 +74,11 @@ class MasterDB:
                 self.result_dbs[full_name].weight = weight
                 
                 continue
-            try:
-                new_db = self.EnsembleConstructor(full_name, id, weight, queue, status)
-                self.result_dbs[full_name] = new_db
-            except:
-                self.result_dbs[full_name] = None
+           ### try:
+            new_db = self.EnsembleConstructor(full_name, id, weight, queue, status)
+            self.result_dbs[full_name] = new_db
+           ### except:
+            ###    self.result_dbs[full_name] = None
    
 
 
