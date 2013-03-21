@@ -506,7 +506,8 @@ class ResultsDBQuery(ParameterEnsemble):
 
 
     def result_table(self, table = "results", restrict_to_values = {}, raw_data = False, restrict_by_val = False, output_column = []):
-   
+        
+        print output_column
         self.clean_dict(restrict_to_values)
 
         if len(self.in_table_vars) == 0:
@@ -519,7 +520,7 @@ class ResultsDBQuery(ParameterEnsemble):
             output_column = self.output_column[table][:]
         if "values_set_id" in output_column: 
                 output_column.remove("values_set_id")
-
+        print output_column
         out_cols = ""
         if not raw_data :
             if len(output_column ) == 1:
@@ -546,7 +547,7 @@ class ResultsDBQuery(ParameterEnsemble):
             else:  
                 query = "%s %s GROUP BY v.id"%(query, restrict_cols)
         query=query.replace("''", "'").replace("'\"", "'")
-#        print query
+  #      print query
         return self.table_from_query(query)        
 
 

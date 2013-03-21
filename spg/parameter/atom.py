@@ -182,4 +182,4 @@ class ParameterAtomExecutor(ParameterAtom):
 
 
 
-       # os.remove(configuration_filename)
+        os.remove(configuration_filename)

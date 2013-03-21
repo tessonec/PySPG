@@ -46,7 +46,7 @@ class ResultCommandParser(BaseDBCommandParser):
     def do_load(self,c):
         """loads a results_database"""
         BaseDBCommandParser.do_load(self, c)
-        self.output_column = self.current_param_db.output_column['results'][:]
+        self.output_column = self.current_param_db.output_column['results'][1:]
         
         os.chdir( self.current_param_db.path )
 
@@ -68,6 +68,7 @@ class ResultCommandParser(BaseDBCommandParser):
        for i in self.current_param_db:
          if self.split_columns:
            for column in self.output_column:
+              print ":::", self.output_column
               gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
               if gen_d :  gen_d+= "/"
               gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
@@ -164,7 +165,7 @@ class ResultCommandParser(BaseDBCommandParser):
                  if ret[k] not in self.current_param_db.output_column.keys():
                      utils.newline_msg("ERR", "table '%s' not among the ones found in the DB: (%s)"%(ret[k], ", ".join(self.current_param_db.output_column.keys())) )
                      return
-                 self.output_column = self.current_param_db.output_column[ ret[k] ][:]
+                 self.output_column = self.current_param_db.output_column[ ret[k] ][1:]
             self.__dict__[k] = ret[k]
 
     def do_conf(self,c):
