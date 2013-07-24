@@ -427,7 +427,7 @@ class ResultsDBQuery(ParameterEnsemble):
         self.in_table_vars =  self.variables[-1:]
 
 
-    def setup_output_vars(self, conf):
+    def setup_vars_in_table(self, conf):
         """which are the variables that are inside of the output file, orphaned variables are sent into the coalesced ones"""
         if conf.strip() != "" :
             in_table_vars = conf.split(",")
@@ -448,7 +448,7 @@ class ResultsDBQuery(ParameterEnsemble):
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(in_table_vars)-set(self.variables) )
         
                 
-    def setup_separated_vars(self, conf):
+    def setup_vars_separated(self, conf):
         """Which variables are separated in different directories, orphaned variables are sent into the coalesced ones"""
         if conf.strip() != "" :
             separated = conf.split(",")
@@ -466,7 +466,7 @@ class ResultsDBQuery(ParameterEnsemble):
         else:
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(separated)-set(self.variables) )
 
-    def setup_coalesced_vars(self, conf):
+    def setup_vars_coalesced(self, conf):
         """Which variables are coalesced into the same files, orphaned variables are sent into the separated ones"""
         if conf.strip() != "" :
             coalesced = conf.split(",")
@@ -507,7 +507,7 @@ class ResultsDBQuery(ParameterEnsemble):
 
     def result_table(self, table = "results", restrict_to_values = {}, raw_data = False, restrict_by_val = False, output_column = []):
         
-        print output_column
+    #    print output_column
         self.clean_dict(restrict_to_values)
 
         if len(self.in_table_vars) == 0:
@@ -520,7 +520,7 @@ class ResultsDBQuery(ParameterEnsemble):
             output_column = self.output_column[table][:]
         if "values_set_id" in output_column: 
                 output_column.remove("values_set_id")
-        print output_column
+   #     print output_column
         out_cols = ""
         if not raw_data :
             if len(output_column ) == 1:
@@ -554,6 +554,8 @@ class ResultsDBQuery(ParameterEnsemble):
     def table_header(self, table='results',output_column = []):
    
         var_cols = "\t".join( self.in_table_vars )
+      #  print self.output_column, type(self.output_column), table
+      #  print self.output_column[table]
         if not output_column:
             output_column = self.output_column[table][:]
         if "values_set_id" in output_column: 

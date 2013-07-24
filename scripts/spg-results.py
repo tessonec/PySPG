@@ -96,7 +96,7 @@ class ResultCommandParser(BaseDBCommandParser):
            if d != "" and not os.path.exists(d): os.makedirs(d)
            output_file = open(output_fname , open_type)
            if "header" in flags:
-                 output_file.write(  self.current_param_db.table_header( self.output_column ) )
+                 output_file.write(  self.current_param_db.table_header(table = self.table, output_column= self.output_column ) )
                  output_file.flush()
            np.savetxt( output_file, data )
 
@@ -105,21 +105,21 @@ class ResultCommandParser(BaseDBCommandParser):
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
-        self.current_param_db.setup_output_table(c)
+        self.current_param_db.setup_vars_in_table(c)
 
     def do_setup_vars_separated(self,c):
         """sets up which variables are going to have a separated directory"""
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
-        self.current_param_db.setup_separated_output(c)
+        self.current_param_db.setup_vars_separated(c)
 
     def do_setup_vars_coalesced(self,c):
         """sets up which variables are coalesced into the same file"""
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
-        self.current_param_db.setup_coalesced_output(c)
+        self.current_param_db.setup_vars_coalesced(c)
         
 
     def do_setup_output_column(self,c):
