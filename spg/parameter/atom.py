@@ -104,7 +104,7 @@ class ParameterAtom:
                 self.run_time = -1
             utils.newline_msg( "INF",  "{%s} %s: ret=%s -- %s,%s -- run_time=%s"  % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id,  self.run_time ) , stream = flog ) 
             print >> flog,  "     values: ", self.values  
-            print >> flog,  "     \n ".join( self.output )
+            print >> flog,  "     \n ","     \n ".join( self.output )
             
             try:
                 print >> flog_err,  "     \n ".join( self.stderr )
@@ -127,7 +127,7 @@ class ParameterAtom:
                 self.run_time = -1
             utils.newline_msg( "INF",  "{%s} %s: ret=%s -- %s,%s -- run_time=%s"  % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id,  self.run_time ) , stream = flog ) 
             print >> flog,  "     values: ", self.values  
-            print >> flog,  "     \n ".join( self.output )
+            print >> flog,  "     \n ","     \n ".join( self.output )
             
             try:
                 print >> flog_err,  "     \n ".join( self.stderr )
