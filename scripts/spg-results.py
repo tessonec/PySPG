@@ -68,7 +68,7 @@ class ResultCommandParser(BaseDBCommandParser):
        for i in self.current_param_db:
          if self.split_columns:
            for column in self.output_column:
-              print ":::", self.output_column
+          #    print ":::", self.output_column
               gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
               if gen_d :  gen_d+= "/"
               gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
@@ -76,6 +76,7 @@ class ResultCommandParser(BaseDBCommandParser):
               d,f = os.path.split(output_fname)
               if d != "" and not os.path.exists(d): os.makedirs(d)
               output_file = open(output_fname , open_type)
+              print "1:::~",output_fname
               if "header" in flags:
                   output_file.write(  self.current_param_db.table_header( [column] ) )
                   output_file.flush()
@@ -91,7 +92,7 @@ class ResultCommandParser(BaseDBCommandParser):
 
            gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
            output_fname = utils.fix_filename( "%s%s-%s.dat"%(gen_d, self.table, gen_s) )
-
+           print "2:::~",output_fname 
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
            output_file = open(output_fname , open_type)
