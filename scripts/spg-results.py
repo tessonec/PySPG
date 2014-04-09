@@ -68,7 +68,7 @@ class ResultCommandParser(BaseDBCommandParser):
        for i in self.current_param_db:
          if self.split_columns:
            for column in self.output_column:
-          #    print ":::", self.output_column
+              print ":::", self.output_column
               gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
               if gen_d :  gen_d+= "/"
               gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
@@ -82,7 +82,7 @@ class ResultCommandParser(BaseDBCommandParser):
                   output_file.flush()
 
               data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
-
+              print "    output", output_file
               np.savetxt( output_file, data)
          else:
            data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
@@ -97,6 +97,7 @@ class ResultCommandParser(BaseDBCommandParser):
            #print "2:::~",output_fname , "%s%s%s.dat"%(gen_d, self.table, gen_s), gen_d, self.table, gen_s
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
+           print "    output", output_file
            output_file = open(output_fname , open_type)
            if "header" in flags:
                  output_file.write(  self.current_param_db.table_header(table = self.table, output_column= self.output_column ) )
