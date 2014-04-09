@@ -92,7 +92,7 @@ class ResultCommandParser(BaseDBCommandParser):
 
            gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
            output_fname = utils.fix_filename( "%s%s-%s.dat"%(gen_d, self.table, gen_s) )
-           print "2:::~",output_fname 
+           print "2:::~",output_fname , "%s%s-%s.dat"%(gen_d, self.table, gen_s), gen_d, self.table, gen_s
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
            output_file = open(output_fname , open_type)
