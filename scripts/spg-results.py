@@ -76,7 +76,7 @@ class ResultCommandParser(BaseDBCommandParser):
               d,f = os.path.split(output_fname)
               if d != "" and not os.path.exists(d): os.makedirs(d)
               output_file = open(output_fname , open_type)
-              print "1:::~",output_fname
+            #  print "1:::~",output_fname
               if "header" in flags:
                   output_file.write(  self.current_param_db.table_header( [column] ) )
                   output_file.flush()
@@ -86,13 +86,15 @@ class ResultCommandParser(BaseDBCommandParser):
               np.savetxt( output_file, data)
          else:
            data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
-
+           gen_s = self.current_param_db.full_name.split("/")[-1][:-len(".sqlite")][len('results'):]
+           
+           
            gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
            if gen_d:  gen_d+= "/"
-
-           gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
-           output_fname = utils.fix_filename( "%s%s-%s.dat"%(gen_d, self.table, gen_s) )
-           print "2:::~",output_fname , "%s%s-%s.dat"%(gen_d, self.table, gen_s), gen_d, self.table, gen_s
+           
+#           gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
+           output_fname = utils.fix_filename( "%s%s%s.dat"%(gen_d, self.table, gen_s) )
+           #print "2:::~",output_fname , "%s%s%s.dat"%(gen_d, self.table, gen_s), gen_d, self.table, gen_s
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
            output_file = open(output_fname , open_type)
