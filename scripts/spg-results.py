@@ -97,8 +97,8 @@ class ResultCommandParser(BaseDBCommandParser):
            #print "2:::~",output_fname , "%s%s%s.dat"%(gen_d, self.table, gen_s), gen_d, self.table, gen_s
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
-           print "    output", output_file
            output_file = open(output_fname , open_type)
+           print "    output", output_file
            if "header" in flags:
                  output_file.write(  self.current_param_db.table_header(table = self.table, output_column= self.output_column ) )
                  output_file.flush()
