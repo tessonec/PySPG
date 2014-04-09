@@ -99,15 +99,19 @@ class ParameterAtom:
                 except:
                     param_ens.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
             flog = open(self.full_db_name.replace("sqlite", "log"), "aw") 
+            flog_err = open(self.full_db_name.replace("sqlite", "err"), "aw") 
             if not hasattr(self,'run_time'):
                 self.run_time = -1
-            utils.newline_msg( "INF",  "{%s} %s: ret=%s -- %s,%s -- %s -- %s" % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id,  self.run_time,"-+*+-".join( self.output ).replace("\t"," ") ) , stream = flog )
+            utils.newline_msg( "INF",  "{%s} %s: ret=%s -- %s,%s -- run_time=%s"  % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id,  self.run_time ) , stream = flog ) 
+            print >> flog,  "     values: ", self.values  
+            print >> flog,  "     \n ".join( self.output )
             
             try:
-                utils.newline_msg( "STDERR", "-+*+-".join( self.stderr ).replace("\t"," "), indent = 1 , stream = flog)
+                print >> flog_err,  "     \n ".join( self.stderr )
             except:
-                utils.newline_msg( "WRN", "NO_STDERR", stream = flog) 
+                utils.newline_msg( "WRN", "NO_STDERR", stream = flog_err) 
             flog.close()
+            flog_err.close()
                   
         else:
             #:::~ status can be either 
@@ -118,13 +122,19 @@ class ParameterAtom:
             param_ens.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
              
             flog = open(self.full_db_name.replace("sqlite", "log"), "aw") 
-            utils.newline_msg( "INF",  "{%s} %s: ret=%s -- %s,%s -- %s -- %s" % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id,self.run_time, "-+*+-".join( self.output ).replace("\t"," ") ) , stream = flog )
+            flog_err = open(self.full_db_name.replace("sqlite", "err"), "aw") 
+            if not hasattr(self,'run_time'):
+                self.run_time = -1
+            utils.newline_msg( "INF",  "{%s} %s: ret=%s -- %s,%s -- run_time=%s"  % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id,  self.run_time ) , stream = flog ) 
+            print >> flog,  "     values: ", self.values  
+            print >> flog,  "     \n ".join( self.output )
+            
             try:
-                utils.newline_msg( "STDERR", "-+*+-".join( self.stderr ).replace("\t"," "), indent = 1 , stream = flog)
+                print >> flog_err,  "     \n ".join( self.stderr )
             except:
-                utils.newline_msg( "WRN", "NO_STDERR", stream = flog) 
+                utils.newline_msg( "WRN", "NO_STDERR", stream = flog_err) 
             flog.close()
-            #self.connection.commit()
+            flog_err.close()
 
 #        connection.commit()
         #conn.close()
