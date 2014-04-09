@@ -82,7 +82,7 @@ class ResultCommandParser(BaseDBCommandParser):
                   output_file.flush()
 
               data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
-              print "    output", output_file
+              print "    output", output_fname
               np.savetxt( output_file, data)
          else:
            data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
@@ -98,7 +98,7 @@ class ResultCommandParser(BaseDBCommandParser):
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
            output_file = open(output_fname , open_type)
-           print "    output", output_file
+           print "    output", output_fname
            if "header" in flags:
                  output_file.write(  self.current_param_db.table_header(table = self.table, output_column= self.output_column ) )
                  output_file.flush()
