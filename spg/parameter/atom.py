@@ -3,7 +3,7 @@ from spg import BINARY_PATH, VAR_PATH, TIMEOUT
 
 
 
-import os.path, sys
+import os.path, sys, time
 import pickle 
 from subprocess import Popen, PIPE
 import sqlite3 as sql
@@ -99,10 +99,12 @@ class ParameterAtom:
                 except:
                     param_ens.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
             flog = open(self.full_db_name.replace("sqlite", "log"), "aw") 
-            utils.newline_msg( "INF",  "{%s} %s: ret=%s -- %s,%s -- %s" % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output) , stream = flog )
+            if not hasattr(self,'run_time'):
+                self.run_time = -1
+            utils.newline_msg( "INF",  "{%s} %s: ret=%s -- %s,%s -- %s -- %s" % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id,  self.run_time,"-+*+-".join( self.output ).replace("\t"," ") ) , stream = flog )
             
             try:
-                utils.newline_msg( "cerr", self.stderr, indent = 1 , stream = flog)
+                utils.newline_msg( "STDERR", "-+*+-".join( self.stderr ).replace("\t"," "), indent = 1 , stream = flog)
             except:
                 utils.newline_msg( "WRN", "NO_STDERR", stream = flog) 
             flog.close()
@@ -116,9 +118,9 @@ class ParameterAtom:
             param_ens.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
              
             flog = open(self.full_db_name.replace("sqlite", "log"), "aw") 
-            utils.newline_msg( "INF",  "{%s} %s: ret=%s -- %s,%s -- %s" % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id, self.output) , stream = flog )
+            utils.newline_msg( "INF",  "{%s} %s: ret=%s -- %s,%s -- %s -- %s" % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id,self.run_time, "-+*+-".join( self.output ).replace("\t"," ") ) , stream = flog )
             try:
-                utils.newline_msg( "cerr", self.stderr, indent = 1 , stream = flog)
+                utils.newline_msg( "STDERR", "-+*+-".join( self.stderr ).replace("\t"," "), indent = 1 , stream = flog)
             except:
                 utils.newline_msg( "WRN", "NO_STDERR", stream = flog) 
             flog.close()
@@ -145,7 +147,7 @@ class ParameterAtomExecutor(ParameterAtom):
 
     def launch_process(self, configuration_filename):
         os.chdir(self.path)
-
+        started_time = time.time()
         if self.create_tree():
             dir_n = utils.generate_string(self.values, self.variables, joining_string = "/")
             if not os.path.exists(dir_n): 
@@ -172,6 +174,7 @@ class ParameterAtomExecutor(ParameterAtom):
         
         file_stdout.close()
         file_stderr.close()
+        finish_time = time.time()
 #     poll = proc.poll()
 #      while poll is None:
 #           time.sleep(1)
@@ -185,7 +188,7 @@ class ParameterAtomExecutor(ParameterAtom):
     #    print self.return_code 
         self.output =  [i.strip() for i in open("%s.stdout"%self.current_run_id, "r")] 
      #   print >> sys.stderr, "STDOUT",  self.output
-        self.stderr =  [i.strip() for i in open("%s.stdout"%self.current_run_id, "r")] 
+        self.stderr =  [i.strip() for i in open("%s.stderr"%self.current_run_id, "r")] 
     #    print >> sys.stderr, "STDERR",  self.stderr
 #        self.return_code = 0
 #        self.output = ""
@@ -196,3 +199,4 @@ class ParameterAtomExecutor(ParameterAtom):
         os.remove("%s.stdout"%self.current_run_id)
         os.remove("%s.stderr"%self.current_run_id)
 
+        self.run_time = finish_time - started_time
