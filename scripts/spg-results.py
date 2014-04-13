@@ -105,25 +105,54 @@ class ResultCommandParser(BaseDBCommandParser):
            np.savetxt( output_file, data )
 
     def do_setup_vars_in_table(self,c):
-        """sets up the variables that output into the table as independent columns"""
+        """sets up the variables that output into the table as independent columns
+           save_table [-single_flag] 
+           FLAGS::: -all:        puts all variables in the output_table 
+                   -restore:    puts only the last variable in the output_table
+          """
+        
+        
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
-        self.current_param_db.setup_vars_in_table(c)
+        flags,c = self.parse_command_line(c)
+        if "all" in flags:
+            self.current_param_db.setup_vars_in_table(",".join(self.current_param_db.variables) )
+        elif "restore" in flags:
+            self.current_param_db.setup_vars_in_table(self.current_param_db.variables[-1])
+        else:    
+            self.current_param_db.setup_vars_in_table(c)
 
     def do_setup_vars_separated(self,c):
-        """sets up which variables are going to have a separated directory"""
+        """sets up which variables are going to have a separated directory
+           save_table [-single_flag] 
+           FLAGS::: -restore:    puts only the last variable in the output_table 
+                    -empty:      sets nothing as separated variables   """
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
-        self.current_param_db.setup_vars_separated(c)
+        flags,c = self.parse_command_line(c)
+        if "restore" in flags:
+            self.current_param_db.setup_vars_separated(",".join(self.current_param_db.variables[:-1]))
+        elif "empty" in flags:
+            self.current_param_db.setup_vars_separated("")
+        else:    
+            self.current_param_db.setup_vars_separated(c)
 
     def do_setup_vars_coalesced(self,c):
-        """sets up which variables are coalesced into the same file"""
+        """sets up which variables are coalesced into the same file
+           save_table [-single_flag] 
+           FLAGS::: -restore:    puts only the last variable in the output_table 
+                    -empty:      sets nothing as separated variables  """
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
-        self.current_param_db.setup_vars_coalesced(c)
+        if "restore" or "empty" in :
+            self.current_param_db.setup_vars_coalesced("")
+        elif "empty" in flags:
+            self.current_param_db.setup_vars_coalesced("")
+        else:    
+            self.current_param_db.setup_vars_coalesced(c)
         
 
     def do_setup_output_column(self,c):
