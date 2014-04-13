@@ -22,7 +22,7 @@ import matplotlib as mpl
 import matplotlib.backends.backend_pdf as mpl_b_pdf
 import itertools
 
-class SPGPlotter:
+class SPGBasePlotter:
     
     colors = ['black','blue', 'green', 'red', 'yellow', 'brown', 'grey', 'violet']
     markers  = mlines.Line2D.filled_markers
@@ -68,7 +68,7 @@ class SPGPlotter:
     def get_transformed_var(self, var):
         if type(var) == type((0,)):
             var, foo = var 
-        if var in self.dict_of_vars:
+        if var in self.settings and self.settings.has_key("label"):
             return self.dict_of_vars[var].replace("$","")
         else:
             return var.replace("$","").replace("_","\_")
@@ -97,9 +97,9 @@ class SPGPlotter:
                 subp.scatter(  minimal_df[[self.x_axis]], minimal_df[[curr_y_axis]] , 
                            label = minimal_legend, marker = marker_it.next(), color = color_it.next(), edgecolors = "black", s = 65)
             elif type(curr_y_axis) == type((0,)) and len(curr_y_axis) == 2:
-                
+                ## BROKEN
                 curr_y_axis, curr_yerr = curr_y_axis
-                
+                 ####### B
                 #subp.errorbar( x=minimal_df[[self.x_axis]], y=minimal_df[[curr_y_axis]] ,yerr = minimal_df[[curr_yerr]],  
                 #           label = minimal_legend, fmt = marker_it.next(), color = color_it.next(), edgecolors = "black", s = 65 )
                 subp.errorbar( x=minimal_df[[self.x_axis]].apply(np.float32) , y=minimal_df[[curr_y_axis]].apply(np.float32)  ,yerr = minimal_df[[curr_yerr]].apply(np.float32) ) 
@@ -145,16 +145,16 @@ class SPGPlotter:
                 curr_axes.tick_params( labelsize = 18 )
                 
                  
-                if self.dict_of_settings.has_key(curr_y_axis):
-                    if self.dict_of_settings[curr_y_axis].has_key('ylim'):
-                        plt.ylim(self.dict_of_settings[curr_y_axis]['ylim'])
-                    if self.dict_of_settings[curr_y_axis].has_key('yscale'):
-                        curr_axes.set_yscale(self.dict_of_settings[self.y_axis]['yscale'])
-                if self.dict_of_settings.has_key(self.x_axis):
-                    if self.dict_of_settings[self.x_axis].has_key('xlim'):
-                        plt.xlim(self.dict_of_settings[self.x_axis]['xlim'])
-                    if self.dict_of_settings[self.x_axis].has_key('xscale'):
-                        curr_axes.set_xscale(self.dict_of_settings[self.x_axis]['xscale'])
+                if self.settings.has_key(curr_y_axis):
+                    if self.settings[curr_y_axis].has_key('ylim'):
+                        plt.ylim(self.settings[curr_y_axis]['ylim'])
+                    if self.settings[curr_y_axis].has_key('yscale'):
+                        curr_axes.set_yscale(self.settings[self.y_axis]['yscale'])
+                if self.settings.has_key(self.x_axis):
+                    if self.settings[self.x_axis].has_key('xlim'):
+                        plt.xlim(self.settings[self.x_axis]['xlim'])
+                    if self.settings[self.x_axis].has_key('xscale'):
+                        curr_axes.set_xscale(self.settings[self.x_axis]['xscale'])
                 plt.savefig(pp, format='pdf')
             print         
             
@@ -200,16 +200,16 @@ class SPGPlotter:
                 curr_axes.tick_params( labelsize = 18 )
                 
                  
-                if self.dict_of_settings.has_key(curr_y_axis):
-                    if self.dict_of_settings[curr_y_axis].has_key('ylim'):
-                        plt.ylim(self.dict_of_settings[curr_y_axis]['ylim'])
-                    if self.dict_of_settings[curr_y_axis].has_key('yscale'):
-                        curr_axes.set_yscale(self.dict_of_settings[self.y_axis]['yscale'])
-                if self.dict_of_settings.has_key(self.x_axis):
-                    if self.dict_of_settings[self.x_axis].has_key('xlim'):
-                        plt.xlim(self.dict_of_settings[self.x_axis]['xlim'])
-                    if self.dict_of_settings[self.x_axis].has_key('xscale'):
-                        curr_axes.set_xscale(self.dict_of_settings[self.x_axis]['xscale'])
+                if self.settings.has_key(curr_y_axis):
+                    if self.settings[curr_y_axis].has_key('ylim'):
+                        plt.ylim(self.settings[curr_y_axis]['ylim'])
+                    if self.settings[curr_y_axis].has_key('yscale'):
+                        curr_axes.set_yscale(self.settings[self.y_axis]['yscale'])
+                if self.settings.has_key(self.x_axis):
+                    if self.settings[self.x_axis].has_key('xlim'):
+                        plt.xlim(self.settings[self.x_axis]['xlim'])
+                    if self.settings[self.x_axis].has_key('xscale'):
+                        curr_axes.set_xscale(self.settings[self.x_axis]['xscale'])
                 plt.savefig(pp, format='pdf')
             print         
             
@@ -222,7 +222,7 @@ class SPGPlotter:
 
 
 
-class SPGSubPlotter(SPGPlotter):
+class SPGBaseSubPlotter(SPGPlotter):
 
 
 
@@ -270,16 +270,16 @@ class SPGSubPlotter(SPGPlotter):
                     
                     subp.tick_params( labelsize = 18 )
                  
-                    if self.dict_of_settings.has_key(curr_y_axis):
-                        if self.dict_of_settings[curr_y_axis].has_key('ylim'):
-                            subp.set_ylim(self.dict_of_settings[curr_y_axis]['ylim'])
-                        if self.dict_of_settings[curr_y_axis].has_key('yscale'):
-                            subp.set_yscale(self.dict_of_settings[self.y_axis]['yscale'])
-                    if self.dict_of_settings.has_key(self.x_axis):
-                        if self.dict_of_settings[self.x_axis].has_key('xlim'):
-                            subp.set_xlim(self.dict_of_settings[self.x_axis]['xlim'])
-                        if self.dict_of_settings[self.x_axis].has_key('xscale'):
-                            subp.set_xscale(self.dict_of_settings[self.x_axis]['xscale'])
+                    if self.settings.has_key(curr_y_axis):
+                        if self.settings[curr_y_axis].has_key('lim'):
+                            subp.set_ylim(self.settings[curr_y_axis]['lim'])
+                        if self.settings[curr_y_axis].has_key('scale'):
+                            subp.set_yscale(self.settings[self.y_axis]['scale'])
+                    if self.settings.has_key(self.x_axis):
+                        if self.settings[self.x_axis].has_key('lim'):
+                            subp.set_xlim(self.settings[self.x_axis]['lim'])
+                        if self.settings[self.x_axis].has_key('scale'):
+                            subp.set_xscale(self.settings[self.x_axis]['scale'])
                 
                 curr_fig.subplots_adjust(hspace=0)
                 plt.savefig(pp, format='pdf')

@@ -128,7 +128,7 @@ def consistency(exec_file, miparser):
   
 def contents_in_output(exec_file):
     """
-     keysColumns = ["type","label","help","scale","repeat"]
+     keysColumns = ["type","label","help","scale","repeat", "lim"]
      the structure of the columns in the files are as follows:
      name of the variable, and a colon separated list of -optional- options
      type:  of the plot if xy, one column is used, xydy two columns are used
@@ -137,7 +137,7 @@ def contents_in_output(exec_file):
      repeat: how many columns are to be taken by the parser
      help: a string containing an explanation of the variable"""
      
-    possible_keys = set(["type","label","texlabel","help","scale","repeat","datatype"])
+    possible_keys = set(["type","label","help","scale","repeat","datatype", "lim"])
     if exec_file[:2] == "ct" and exec_file[3] == "-" :  exec_file = exec_file[4:]
     ret = {}
     exec_file,ext=os.path.splitext(exec_file)
@@ -167,12 +167,17 @@ def contents_in_output(exec_file):
             if k not in possible_keys:
                 newline_msg("SYN","in column '%s', unrecognised key '%s'"%(name,k))
                 sys.exit(1)
-            values[k]=v
+            if k == "lim":
+                values[k] = eval(v)
+            else:
+                values[k]=v
 
         ret[table].append((name,values))    
        
     return ret 
    
+
+
 
 
 

@@ -30,6 +30,7 @@ class Iterator:
     """
     self.name  = name
     self.data  = data
+    self.type = "."
     self.reset()
     
   def __iter__(self):
@@ -293,7 +294,7 @@ class MultIterator:
     
   def position_of(self,var):
     """returns the position in the ordered list of a given variable"""
-    assert var in self.order, "the requested variable was not found in the multiterator"
+    assert var in self.names, "the requested variable was not found in the multiterator"
     
     return self.names.index(var)
     

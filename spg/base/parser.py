@@ -100,7 +100,7 @@ class MultIteratorParser(iterator.MultIterator):
 
 class MultIteratorParserExt(MultIteratorParser):
     """
-      a param iterator with functionality added
+        a param iterator with functionality added
     """
 
     def __init__(self, stream = None):
@@ -108,14 +108,14 @@ class MultIteratorParserExt(MultIteratorParser):
         self.add_ins = {}
         
         if stream is not None:
-          self.fetch(stream)
+            self.fetch(stream)
 
     def add_plugin(self, rw, manip):
-      self.add_ins[rw] = manip
+        self.add_ins[rw] = manip
 
     def parse_reserved_word(self, rest):
-       if rest[0] in self.add_ins.keys():
-           self.add( self.add_ins[ rest[0] ]( rest[1:] ) )
+        if rest[0] in self.add_ins.keys():
+            self.add( self.add_ins[ rest[0] ]( rest[1:] ) )
 
 
     def fetch(self, stream):
@@ -129,22 +129,22 @@ class MultIteratorParserExt(MultIteratorParser):
             if symbol is '#': continue #line is a comment
 
             if (symbol in ('!')): # reserved for the future
-              continue
+                continue
 
             if (symbol is '@' and rest[0]=="execute"):
-              self.command = rest[1]
+                self.command = rest[1]
 
             if (symbol in ['+', '-', '*', '/', '**']):
-              self.add( \
-                iterator.IterOperator( rest[0], symbol, \
+                self.add( \
+                 iterator.IterOperator( rest[0], symbol, \
                        (eval(rest[1] ), eval( rest[2]), eval(rest[3]) ) ) )
 
             if (symbol == '.'):
-              self.add( \
+                self.add( \
                  iterator.Iterator(rest[0], rest[1:]) )
 
             if (symbol == ':'):
-              self.add( iterator.Iterator( name = "".join(rest) ) )
+                self.add( iterator.Iterator( name = "".join(rest) ) )
 
 
 
