@@ -147,7 +147,7 @@ class ResultCommandParser(BaseDBCommandParser):
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
-        if "restore" or "empty" in :
+        if "restore" or "empty" in flags:
             self.current_param_db.setup_vars_coalesced("")
         elif "empty" in flags:
             self.current_param_db.setup_vars_coalesced("")
