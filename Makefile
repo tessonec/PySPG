@@ -16,6 +16,7 @@ install:
 	install scripts/spg-master.py ${BINDIR}
 	install scripts/spg-worker.py ${BINDIR}
 	install scripts/spg-results.py ${BINDIR}
+	install scripts/spg-plotter.py ${BINDIR}
 	install scripts/spg-get_parameters.py ${BINDIR}
 	mkdir -p ${LIBDIR}
 	# library (base)
@@ -41,8 +42,8 @@ install:
 	# library (plot)
 	mkdir -p ${LIBDIR}/plot
 	install -m 0644 spg/plot/__init__.py ${LIBDIR}/plot
-	install -m 0644 spg/plot/grace.py ${LIBDIR}/plot
-	install -m 0644 spg/plot/spgpyplot.py ${LIBDIR}/plot
+	#install -m 0644 spg/plot/grace.py ${LIBDIR}/plot
+	#install -m 0644 spg/plot/spgpyplot.py ${LIBDIR}/plot
 	install -m 0644 spg/plot/base.py ${LIBDIR}/plot
 	# library (queue)
 	mkdir -p ${LIBDIR}/queue

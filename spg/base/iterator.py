@@ -30,7 +30,7 @@ class Iterator:
     """
     self.name  = name
     self.data  = data
-    self.type = "."
+    # self.type = "."
     self.reset()
     
   def __iter__(self):

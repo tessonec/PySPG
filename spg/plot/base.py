@@ -68,8 +68,9 @@ class SPGBasePlotter:
     def get_transformed_var(self, var):
         if type(var) == type((0,)):
             var, foo = var 
-        if var in self.settings and self.settings.has_key("label"):
-            return self.dict_of_vars[var].replace("$","")
+        if var in self.settings and self.settings[var].has_key("label"):
+       #     print self.settings[var]["label"].replace("$","").replace("\\\\",'\\')
+            return self.settings[var]["label"].replace("$","").replace("\\\\",'\\')
         else:
             return var.replace("$","").replace("_","\_")
 
@@ -146,15 +147,16 @@ class SPGBasePlotter:
                 
                  
                 if self.settings.has_key(curr_y_axis):
-                    if self.settings[curr_y_axis].has_key('ylim'):
-                        plt.ylim(self.settings[curr_y_axis]['ylim'])
-                    if self.settings[curr_y_axis].has_key('yscale'):
-                        curr_axes.set_yscale(self.settings[self.y_axis]['yscale'])
+                    #print self.settings[curr_y_axis], 
+                    if self.settings[curr_y_axis].has_key('lim'):
+                        plt.ylim(self.settings[curr_y_axis]['lim'])
+                    if self.settings[curr_y_axis].has_key('scale'):
+                        curr_axes.set_yscale( self.settings[curr_y_axis]['scale'] )
                 if self.settings.has_key(self.x_axis):
-                    if self.settings[self.x_axis].has_key('xlim'):
-                        plt.xlim(self.settings[self.x_axis]['xlim'])
-                    if self.settings[self.x_axis].has_key('xscale'):
-                        curr_axes.set_xscale(self.settings[self.x_axis]['xscale'])
+                    if self.settings[self.x_axis].has_key('lim'):
+                        plt.xlim( self.settings[self.x_axis]['lim'] )
+                    if self.settings[self.x_axis].has_key('scale'):
+                        curr_axes.set_xscale( self.settings[self.x_axis]['scale']) 
                 plt.savefig(pp, format='pdf')
             print         
             
@@ -201,15 +203,17 @@ class SPGBasePlotter:
                 
                  
                 if self.settings.has_key(curr_y_axis):
-                    if self.settings[curr_y_axis].has_key('ylim'):
-                        plt.ylim(self.settings[curr_y_axis]['ylim'])
-                    if self.settings[curr_y_axis].has_key('yscale'):
-                        curr_axes.set_yscale(self.settings[self.y_axis]['yscale'])
+                    print self.settings
+                    if self.settings[curr_y_axis].has_key('lim'):
+                        plt.ylim(self.settings[curr_y_axis]['lim'])
+                    if self.settings[curr_y_axis].has_key('scale'):
+                        curr_axes.set_yscale(self.settings[self.y_axis]['scale'])
                 if self.settings.has_key(self.x_axis):
-                    if self.settings[self.x_axis].has_key('xlim'):
-                        plt.xlim(self.settings[self.x_axis]['xlim'])
-                    if self.settings[self.x_axis].has_key('xscale'):
-                        curr_axes.set_xscale(self.settings[self.x_axis]['xscale'])
+                    print self.settings[self.x_axis]
+                    if self.settings[self.x_axis].has_key('lim'):
+                        plt.xlim(self.settings[self.x_axis]['lim'])
+                    if self.settings[self.x_axis].has_key('scale'):
+                        curr_axes.set_xscale(self.settings[self.x_axis]['scale'])
                 plt.savefig(pp, format='pdf')
             print         
             
@@ -222,7 +226,7 @@ class SPGBasePlotter:
 
 
 
-class SPGBaseSubPlotter(SPGPlotter):
+class SPGBaseSubPlotter(SPGBasePlotter):
 
 
 
