@@ -36,7 +36,7 @@ class SPGPlotter:
         
         settings_output, self.output_columns = self.get_settings(self.mit.command, "stdout")
         
-         
+        newline_msg( "INF", "output columns: %s"% enumerate(self.output_columns) )
         self.settings.update(settings_output)
         
         self.x_axis =  self.variables[-1]
