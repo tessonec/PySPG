@@ -132,7 +132,10 @@ class SPGPlotter:
                 ret_name[k] = eval(v)
             else:
                 ret_name[k]=v
-            
+ 
+    def setup_output_columns(self, oc):
+        self.output_columns = oc
+           
 
     def setup_coalesced_vars(self, cv):
         all_vars = self.separated_vars + self.coalesced_vars 
@@ -219,6 +222,10 @@ def parse_command_line():
      parser.add_option("--separated", type="string", action='store', dest="separated", 
 		        default = [],
                         help = "comma separated list of separated variables")
+     parser.add_option("--output", type="string", action='store', dest="output", 
+		        default = [],
+                        help = "output structure")
+
 
 
      #parser.add_option("-a","--append", type="string", nargs=2, action='append', dest="append",
@@ -230,6 +237,8 @@ def parse_command_line():
          opts.coalesced = opts.coalesced.split(",")
      if len( opts.separated ) >0:
          opts.separated = opts.separated.split(",")
+     if len( opts.output ) >0:
+         opts.output = opts.output.split(",")
      return  opts, args 
 
 
@@ -247,7 +256,9 @@ for iarg in args:
         plotter.setup_coalesced_vars( opts.coalesced )
     if len(opts.separated) > 0:
         plotter.setup_separated_vars( opts.separated )
-
+    if len(opts.output) > 0:
+        plotter.setup_output_columns( opts.output )
+    
     plotter.plot_all(spgp.SPGBasePlotter)
 
 #plotter.coalesced_vars = "rate_is"
