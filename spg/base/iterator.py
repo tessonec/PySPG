@@ -275,7 +275,9 @@ class MultIterator:
       
       return self.__dict[name]
 
-
+  def get_dict(self):
+      return self.__dict.copy()
+      
   def items(self):
       return self.names
 

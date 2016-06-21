@@ -17,6 +17,7 @@ from spg import database_version
 
 import sys
 import sqlite3 as sql
+import csv
 
 class SPGConflictingValue(Exception):
     """Raised when the DB has a value different from the one that should be set
@@ -66,22 +67,13 @@ class EnsembleBuilder(MultIteratorParser):
         
 
     def init_db(self):
-   #     print "EnsembleBuilder::init_db"
         #:::~ Table with the information related to the database
         self.cursor.execute("CREATE TABLE IF NOT EXISTS information "
                             "(id INTEGER PRIMARY KEY, key CHAR(64), value CHAR(128))"
                             )
         
         self.check_and_insert_information('version', database_version)
-        #except:
-        #    print "error1"
-        #    sys.exit(1)
-
-#        try:
         self.check_and_insert_information('command', self.command )
- #       except:
-  #          print "error2"
-   #         sys.exit(1)
         
         
         #:::~ Table with the defined entities
@@ -201,3 +193,30 @@ class EnsembleBuilder(MultIteratorParser):
 # 
 #===============================================================================
 
+class EnsembleBuilderCSV(MultIteratorParser):
+    """Generates a DB file with the representation of the parameters"""
+    def __init__(self, stream=None, db_name = "results.csv", timeout = 5):
+        MultIteratorParser.__init__(self, stream)
+    
+        if not check_params.consistency(self.command, self):
+            utils.newline_msg("ERR","parameters.dat file is not consistent.")
+            sys.exit(1)
+        self.stdout_contents = check_params.contents_in_output(self.command)
+        
+               
+        self.csv_filename
+        
+    def init_db(self):
+        
+        csv_file = open(self.csv_filename,"w")
+        fieldnames = [i.name for i in self.data]
+        fieldnames.append("id")
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        
+        for counter,i in enumerate(self):
+                d = self.get_dict()
+                d["id"]  = counter
+                writer.writerow(d)
+
+        csv_file.close()

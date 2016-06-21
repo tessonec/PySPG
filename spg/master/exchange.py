@@ -12,11 +12,11 @@ from spg import utils
 from spg import VAR_PATH, TIMEOUT
 from spg.parameter import ParameterAtom, ParameterEnsemble
 
-from spg.master import MasterDB
+from spg.master import MasterDB, PickledMaster
+
 
 import os
 import random
-import sqlite3 as sql
 
 import fnmatch
 
@@ -96,6 +96,70 @@ class DataExchanger(MasterDB):
             if ret == None:
                 continue
             pd.dump(src = "queue/%s"%queue_name)
+
+
+
+    def harvest_atoms(self):
+        ls_atoms = os.listdir("%s/run"%(VAR_PATH) )
+        self.harvested_atoms  = len(ls_atoms)
+        for i_d in ls_atoms:
+            pd = ParameterAtom(i_d)
+            try:
+                pd.load(src = 'run')
+            except:
+                utils.newline_msg("WRN", "could not pickle '%s'...skipping"%i_d, 2)
+                os.system("rm -f %s/run/%s"%(VAR_PATH,i_d))
+                continue
+            
+            try:
+                a_db =self.result_dbs[pd.full_db_name]
+                pd.dump_result_in_ensemble( a_db  )
+            except KeyError:
+                utils.newline_msg("SKP", "database '%s' not registered anymore, skipping"%pd.full_db_name,2)
+
+
+
+
+
+
+class PickledDataExchanger(PickledMaster):
+    max_atoms_to_seed = 100
+    
+
+    def __init__(self, EnsembleConstructor = ParameterEnsemble):
+         PickledMaster.__init__(self, EnsembleConstructor)           
+
+    def pick_ensemble(self):
+            
+            rnd = self.normalising * random.random()
+            ls_dbs = [ i for i in self.active_dbs ] 
+            if len( ls_dbs  ) == 0:
+                return None
+                
+            curr_db = ls_dbs.pop()
+            ac =  curr_db[ 'weight' ]
+            
+            while rnd > ac:
+                curr_db = ls_dbs.pop()
+                ac +=  curr_db[ 'weight' ]
+            
+            return  curr_db 
+
+
+    def seed_atoms(self):
+        self.seeded_atoms =  self.max_atoms_to_seed - len(os.listdir("%s/queue/"%(VAR_PATH) ) ) 
+
+        self.update_ensemble_list()
+        for i_atom in range(self.seeded_atoms):
+            sel_db = self.pick_ensemble( )
+            self.current_counter += 1
+
+            in_name = "in_%.10d"%self.current_counter
+            pd = ParameterAtom(in_name, sel_db.full_name)
+            ret = pd.load_next_from_ensemble( sel_db )
+            if ret == None:
+                continue
+            pd.dump(src = "queue")
 
 
 

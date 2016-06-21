@@ -1,1 +1,1 @@
-from ensembledb import BaseDBCommandParser
+from ensembledb import BaseDBCommandParser, BaseSPGCommandParser

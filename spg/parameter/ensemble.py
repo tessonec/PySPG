@@ -10,11 +10,169 @@ import numpy as n
 #import math as m
 
 
+import csv 
+
 #TIMEOUT = 120
 
 
 
 
+
+class ParameterEnsembleCSV:
+    
+    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = False):
+        self.full_name = full_name
+        self.path, self.db_name = os.path.split(full_name)
+
+        self.values = {}
+        self.directory_vars = None
+
+         
+
+
+    def __close_db(self):
+        self.connection.commit()
+        self.connection.close()
+        del self.cursor
+        del self.connection
+
+
+
+    def execute_query(self, query, *args):
+        self.__connect_db()
+        ret = [i for i in self.cursor.execute(query, args)]
+        self.__close_db()
+        return ret 
+
+
+    def execute_query_fetchone(self, query, *args):
+        self.__connect_db()
+        ret = self.cursor.execute(query, args).fetchone()
+        self.__close_db()
+        return ret 
+
+    def parse_output_line(self,  output_line):
+        """ parses a line from output. Returns a tuple containing: table of output, column names of output,  output values to be inserted in table"""
+        output_columns = output_line.strip().split()
+        table_name = "results"
+    #    print ">>%s<<"%output_columns
+        if output_columns[0][0] == "@":
+            table_name = output_columns[0][1:] 
+            output_columns.pop(0)
+        try:
+            output_column_names = [ i[0] for i in self.execute_query("SELECT column FROM output_tables WHERE name = '%s'"%(table_name)) ]
+        except:
+            utils.newline_msg("ERR", "DB does not contain table named '%s'"%table_name)
+            sys.exit(1)
+        
+     #  print table_name, output_column_names, output_columns
+        
+        return table_name, output_column_names, output_columns 
+
+    def init_db(self):
+    
+  #      self.__connect_db()
+    
+        
+        #:::~ Table with the name of the executable
+#        (self.command, ) = self.cursor.execute( "SELECT name FROM executable " ).fetchone()
+#        (self.command, ) = self.execute_query_fetchone( "SELECT name FROM executable " )
+        #try:
+  ###      print ":::init_db"
+        (self.command, ) = self.execute_query_fetchone( "SELECT value FROM information WHERE key = 'command'" )
+        #except:
+        #    self.command = None
+        
+        
+        #:::~ get the names of the columns
+        sel = self.execute_query("SELECT name FROM entities ORDER BY id")
+        self.entities = [ i[0] for i in sel ]
+        #:::~ get the names of the columns
+        sel = self.execute_query("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
+        self.variables = [ i[0] for i in sel ]
+        #:::~ get the names of the outputs
+        
+        self.output_column = {}
+        
+        table_names = [i[0] for i in self.execute_query("SELECT DISTINCT name from output_tables")]
+     ###   print table_names
+        for table in table_names:
+            fa = self.execute_query("SELECT column FROM output_tables WHERE name = '%s';"%table)
+            
+            self.output_column[table] = [ i[0] for i in fa ]
+          
+#        self.output_column = self.output_column[2:]
+        self.directory_vars = self.variables[:-1]
+  ###      print self.output_column
+   #     self.__close_db()
+
+
+
+    def __iter__(self):
+        return self
+
+
+    def reset(self):     
+        self.execute_query( 'UPDATE run_status SET status ="N" WHERE id>0 '  )
+
+    def next(self):
+        query = "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join( ["v.%s"%i for i in self.entities] )  +"WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
+#       print query
+        res = self.execute_query_fetchone(query)
+#        print res
+        if res == None:
+            # utils.newline_msg("WRN","db '%s' did not return any new data point"%self.full_name)
+            raise StopIteration
+
+        self.current_run_id  = res[0]
+        self.current_valuesset_id = res[1]
+        self.execute_query( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
+        
+        for i in range( len(self.entities) ):
+            self.values[ self.entities[i] ] = res[i+2]
+
+        return self.values
+
+    def create_trees(self):
+#        self.__connect_db()
+        if not self.directory_vars: return False
+        ret = self.execute_query_fetchone("SELECT * FROM entities WHERE name LIKE 'store_%'")
+        
+#        self.__close_db()
+        return ret is not None
+
+
+    def generate_tree(self, dir_vars = None):
+        
+        if type(dir_vars) == type(""):
+            self.directory_vars = dir_vars.split(",")
+        elif type(dir_vars) == type([]):
+            self.directory_vars = dir_vars
+        else:
+            self.directory_vars  = self.variables
+
+    def update_status(self):
+        #:::~    'N': not run yet
+        #:::~    'R': running
+        #:::~    'D': successfully run (done)
+        #:::~    'E': run but with non-zero error code
+
+        (self.stat_values_set_with_rep , ) = self.execute_query_fetchone("SELECT COUNT(*) FROM run_status ;")
+        (self.stat_values_set, ) = self.execute_query_fetchone("SELECT COUNT(*) FROM values_set ;")
+        
+        ret = self.execute_query("SELECT status, COUNT(*) FROM run_status GROUP BY status")
+#        self.stat_done, self.stat_not_run, self.stat_running,self.stat_error = 0,0,0,0
+        for (k,v) in ret:
+            if k == "D":
+                self.stat_processes_done = v
+            elif k == "N":
+                self.stat_processes_not_run = v
+            elif k == "R":
+                self.stat_processes_running = v
+            elif k == "E":
+                self.stat_processes_error = v
+ 
+ 
 
 class ParameterEnsemble:
     

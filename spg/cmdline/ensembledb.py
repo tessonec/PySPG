@@ -17,6 +17,165 @@ import sys, os.path
 import fnmatch
 
 
+
+
+
+
+
+
+
+class BaseSPGCommandParser(cmd.Cmd):
+    """DB command handler"""
+ 
+    def __init__(self, EnsembleConstructor = ParameterEnsemble):
+        cmd.Cmd.__init__(self)
+        self.EnsembleConstructor = EnsembleConstructor 
+
+
+    def parse_command_line(self, st):
+        """returns command the flags set under a command and the arguments"""
+        cmd = []
+        flags = set()
+        
+        
+        for ic in st.strip().split():
+            if ic[0] == "-":
+                flags.add( ic.strip("-") )
+            else:
+                cmd.append( ic )
+        
+        return flags, cmd
+
+    def shorten_name(self, st):
+        ret = os.path.relpath(st,RUN_DIR)
+        if ret[:3] == "../":
+            return st
+        return ret
+
+    def lengthen_name(self, st):
+        return "%s/%s"%(RUN_DIR, st)
+
+
+    def do_ls(self, c):
+        """ls REGEXP|DB_ID
+        lists the databases already registered in the master database and the possible ones found in the current directory"""
+    #    print self.filter_db_list(), self.master_db.result_dbs
+        ls_res_db = self.filter_db_list( filter = c ) 
+    ###    print ls_res_db, self.master_db.result_dbs
+        if ls_res_db: 
+            print " --- registered dbs" 
+            for i in sorted( ls_res_db  ):
+                #print "%5d: %s"%(i_id, i_name)
+                # :::~FIXME workaround for non-existing dbs 
+             #   try:
+                curr_db = self.master_db.result_dbs[i]
+              #  except:
+              #      continue
+    #            if not curr_db: continue
+    ###            print " %5d: %s (%5.5f)"%(curr_db.id, self.shorten_name( curr_db.full_name ) , curr_db.weight )
+                try:
+                    print "%5d: %s (%5.5f)"%(curr_db.id, self.shorten_name( curr_db.full_name ) , curr_db.weight )
+                except:
+                    print "%5d: %s "%(curr_db.id,   self.shorten_name( curr_db.full_name ) ) 
+                    
+        ls_res_db = fnmatch.filter( os.listdir("."), "results*.sqlite" )
+        ls_res_db.extend( fnmatch.filter( os.listdir("."), "parameter*.dat" ) )
+        ls_res_db = self.filter_db_list(  ls_res_db, filter = c )
+        if ls_res_db:
+            print " --- cwd dbs"
+            for i in sorted( ls_res_db  ):
+                print "     : %s "%self.shorten_name(i)
+                
+    def do_load(self,c):
+        """load DB_NAME|DB_ID 
+        loads one of the registered databases from the master"""
+        c = c.split()
+        if len(c) >1:
+            utils.newline_msg("ERR", "only one db can be loaded at a time", 2)
+            return
+        ret = self.get_db_from_cmdline(c[0])
+        if ret:
+            self.current_param_db = ret 
+            print " --- loaded db '%s'"%self.shorten_name( self.current_param_db.full_name )
+        else:    
+            utils.newline_msg("ERR", "db does not exist", 2)
+
+# :::~ FIXME!: Hast to be implemented
+#    def complete_load(self, text, line, begidx, endidx):
+#        return self.complete(text)
+
+    def do_info(self, c):
+        """info REGEXP 
+        prints the information of the results databases, filtered by a regular expression, or its id """
+        if not c:
+            if not self.current_param_db:
+                return
+            else:
+                ls_res_db = [ self.current_param_db.full_name ]
+        else:
+            ls_res_db = self.filter_db_list( filter = c )
+        if not ls_res_db: return
+        
+        for i in ls_res_db: 
+            curr_db = self.master_db.result_dbs[i]
+        
+            self.master_db.update_result_db( curr_db )
+        
+            print " ---%5d: %s"%( curr_db.id, os.path.relpath(curr_db.full_name,RUN_DIR) )
+            frac_done =  float(curr_db.stat_processes_done) / float(curr_db.stat_values_set)
+            
+            n_repet = curr_db.stat_values_set_with_rep/ curr_db.stat_values_set
+            
+            print "   -+ status: %s / total = %d*%d / D: %d (%.5f) - R: %d - E: %d "%(curr_db.status, curr_db.stat_values_set,n_repet , curr_db.stat_processes_done, frac_done, curr_db.stat_processes_running,  curr_db.stat_processes_error ) 
+            print "   -+ queue = %s / w=%5.5f "%(curr_db.queue, curr_db.weight ) 
+
+    
+    def do_EOF(self, line):
+        return True
+
+    def do_shell(self, line):
+        """Runs a shell command"""
+        output = os.popen(line).read()
+        print output
+
+    def do_cd(self,line):
+        """ Changes into a given directory """
+        try:
+            os.chdir(line)
+        except:
+            utils.newline_msg("DIR", "no directory named '%s'"%line, 2)
+
+    def complete_cd(self, text, line, begidx, endidx):    
+        completions =  filter(lambda x: os.path.isdir(x) , os.listdir(".") )
+        if text:
+            completions = [ f
+                            for f in completions
+                            if f.startswith(text)
+                            ]
+        return completions
+
+
+    def do_run_script(self,c):
+        """executes a script file with commands accepted in this cmdline parser"""
+        if not os.path.exists(c):
+            utils.newline_msg("FIL", "file doesn't exist")
+            return
+        for l in open(c):
+            l = l.strip()
+            if not l: continue 
+            if l[0] == "#": continue
+            
+            self.onecmd(l.strip())
+
+
+
+
+
+
+
+
+
+
 class BaseDBCommandParser(cmd.Cmd):
     """DB command handler"""
 
