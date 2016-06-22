@@ -9,16 +9,15 @@ Created on Tue Jun 28 08:10:30 2011
 
 
 from spg import utils
-from spg import VAR_PATH, TIMEOUT
-from spg.parameter import ParameterAtom, ParameterEnsemble
+from spg import VAR_PATH #, TIMEOUT
+from spg.parameter import ParameterAtom #, ParameterEnsemble
 
 from spg.master import MasterDB
 
-import os
+import os, fnmatch
 import random
-import sqlite3 as sql
+# import sqlite3 as sql
 
-import fnmatch
 
 
 
@@ -28,13 +27,11 @@ class DataExchanger(MasterDB):
     def __init__(self, connection = None):
         MasterDB.__init__(self, connection)
 
-        
         self.current_counter = 0
         res = self.cursor.execute("SELECT last FROM infiles WHERE id = 1").fetchone()
         if res == None:
             self.cursor.execute("INSERT INTO infiles  (last) VALUES (0)")
             self.connection.commit()
-
 
     def update_ensemble_list(self):
             self.normalising = 0.
@@ -77,25 +74,22 @@ class DataExchanger(MasterDB):
 
 
     def seed_atoms(self, queue_name):
-        self.seeded_atoms =  self.max_atoms_to_seed - len(os.listdir("%s/queue/%s"%(VAR_PATH,queue_name) ) ) 
-#      utils.newline_msg("INF", "initialise_infiles - %d"%to_run_processes )
-#        print "inti"
+        self.seeded_atoms =  self.max_atoms_to_seed - len(os.listdir("%s/spool"%(VAR_PATH) ) ) 
+
         self.update_ensemble_list()
         for i_atom in range(self.seeded_atoms):
             sel_db = self.pick_ensemble( queue_name )
-#            utils.newline_msg("INF", "  >> %s/%s"%(sel_db.path,sel_db.db_name) )
-        #    sel_db.next()
             
             (self.current_counter, ) = self.execute_query_fetchone("SELECT last FROM infiles WHERE id = 1")
             self.current_counter += 1
             self.execute_query("UPDATE infiles SET last = ? WHERE id = 1", self.current_counter )
-#            self.db_master.commit()
+
             in_name = "in_%.10d"%self.current_counter
             pd = ParameterAtom(in_name, sel_db.full_name)
             ret = pd.load_next_from_ensemble( sel_db )
             if ret == None:
                 continue
-            pd.dump(src = "queue/%s"%queue_name)
+            pd.dump(src = "spool")
 
 
 

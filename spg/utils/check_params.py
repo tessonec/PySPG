@@ -73,10 +73,13 @@ def consistency(exec_file, miparser):
     """ Checks the consistency of a parameters.dat file """  
     consistent_param=True
   
-    if exec_file[:2] == "ct" and exec_file[3] == "-" :  exec_file = exec_file[4:]
+    # if exec_file[:2] == "ct" and exec_file[3] == "-" :  exec_file = exec_file[4:]
 
     exec_file, ext = os.path.splitext(exec_file)
-    possible_lines = import_backends("%s/spg-conf/%s.ct"%(CONFIG_DIR,exec_file))
+    try:
+        possible_lines = import_backends("%s.ct"%(exec_file))
+    except:
+        possible_lines = import_backends("%s/spg-conf/%s.ct"%(CONFIG_DIR,exec_file))
 
     assert len(set(miparser.items() ) - set( possible_lines.keys() ) ) == 0 , "not all the variables are recognised: offending vars: %s"%(set( miparser.items() ) -set( possible_lines.keys() )  )
 
@@ -142,7 +145,11 @@ def contents_in_output(exec_file):
     ret = {}
     exec_file,ext=os.path.splitext(exec_file)
 
-    cfgFile = "%s/spg-conf/%s.stdout"%(CONFIG_DIR,exec_file)
+    try:
+        cfgFile = "%s.stdout"%(CONFIG_DIR,exec_file)
+    except:
+        cfgFile = "%s/spg-conf/%s.stdout"%(CONFIG_DIR,exec_file)
+        
     ret['results'] = []  # :::~ by default, results table is always created
     
     for line in open(cfgFile):

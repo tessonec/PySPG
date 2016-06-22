@@ -79,7 +79,11 @@ class EnsembleBuilder(MultIteratorParser):
 
 #        try:
         self.check_and_insert_information('command', self.command )
- #       except:
+
+
+        self.check_and_insert_information('path', self.path)
+
+#       except:
   #          print "error2"
    #         sys.exit(1)
         

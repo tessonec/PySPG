@@ -1,5 +1,5 @@
 from spg import utils
-from spg import BINARY_PATH, TIMEOUT
+from spg import TIMEOUT
 
 #import os.path, os, sys
 import os, sys

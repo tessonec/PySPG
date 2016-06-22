@@ -3,13 +3,11 @@
 import cmd
 import re
 
-
-
 import spg.utils as utils
 from spg.parameter import ParameterEnsemble
 from spg.master import MasterDB
 
-from spg import RUN_DIR
+# from spg import RUN_DIR
 
 import sys, os.path
 
@@ -19,7 +17,6 @@ import fnmatch
 
 class BaseDBCommandParser(cmd.Cmd):
     """DB command handler"""
-
  
     def __init__(self, EnsembleConstructor = ParameterEnsemble):
         cmd.Cmd.__init__(self)
@@ -43,13 +40,14 @@ class BaseDBCommandParser(cmd.Cmd):
         return flags, cmd
 
     def shorten_name(self, st):
-        ret = os.path.relpath(st,RUN_DIR)
-        if ret[:3] == "../":
-            return st
-        return ret
+#        ret = os.path.relpath(st,RUN_DIR)
+#        if ret[:3] == "../":
+#            return st
+        return st
 
     def lengthen_name(self, st):
-        return "%s/%s"%(RUN_DIR, st)
+        return st        
+#         return "%s/%s"%(RUN_DIR, st)
 
     def translate_name( self,st):
         """translates the parameters filename and the  database name 
@@ -254,4 +252,12 @@ class BaseDBCommandParser(cmd.Cmd):
             
             self.onecmd(l.strip())
 
+
+    def do_set_max_jobs(self, c):
+        """sets the maximum number of jobs in the given queue 
+           usage: N_JOBS"""
+        c = c.split()
+        if len(c) == 1:
+            max_jobs = int(c[0])
+            self.master_db.execute_query( 'UPDATE queues SET max_jobs= ? WHERE name = "default"', max_jobs )
 

@@ -3,12 +3,12 @@
 
 import spg.utils as utils
 from spg.parameter import EnsembleBuilder, ParameterEnsemble
-from spg.master import MasterDB
+# from spg.master import MasterDB
 from spg.cmdline import BaseDBCommandParser
-from spg import VAR_PATH, RUN_DIR
+# from spg import VAR_PATH, RUN_DIR
 
-import sqlite3 as sql
-import sys, optparse
+#import sqlite3 as sql
+import sys #, optparse
 import os, os.path
 
 
