@@ -6,7 +6,7 @@ Created on Oct 5, 2011
 
 from spg import VAR_PATH, RUN_DIR, CONFIG_DIR
 import spg.utils as utils
-from spg.cmdline import BaseDBCommandParser
+from spg.cmdline import DBCommandLine
 from spg.master import MasterDB
 from spg.parameter import ResultsDBQuery
 
@@ -26,11 +26,11 @@ import fnmatch
 
 
 
-class PlotCommandParser(BaseDBCommandParser):
+class PlotCommandParser(DBCommandLine):
     """Results command handler"""
 
     def __init__(self):
-        BaseDBCommandParser.__init__(self, EnsembleConstructor = ResultsDBQuery)
+        DBCommandLine.__init__(self, EnsembleConstructor = ResultsDBQuery)
         self.prompt = "| spg-results :::~ "
         
         self.possible_keys = set( [ "table_depth", "expand_dirs", "raw_data", "split_colums", "restrict_by_val", "prefix", "n_rows", "plot_x_label", "plot_y_label", "plot_x_scale", "plot_y_scale", "plot_x_min", "plot_x_max", "plot_y_min", "plot_y_max", "split_columns"] )
@@ -60,7 +60,7 @@ class PlotCommandParser(BaseDBCommandParser):
 
     def do_load(self,c):
         """loads a results_database"""
-        BaseDBCommandParser.do_load(self, c)
+        DBCommandLine.do_load(self, c)
         self.output_column = self.current_param_db.output_column['results'][:]
         
         os.chdir( self.current_param_db.path )

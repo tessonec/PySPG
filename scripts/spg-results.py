@@ -8,7 +8,7 @@ Created on Mon Jul 11 11:37:27 2011
 
 #from spg import  CONFIG_DIR
 import spg.utils as utils
-from spg.cmdline import BaseSPGCommandParser
+from spg.cmdline import BaseSPGCommandLine
 # from spg.master import MasterDB
 from spg.parameter import ResultsDBQuery
 import spg.utils as utils
@@ -23,11 +23,11 @@ import sys, optparse
 import os, os.path
 import fnmatch
 
-class ResultCommandParser(BaseSPGCommandParser):
+class SPGResultsCommandLine(BaseSPGCommandLine):
     """Results command handler"""
 
     def __init__(self):
-        BaseSPGCommandParser.__init__(self, EnsembleConstructor = ResultsDBQuery)
+        BaseSPGCommandLine.__init__(self, EnsembleConstructor = ResultsDBQuery)
         self.prompt = "| spg-results :::~ "
         
         self.possible_keys = set( [ "raw_data", "split_colums", "restrict_by_val", "table", "split_columns"] )
@@ -42,7 +42,7 @@ class ResultCommandParser(BaseSPGCommandParser):
 
     def do_load(self,c):
         """loads a results_database"""
-        BaseSPGCommandParser.do_load(self, c)
+        BaseSPGCommandLine.do_load(self, c)
         self.output_column = self.current_param_db.output_column['results'][1:]
         
         os.chdir( self.current_param_db.path )
@@ -227,7 +227,7 @@ class ResultCommandParser(BaseSPGCommandParser):
 
 
 if __name__ == '__main__':
-    cmd_line = ResultCommandParser()
+    cmd_line = SPGResultsCommandLine()
     if len(sys.argv) == 1:
         cmd_line.cmdloop()
     else:

@@ -7,10 +7,13 @@ from spg.parameter import ParameterEnsemble
 
 
 class MasterDB:
+    """
+    A class that abstract the interaction with a central database where all the registered simulations lay
+    """
 
     def __init__(self,  connection = None, EnsembleConstructor = ParameterEnsemble):
         if not connection:
-            self.connection = sql.connect("%s/spg_pool.sqlite"%VAR_PATH, timeout = TIMEOUT)
+            self.connection = sql.connect("%s/spg-pool.sqlite"%VAR_PATH, timeout = TIMEOUT)
         else:
             self.connection = connection
             

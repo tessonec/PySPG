@@ -4,7 +4,7 @@
 import spg.utils as utils
 from spg.parameter import EnsembleBuilderCSV, ParameterEnsemble, ParameterEnsembleCSV
 from spg.master import MasterDB
-from spg.cmdline import BaseSPGCommandParser
+from spg.cmdline import BaseSPGCommandLine
 from spg import VAR_PATH, RUN_DIR
 
 import sqlite3 as sql
@@ -15,12 +15,12 @@ import os, os.path
 import fnmatch
 
 
-class DBCommandParser(BaseSPGCommandParser):
+class DBCommandLine(BaseSPGCommandLine):
     """DB command handler"""
 
  
     def __init__(self):
-         BaseSPGCommandParser.__init__(self)
+         BaseSPGCommandLine.__init__(self)
         self.prompt = "| spg-db :::~ "
         self.possible_keys = ['weight', 'repeat',  'status', 'queue']
 
@@ -198,7 +198,7 @@ class DBCommandParser(BaseSPGCommandParser):
     
 
 if __name__ == '__main__':
-    cmd_line = DBCommandParser()
+    cmd_line = DBCommandLine()
     cmd_line.do_init( " ".join(sys.argv[1:]) )
 #    if len(sys.argv) == 1:
 #        cmd_line.cmdloop()

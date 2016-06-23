@@ -4,7 +4,7 @@
 import spg.utils as utils
 from spg.parameter import EnsembleBuilder, ParameterEnsemble
 # from spg.master import MasterDB
-from spg.cmdline import BaseDBCommandParser
+from spg.cmdline import DBCommandLine
 # from spg import VAR_PATH, RUN_DIR
 import spg.utils as utils
 
@@ -16,12 +16,12 @@ import os, os.path
 import fnmatch
 
 
-class DBCommandParser(BaseDBCommandParser):
+class SPGDBCommandLine(DBCommandLine):
     """DB command handler"""
 
  
     def __init__(self):
-        BaseDBCommandParser.__init__(self)
+        DBCommandLine.__init__(self)
         self.prompt = "| spg-db :::~ "
         self.possible_keys = ['weight', 'repeat',  'status', 'queue']
 
@@ -203,7 +203,7 @@ class DBCommandParser(BaseDBCommandParser):
 
 
 if __name__ == '__main__':
-    cmd_line = DBCommandParser()
+    cmd_line = SPGDBCommandLine()
     if len(sys.argv) == 1:
         cmd_line.cmdloop()
     else:

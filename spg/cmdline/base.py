@@ -1,18 +1,19 @@
 #!/usr/bin/python
 
+
+
+# from spg import RUN_DIR
+
+import sys, os.path
 import cmd
-import re
+
+import re, fnmatch
+
 
 import spg.utils as utils
 from spg.parameter import ParameterEnsemble
 from spg.master import MasterDB
 
-# from spg import RUN_DIR
-
-import sys, os.path
-
-
-import fnmatch
 
 
 
@@ -20,10 +21,8 @@ import fnmatch
 
 
 
-
-
-class BaseSPGCommandParser(cmd.Cmd):
-    """DB command handler"""
+class BaseSPGCommandLine(cmd.Cmd):
+    """This is a basic command line for SPG based programs. It contains basic functionality"""
  
     def __init__(self, EnsembleConstructor = ParameterEnsemble):
         cmd.Cmd.__init__(self)
@@ -146,11 +145,11 @@ class BaseSPGCommandParser(cmd.Cmd):
 
 
 
-class BaseDBCommandParser(BaseSPGCommandParser):
-    """DB command handler"""
+class DBCommandLine(BaseSPGCommandLine):
+    """A command handler which interfaces a master DB"""
  
     def __init__(self, EnsembleConstructor = ParameterEnsemble):
-        BaseSPGCommandParser.__init__(self, EnsembleConstructor )
+        BaseSPGCommandLine.__init__(self, EnsembleConstructor)
 
         self.current_param_db = None
         self.master_db =  MasterDB(EnsembleConstructor = EnsembleConstructor)
