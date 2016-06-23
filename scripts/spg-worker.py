@@ -56,24 +56,24 @@ if __name__ == "__main__":
  #    print env
      
      from spg.parameter import ParameterAtomExecutor
-     from spg.queue import get_queueing_system
-     import spg.queue.torque as torque
+     #from spg.queue import get_queueing_system
+     #import spg.queue.torque as torque
  
      import spg.utils as utils
      from spg import VAR_PATH 
      
-     try:
-         queue_type = env[ "QUEUE_TYPE" ]
-     except:
-         utils.newline_msg("WRN", "QUEUE_TYPE could not be parsed, using 'base'")
-         queue_name = 'base'
+#     try:
+#         queue_type = env[ "QUEUE_TYPE" ]
+#     except:
+#         utils.newline_msg("WRN", "QUEUE_TYPE could not be parsed, using 'base'")
+#         queue_name = 'base'
      
-     try:
-         queue_name = env[ "QUEUE_NAME" ]
-     except:
-         utils.newline_msg("WRN", "QUEUE_NAME could not be parsed, using 'default'")
-         queue_name = 'default'
-
+#     try:
+#         queue_name = env[ "QUEUE_NAME" ]
+#     except:
+#         utils.newline_msg("WRN", "QUEUE_NAME could not be parsed, using 'default'")
+#         queue_name = 'default'
+#
      try:
          sleep_time = int( env[ "WORKERS_SLEEP" ] )
      except:
@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
      while True:
         try:
-          next_file = min ( os.listdir("%s/queue/%s"%(VAR_PATH,queue_name) ) )
+          next_file = min ( os.listdir("%s/%s"%(VAR_PATH,queue_name) ) )
           pex = ParameterAtomExecutor(next_file)
           pex.load("queue/%s"%(queue_name) )
         except ValueError:

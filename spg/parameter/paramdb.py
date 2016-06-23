@@ -15,7 +15,7 @@ from spg.base import MultIteratorParser, IterConstant
 
 from spg import database_version
 
-import sys
+import sys, os.path
 import sqlite3 as sql
 import csv
 
@@ -40,6 +40,8 @@ class EnsembleBuilder(MultIteratorParser):
     """Generates a DB file with the representation of the parameters"""
     def __init__(self, stream=None, db_name = "results.sqlite", timeout = 5):
         MultIteratorParser.__init__(self, stream)
+        self.path, foo = os.path.split( os.path.abspath(db_name) )
+        self.base_name, foo = os.path.splitext( foo )
     #    print  check_params.consistency(self.command, self)
         if not check_params.consistency(self.command, self):
             utils.newline_msg("ERR","parameters.dat file is not consistent.")
@@ -74,7 +76,11 @@ class EnsembleBuilder(MultIteratorParser):
         
         self.check_and_insert_information('version', database_version)
         self.check_and_insert_information('command', self.command )
-        
+
+
+        self.check_and_insert_information('path', self.path)
+
+
         
         #:::~ Table with the defined entities
         self.cursor.execute("CREATE TABLE IF NOT EXISTS entities "

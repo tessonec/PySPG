@@ -51,7 +51,7 @@ install:
 	install -m 0644 spg/queue/base.py ${LIBDIR}/queue
 	install -m 0644 spg/queue/base.py ${LIBDIR}/queue
 	install -m 0644 spg/queue/tools.py ${LIBDIR}/queue
-	install -m 0644 spg/queue/torque.py ${LIBDIR}/queue
+	# install -m 0644 spg/queue/torque.py ${LIBDIR}/queue
 	# library (utils)
 	mkdir -p ${LIBDIR}/utils
 	install -m 0644 spg/utils/__init__.py ${LIBDIR}/utils

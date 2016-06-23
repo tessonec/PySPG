@@ -65,9 +65,9 @@ def load_parameters(argv):
 
     prog_name, ext = os.path.splitext(prog_name)
         
-    default_input_file = open("%s/spg-conf/%s.in"%(CONFIG_DIR, prog_name)  ).readline().strip()
-    
-    
+    default_input_file = "input.dat" #open("%s/spg-conf/%s.in"%(CONFIG_DIR, prog_name)  ).readline().strip()
+#    default_input_file = open("%s/spg-conf/%s.in"%(CONFIG_DIR, prog_name)  ).readline().strip()
+
     parser = optparse.OptionParser()
     parser.add_option("--input", '-i', type="string", action='store', dest="input_filename",
                         default = default_input_file , help = "Input file parameter" )

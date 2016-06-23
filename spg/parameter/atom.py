@@ -1,5 +1,5 @@
 from spg import utils
-from spg import BINARY_PATH, VAR_PATH, TIMEOUT
+from spg import VAR_PATH, TIMEOUT
 
 
 
@@ -175,7 +175,7 @@ class ParameterAtomExecutor(ParameterAtom):
         file_stderr = open("%s.stderr"%self.current_run_id, "w")
         
         
-        cmd = "%s/%s -i %s"%(BINARY_PATH, self.command, configuration_filename )
+        cmd = "./%s -i %s"%(self.command, configuration_filename )
 
 #        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
 

@@ -6,10 +6,10 @@ Created on Mon Jul 11 11:37:27 2011
 @author: Claudio Tessone - <tessonec@ethz.ch>
 """
 
-from spg import VAR_PATH, RUN_DIR, CONFIG_DIR
+#from spg import  CONFIG_DIR
 import spg.utils as utils
 from spg.cmdline import BaseDBCommandParser
-from spg.master import MasterDB
+# from spg.master import MasterDB
 from spg.parameter import ResultsDBQuery
 
 
