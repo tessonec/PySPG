@@ -2,7 +2,7 @@ from spg import utils
 from spg import TIMEOUT
 
 #import os.path, os, sys
-import os, sys
+import os, sys, os.path, time
 from subprocess import Popen, PIPE
 import sqlite3 as sql
 
@@ -51,23 +51,23 @@ class ParameterEnsembleCSV:
         self.__close_db()
         return ret 
 
-    def parse_output_line(self,  output_line):
-        """ parses a line from output. Returns a tuple containing: table of output, column names of output,  output values to be inserted in table"""
-        output_columns = output_line.strip().split()
-        table_name = "results"
-    #    print ">>%s<<"%output_columns
-        if output_columns[0][0] == "@":
-            table_name = output_columns[0][1:] 
-            output_columns.pop(0)
-        try:
-            output_column_names = [ i[0] for i in self.execute_query("SELECT column FROM output_tables WHERE name = '%s'"%(table_name)) ]
-        except:
-            utils.newline_msg("ERR", "DB does not contain table named '%s'"%table_name)
-            sys.exit(1)
-        
-     #  print table_name, output_column_names, output_columns
-        
-        return table_name, output_column_names, output_columns 
+    # def parse_output_line(self,  output_line):
+    #     """ parses a line from output. Returns a tuple containing: table of output, column names of output,  output values to be inserted in table"""
+    #     output_columns = output_line.strip().split()
+    #     table_name = "results"
+    # #    print ">>%s<<"%output_columns
+    #     if output_columns[0][0] == "@":
+    #         table_name = output_columns[0][1:]
+    #         output_columns.pop(0)
+    #     try:
+    #         output_column_names = [ i[0] for i in self.execute_query("SELECT column FROM output_tables WHERE name = '%s'"%(table_name)) ]
+    #     except:
+    #         utils.newline_msg("ERR", "DB does not contain table named '%s'"%table_name)
+    #         sys.exit(1)
+    #
+    #  #  print table_name, output_column_names, output_columns
+    #
+    #     return table_name, output_column_names, output_columns
 
     def init_db(self):
     
@@ -176,9 +176,12 @@ class ParameterEnsembleCSV:
 
 class ParameterEnsemble:
     
-    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = False):
-        self.full_name = full_name
-        self.path, self.db_name = os.path.split(full_name)
+    def __init__(self, full_name = "", id=-1, weight=1., queue = '*',
+                 status = 'R', repeat = 1, init_db = False):
+
+        self.full_name, self.path, base_name, ext = self.translate_name(full_name)
+
+        self.db_name = "%s.sqlite"%base_name
 
         self.values = {}
         self.directory_vars = None
@@ -196,8 +199,8 @@ class ParameterEnsemble:
         self.queue = queue
         self.status = status
         self.repeat = repeat
-       # print init_db
-        if init_db:
+
+        if init_db  :
             self.init_db()
 
         # :::~ Before they were in __connect_db(self)
@@ -217,6 +220,18 @@ class ParameterEnsemble:
         del self.cursor
         del self.connection
 
+    def translate_name(self, st):
+        """translates the parameters filename and the  database name
+           into the other and viceversa (returns a duple: param_name, db_name)"""
+        full_name = os.path.realpath(st)
+
+#        if not os.path.exists(full_name):
+#            utils.newline_msg("ERR", "database '%s' does not exist" % full_name)
+#            return None
+
+        path, st = os.path.split(full_name)
+        base_name, ext = os.path.splitext(st)
+        return full_name, path, base_name, ext
 
 
     def execute_query(self, query, *args):
@@ -236,7 +251,7 @@ class ParameterEnsemble:
         """ parses a line from output. Returns a tuple containing: table of output, column names of output,  output values to be inserted in table"""
         output_columns = output_line.strip().split()
         table_name = "results"
-    #    print ">>%s<<"%output_columns
+
         if output_columns[0][0] == "@":
             table_name = output_columns[0][1:] 
             output_columns.pop(0)
@@ -246,24 +261,11 @@ class ParameterEnsemble:
             utils.newline_msg("ERR", "DB does not contain table named '%s'"%table_name)
             sys.exit(1)
         
-     #  print table_name, output_column_names, output_columns
-        
         return table_name, output_column_names, output_columns 
 
     def init_db(self):
-    
-  #      self.__connect_db()
-    
-        
-        #:::~ Table with the name of the executable
-#        (self.command, ) = self.cursor.execute( "SELECT name FROM executable " ).fetchone()
-#        (self.command, ) = self.execute_query_fetchone( "SELECT name FROM executable " )
-        #try:
-  ###      print ":::init_db"
+
         (self.command, ) = self.execute_query_fetchone( "SELECT value FROM information WHERE key = 'command'" )
-        #except:
-        #    self.command = None
-        
         
         #:::~ get the names of the columns
         sel = self.execute_query("SELECT name FROM entities ORDER BY id")
@@ -281,11 +283,8 @@ class ParameterEnsemble:
             fa = self.execute_query("SELECT column FROM output_tables WHERE name = '%s';"%table)
             
             self.output_column[table] = [ i[0] for i in fa ]
-          
-#        self.output_column = self.output_column[2:]
+
         self.directory_vars = self.variables[:-1]
-  ###      print self.output_column
-   #     self.__close_db()
 
 
 
@@ -297,15 +296,14 @@ class ParameterEnsemble:
         self.execute_query( 'UPDATE run_status SET status ="N" WHERE id>0 '  )
 
     def next(self):
-        query = "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join( ["v.%s"%i for i in self.entities] )  +"WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
-#       print query
+
+        query = "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join( ["v.%s"%i for i in self.entities] )  +"WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1"
         res = self.execute_query_fetchone(query)
-#        print res
         if res == None:
-            # utils.newline_msg("WRN","db '%s' did not return any new data point"%self.full_name)
             raise StopIteration
 
         self.current_run_id  = res[0]
+
         self.current_valuesset_id = res[1]
         self.execute_query( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
         
@@ -315,22 +313,11 @@ class ParameterEnsemble:
         return self.values
 
     def create_trees(self):
-#        self.__connect_db()
         if not self.directory_vars: return False
         ret = self.execute_query_fetchone("SELECT * FROM entities WHERE name LIKE 'store_%'")
-        
-#        self.__close_db()
+
         return ret is not None
 
-
-    def generate_tree(self, dir_vars = None):
-        
-        if type(dir_vars) == type(""):
-            self.directory_vars = dir_vars.split(",")
-        elif type(dir_vars) == type([]):
-            self.directory_vars = dir_vars
-        else:
-            self.directory_vars  = self.variables
 
     def update_status(self):
         #:::~    'N': not run yet
@@ -352,110 +339,6 @@ class ParameterEnsemble:
                 self.stat_processes_running = v
             elif k == "E":
                 self.stat_processes_error = v
- 
- 
-#    def update_weight(self,weight):
-#        ParameterEnsemble.normalising -= self.weight  
-#        self.weight = weight
-#        ParameterEnsemble.normalising += self.weight
- 
-        
-#
-#class ParameterEnsemble:
-#    def __init__(self, full_name = ""):
-#        self.full_name = full_name
-#        self.path, self.db_name = os.path.split(full_name)
-#
-#        self.values = {}
-#        self.directory_vars = None
-#        self.__init_db()
-#
-#        
-#    def query_db(self, query):
-#        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
-#        self.cursor = self.connection.cursor()
-#
-#        ret = [i for i in self.cursor.execute(query)]
-#        
-#        self.connection.commit()
-#        self.connection.close()
-#        
-#        return ret
-#
-#    def query_db_fetchone(self, query):
-#        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
-#        self.cursor = self.connection.cursor()
-#
-#        ret = self.cursor.execute(query).fetchone()
-#        
-#        self.connection.commit()
-#        self.connection.close()
-#        
-#        return ret
-#
-#
-#
-#    def __init_db(self):
-#
-#        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
-#        self.cursor = self.connection.cursor()
-#        #:::~ Table with the name of the executable
-#        (self.command, ) = self.cursor.execute( "SELECT name FROM executable " ).fetchone()
-#        #:::~ get the names of the columns
-#        sel = self.cursor.execute("SELECT name FROM entities ORDER BY id")
-#        self.entities = [ i[0] for i in sel ]
-#        #:::~ get the names of the columns
-#        sel = self.cursor.execute("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
-#        self.variables = [ i[0] for i in sel ]
-#        #:::~ get the names of the outputs
-#        fa = self.cursor.execute("PRAGMA table_info(results)")
-#        self.output_column = [ i[1] for i in fa ]
-#        self.output_column = self.output_column[1:]
-#
-#    def close_db(self):
-#        self.connection.commit()
-#        self.connection.close()
-#        del self.cursor
-#        del self.connection
-#
-#    def __iter__(self):
-#        return self
-#
-#
-#    def next(self):
-#        res = self.cursor.execute(
-#                    "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
-#                    "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
-#                   ).fetchone()
-#        if res == None:
-#            utils.newline_msg("WRN","db '%s' did not return any new data point"%self.full_name)
-#            return None
-#
-#        self.current_run_id  = res[0]
-#        self.current_valuesset_id = res[1]
-#        self.cursor.execute( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
-#        self.connection.commit()
-#        for i in range( len(self.entities) ):
-#            self.values[ self.entities[i] ] = res[i+2]
-#
-#        return self.values
-#
-#    def create_trees(self):
-#        ret = self.cursor.execute("SELECT * FROM entities WHERE name LIKE 'store_%'").fetchone()
-#        return ret is not None
-#
-#
-#    def generate_tree(self, dir_vars = None):
-#        
-#        if type(dir_vars) == type(""):
-#            self.directory_vars = dir_vars.split(",")
-#        elif type(dir_vars) == type([]):
-#            self.directory_vars = dir_vars
-#        else:
-#            self.directory_vars  = self.variables
-
-
-
 
 
 
@@ -481,68 +364,114 @@ class ParameterEnsemble:
 ################################################################################
 
 class ParameterEnsembleExecutor(ParameterEnsemble):
-    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = False):
-        ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  , init_db )
-        self.generate_tree()
-        self.directory_vars = self.variables[:]
+    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = True):
+        ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  )
+        self.init_db()
         os.chdir(self.path)
-           
+
     def launch_process(self):
-        pwd = os.path.abspath(".")
-        if self.create_trees():
-            
-            dir = utils.generate_string(self.values,self.directory_vars, joining_string = "/")
-            if not os.path.exists(dir): os.makedirs(dir)
-            os.chdir(dir)
-        configuration_filename = "input_%.8d.dat"%(self.current_run_id)
-        output_filename = "output_%.8d.dat"%(self.current_run_id)
-    #   print configuration_filename
-        fconf = open(configuration_filename,"w")
-        for k in self.values.keys():
-            print >> fconf, k, utils.replace_values(self.values[k], self.values) 
-        fconf.close()
-        #except:
-        #      utils.newline_msg("WRN", "could not load '%s'"%configuration_filename)
-        #      return
+         os.chdir(self.path)
+         started_time = time.time()
 
-        cmd = "%s/%s -i %s > %s"%(BINARY_PATH, self.command, configuration_filename, output_filename )
-        os.system(cmd)
-        ret_code = 0
-#        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
-#        proc.wait()
- #       ret_code = proc.returncode
-        try:
-            output = [ l for l in open(output_filename) ]
-            os.remove(configuration_filename)
-            os.remove(output_filename)
-        except:
-            utils.newline_msg("WRN", "could not read '%s' -  may it be other process accessed it"%output_filename)
-            return
-        if self.directory_vars:
-            os.chdir(pwd)
-#        if ret_code == 0:
-            
-        for line in output:
-            
-                table_name, output_column_names, output_columns = self.parse_output_line( line )
-            
-                cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(output_column_names) , ", ".join(["'%s'" % str(i) for i in output_columns ]))
-                
-                try:
-                    self.execute_query(cc)
-                    self.execute_query('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
-                except:
-                    self.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
-            
+         configuration_filename = "input-%d.dat"%(self.current_run_id)
+         fconf = open(configuration_filename, "w")
+         for k in self.values.keys():
+                print >> fconf, k, utils.replace_values(self.values[k], self.values)
+         fconf.close()
 
-#        else:
-            #:::~ status can be either 
-            #:::~    'N': not run
-            #:::~    'R': running
-            #:::~    'D': successfully run (done)
-            #:::~    'E': run but with non-zero error code
-        
-#       self.connection.commit()
+         file_stdout = open("%s.stdout" % self.current_run_id, "w")
+         file_stderr = open("%s.stderr" % self.current_run_id, "w")
+
+         cmd = "./%s -i %s" % (self.command, configuration_filename)
+
+
+         proc = Popen(cmd, shell=True, stdin=PIPE, stdout=file_stdout, stderr=file_stderr)
+         self.return_code = proc.wait()
+
+         file_stdout.close()
+         file_stderr.close()
+         finish_time = time.time()
+
+         self.output = [i.strip() for i in open("%s.stdout" % self.current_run_id, "r")]
+         self.stderr = [i.strip() for i in open("%s.stderr" % self.current_run_id, "r")]
+
+         os.remove(configuration_filename)
+
+         os.remove("%s.stdout" % self.current_run_id)
+         os.remove("%s.stderr" % self.current_run_id)
+
+         self.run_time = finish_time - started_time
+
+         try:
+            self.dump_result()
+            self.execute_query('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
+         except:
+            self.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
+
+    def restore_last_run(self):
+        self.execute_query('UPDATE run_status SET status ="N" WHERE id = %d' % self.current_run_id)
+
+    def dump_result(self):
+         """ loads the next parameter atom from a parameter ensemble"""
+
+         if self.return_code == 0:
+              #       print self.output
+              for line in self.output:
+                 table_name, output_column_names, output_columns = self.parse_output_line(line)
+                 #        print output_column_names
+                 output_columns.insert(0, self.current_run_id)  # WARNING: MZ FOUND THAT BEFORE WE HAVE BEEN SETTING current_run_id
+                 cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(output_column_names),
+                                                                   ", ".join(["'%s'" % str(i) for i in output_columns]))
+                 # print cc
+                 try:
+                     param_ens.execute_query(cc)
+                     param_ens.execute_query(
+                                'UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
+                 except:
+                     param_ens.execute_query(
+                                'UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
+                 flog = open(self.full_db_name.replace("sqlite", "log"), "aw")
+                 flog_err = open(self.full_db_name.replace("sqlite", "err"), "aw")
+                 if not hasattr(self, 'run_time'):
+                        self.run_time = -1
+                 utils.newline_msg("INF", "{%s} %s: ret=%s -- %s,%s -- run_time=%s" % (
+                     self.command, self.in_name, self.return_code, self.current_run_id, self.current_valuesset_id,
+                     self.run_time), stream=flog)
+                 print >> flog, "     values: ", self.values
+                 print >> flog, "OUT--  ", "       \n ".join(self.output)
+
+                 try:
+                        print >> flog_err, "     \n ".join(self.stderr)
+                 except:
+                        utils.newline_msg("WRN", "NO_STDERR", stream=flog_err)
+                 flog.close()
+                 flog_err.close()
+
+         else:
+              #:::~ status can be either
+              #:::~    'N': not run
+              #:::~    'R': running
+              #:::~    'D': successfully run (done)
+              #:::~    'E': run but with non-zero error code
+              self.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
+
+              flog = open(self.full_db_name.replace("sqlite", "log"), "aw")
+              flog_err = open(self.full_db_name.replace("sqlite", "err"), "aw")
+              if not hasattr(self, 'run_time'):
+                  self.run_time = -1
+              utils.newline_msg("INF", "{%s} %s: ret=%s -- %s,%s -- run_time=%s" % (
+              self.command, self.in_name, self.return_code, self.current_run_id, self.current_valuesset_id,
+                    self.run_time), stream=flog)
+              print >> flog, "     values: ", self.values
+              print >> flog, "OUT--  ", "       ".join(self.output)
+
+              try:
+                        print >> flog_err, "     \n ".join(self.stderr)
+              except:
+                        utils.newline_msg("WRN", "NO_STDERR", stream=flog_err)
+              flog.close()
+              flog_err.close()
+
 
 
 

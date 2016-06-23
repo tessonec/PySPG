@@ -211,36 +211,35 @@ class BaseDBCommandParser(cmd.Cmd):
     def translate_name( self,st):
         """translates the parameters filename and the  database name 
            into the other and viceversa (returns a duple: param_name, db_name)"""
+       # print "translate_name:::",st
         full_name = os.path.realpath( st )
-        if not os.path.exists(full_name):
-            full_name = self.lengthen_name(full_name)
-#        print "::::::::", full_name   
-        if not os.path.exists(full_name):
-            utils.newline_msg("ERR","database '%s' does not exist"%st)
-            return None
+
+#        if not os.path.exists(full_name):
+#            full_name = self.lengthen_name(full_name)
+
+#        if not os.path.exists(full_name):
+#            utils.newline_msg("ERR","database '%s' does not exist"%full_name)
+#            return None
         
         path, st = os.path.split(full_name)
-        if ".sqlite" in st:
-            par_name = st.replace("results","").replace(".sqlite","")
-            par_name = "parameters%s.dat"%par_name
-            return  "%s/%s"%(path,par_name) , "%s/%s"%(path,st)
-        else:
-            db_name = st.replace("parameters","").replace(".dat","")
-            db_name = "results%s.sqlite"%db_name
-            return  "%s/%s"%(path,st) ,  "%s/%s"%(path,db_name) 
-            
+        base_name, ext = os.path.splitext(st)
+        return  full_name, path, base_name, ext
+
     def update_active_result_db(self, c):
         c = c.strip()
         if not c: return 
         try:
-            param_name, db_name = self.translate_name(c)
+            full_name, path, base_name, extension = self.translate_name(i_arg)
+            db_name = "%s/%s.sqlite" % (path, base_name)
+            sim_name = "%s/%s.spg" % (path, base_name)
+
         except: 
 #            utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not load it" )
             return
 
         if os.path.exists( db_name ):
             self.current_param_db = ParameterEnsemble( db_name )
-        elif os.path.exists( param_name ) and not os.path.exists( db_name ):
+        elif os.path.exists( sim_name ) and not os.path.exists( db_name ):
             self.current_param_db = ParameterEnsemble( db_name , db_init = False)
         return   
         
@@ -248,7 +247,6 @@ class BaseDBCommandParser(cmd.Cmd):
   #      print self.master_db.result_dbs.keys()
         if ls == None:
             ls = self.master_db.result_dbs.keys()
-            
      #   try:
         if  re.match("^\d+?$", filter): #:::~ Is filter an integer???
             id = int(filter)
@@ -278,7 +276,9 @@ class BaseDBCommandParser(cmd.Cmd):
             else: return None
         except:
             try:
-                foo, db_name = self.translate_name(c)
+                full_name, path, base_name, extension = self.translate_name(i_arg)
+                db_name = "%s/%s.sqlite" % (path, base_name)
+                sim_name = "%s/%s.spg" % (path, base_name)
             except: 
                 utils.newline_msg("ERR", "results db '%s' doesn't exist."%c )
                 return 

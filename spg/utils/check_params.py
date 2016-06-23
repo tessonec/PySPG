@@ -94,7 +94,7 @@ def consistency(exec_file, miparser):
             values = it.data
         for val in values:
             if family == "flag" : 
-                newline_msg("VAL", "flag can not contain a value")
+                newline_msg("VAL", "flag cannot contain a value")
             elif family == "choice" and str(val) not in default: 
                 newline_msg("VAL", "choice value '%s' not recognised: possible values: %s"%(val, default))
                 consistent_param = False

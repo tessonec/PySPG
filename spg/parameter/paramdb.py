@@ -76,9 +76,8 @@ class EnsembleBuilder(MultIteratorParser):
         
         self.check_and_insert_information('version', database_version)
         self.check_and_insert_information('command', self.command )
-
-
         self.check_and_insert_information('path', self.path)
+        self.check_and_insert_information('base_name', self.base_name)
 
 
         
@@ -113,6 +112,7 @@ class EnsembleBuilder(MultIteratorParser):
         
         # :::~ (CT) Index creation code
         for i in self.data:
+
             if i.__class__ == IterConstant: continue
             
             self.cursor.execute( "CREATE INDEX idxvs_%s_id ON values_set (%s) "%(i.name,i.name) )

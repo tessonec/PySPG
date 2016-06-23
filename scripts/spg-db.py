@@ -28,7 +28,7 @@ class DBCommandParser(BaseDBCommandParser):
 
     def do_init(self, c):
         """init [-flag ...] PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
-        Generates a new database out of a parameters.dat
+        Generates a new database out of a simulation.dat
         FLAGS::: -skip-master: the new results.sqlite is created, but gets not registered in master
                  -purge:       deletes the results.sqlite db, if it already existed 
         """
@@ -38,7 +38,11 @@ class DBCommandParser(BaseDBCommandParser):
         i_arg = c[0]
         
         try:
-            i_arg, db_name = self.translate_name(i_arg)
+            full_name, path, base_name, extension = self.translate_name(i_arg)
+            # print "do_init::: ",self.translate_name(i_arg)
+            db_name = "%s/%s.sqlite" % (path, base_name)
+            sim_name = "%s/%s.spg" % (path, base_name)
+
         except: 
             utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not init it" )
             return
@@ -48,13 +52,14 @@ class DBCommandParser(BaseDBCommandParser):
                 os.remove(db_name)
             except:
                 utils.newline_msg("WRN", "db '%s' could not be removed... skipping"%db_name)  
-            self.do_remove(i_arg) 
+
+            self.do_remove(i_arg)
 
         self.current_param_db = ParameterEnsemble( db_name, init_db = False )
-         
+
         if len(c) >1: self.do_set( ":".join( c[1:] ) )
         
-        parser = EnsembleBuilder( stream = open(i_arg), db_name=db_name  )
+        parser = EnsembleBuilder( stream = open(sim_name), db_name=db_name  )
         parser.init_db(  )
         parser.fill_status(repeat = self.current_param_db.repeat ) 
         if not "skip-master" in  flags:
@@ -65,8 +70,8 @@ class DBCommandParser(BaseDBCommandParser):
 
     def complete_init(self, text, line, begidx, endidx):    
         
-        completions = fnmatch.filter( os.listdir("."), "results*.sqlite" )
-        completions.extend( fnmatch.filter( os.listdir("."), "parameters*.dat" ) )
+        completions = fnmatch.filter( os.listdir("."), ".sqlite" )
+        completions.extend( fnmatch.filter( os.listdir("."), "*.spg" ) )
         if text:
             completions = [ f
                             for f in completions
@@ -79,9 +84,12 @@ class DBCommandParser(BaseDBCommandParser):
         c = c.split()
         i_arg = c[0]
         try: 
-            i_arg, db_name = self.translate_name(i_arg)
+            full_name, path, base_name, extension = self.translate_name(i_arg)
+            db_name = "%s/%s.sqlite" % (path, base_name)
+            sim_name = "%s/%s.spg" % (path, base_name)
+
         except:
-            utils.newline_msg("WRN", "results db '%s' already registered"%self.shorten_name( db_name ), 2)
+            utils.newline_msg("WRN", "database '%s' already registered"%self.shorten_name( db_name ), 2)
             return 
 
         self.current_param_db = ParameterEnsemble( db_name ) 
