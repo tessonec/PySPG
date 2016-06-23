@@ -6,6 +6,7 @@ from spg.parameter import EnsembleBuilder, ParameterEnsemble
 # from spg.master import MasterDB
 from spg.cmdline import BaseDBCommandParser
 # from spg import VAR_PATH, RUN_DIR
+import spg.utils as utils
 
 #import sqlite3 as sql
 import sys #, optparse
@@ -38,9 +39,9 @@ class DBCommandParser(BaseDBCommandParser):
         i_arg = c[0]
         
         try:
-            full_name, path, base_name, extension = self.translate_name(i_arg)
+            full_name, path, base_name, extension = utils.translate_name(i_arg)
             # print "do_init::: ",self.translate_name(i_arg)
-            db_name = "%s/%s.sqlite" % (path, base_name)
+            db_name = "%s/%s.spgql" % (path, base_name)
             sim_name = "%s/%s.spg" % (path, base_name)
 
         except: 
@@ -70,7 +71,7 @@ class DBCommandParser(BaseDBCommandParser):
 
     def complete_init(self, text, line, begidx, endidx):    
         
-        completions = fnmatch.filter( os.listdir("."), ".sqlite" )
+        completions = fnmatch.filter( os.listdir("."), ".spgql" )
         completions.extend( fnmatch.filter( os.listdir("."), "*.spg" ) )
         if text:
             completions = [ f
@@ -84,8 +85,8 @@ class DBCommandParser(BaseDBCommandParser):
         c = c.split()
         i_arg = c[0]
         try: 
-            full_name, path, base_name, extension = self.translate_name(i_arg)
-            db_name = "%s/%s.sqlite" % (path, base_name)
+            full_name, path, base_name, extension = utils.translate_name(i_arg)
+            db_name = "%s/%s.spgql" % (path, base_name)
             sim_name = "%s/%s.spg" % (path, base_name)
 
         except:
@@ -190,8 +191,16 @@ class DBCommandParser(BaseDBCommandParser):
     def do_pause(self, c):
          """pauses the currently loaded registered database"""
          self.__set_status(c, 'P')
-                
-    
+
+
+    def do_set_max_jobs(self, c):
+        """sets the maximum number of jobs in the given queue
+           usage: N_JOBS"""
+        c = c.split()
+        if len(c) == 1:
+            max_jobs = int(c[0])
+            self.master_db.execute_query('UPDATE queues SET max_jobs= ? WHERE name = "default"', max_jobs)
+
 
 if __name__ == '__main__':
     cmd_line = DBCommandParser()

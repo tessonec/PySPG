@@ -1,5 +1,5 @@
 from spg import utils
-from spg import VAR_PATH, TIMEOUT
+from spg import VAR_PATH, ROOT_DIR
 
 
 
@@ -98,8 +98,8 @@ class ParameterAtom:
                     param_ens.execute_query('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
                 except:
                     param_ens.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
-            flog = open(self.full_db_name.replace("sqlite", "log"), "aw") 
-            flog_err = open(self.full_db_name.replace("sqlite", "err"), "aw") 
+            flog = open(self.full_db_name.replace("spgql", "log"), "aw")
+            flog_err = open(self.full_db_name.replace("spgql", "err"), "aw")
             if not hasattr(self,'run_time'):
                 self.run_time = -1
             utils.newline_msg( "INF",  "{%s} %s: ret=%s -- %s,%s -- run_time=%s"  % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id,  self.run_time ) , stream = flog ) 
@@ -121,8 +121,8 @@ class ParameterAtom:
             #:::~    'E': run but with non-zero error code
             param_ens.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
              
-            flog = open(self.full_db_name.replace("sqlite", "log"), "aw") 
-            flog_err = open(self.full_db_name.replace("sqlite", "err"), "aw") 
+            flog = open(self.full_db_name.replace("spgql", "log"), "aw")
+            flog_err = open(self.full_db_name.replace("spgql", "err"), "aw")
             if not hasattr(self,'run_time'):
                 self.run_time = -1
             utils.newline_msg( "INF",  "{%s} %s: ret=%s -- %s,%s -- run_time=%s"  % (self.command, self.in_name, self.return_code , self.current_run_id, self.current_valuesset_id,  self.run_time ) , stream = flog ) 
@@ -149,6 +149,13 @@ class ParameterAtom:
 class ParameterAtomExecutor(ParameterAtom):
     def __init__(self, fname, full_db_name = None):
         ParameterAtom.__init__(self, fname, full_db_name )
+        if os.path.exists("./%s"%self.command):
+            self.bin_dir = "."
+        elif os.path.exists("%s%/bin/%s"%(ROOT_DIR, self.command)):
+            self.bin_dir = "%s%/bin"%(ROOT_DIR)
+        else:
+            utils.newline_msg("ERR","Fatal, binary '%s' not found"%self.command)
+            sys.exit(1)
 
     def create_tree(self):
         for k in self.values:
@@ -171,11 +178,11 @@ class ParameterAtomExecutor(ParameterAtom):
         fconf.close()
         
         
-        file_stdout = open("%s.stdout"%self.current_run_id, "w")
-        file_stderr = open("%s.stderr"%self.current_run_id, "w")
+        file_stdout = open("%s.tmp_stdout"%self.current_run_id, "w")
+        file_stderr = open("%s.tmp_stderr"%self.current_run_id, "w")
         
         
-        cmd = "./%s -i %s"%(self.command, configuration_filename )
+        cmd = "%s/%s -i %s"%(self.bin_dir , self.command, configuration_filename )
 
 #        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
 
@@ -196,9 +203,9 @@ class ParameterAtomExecutor(ParameterAtom):
 #        print self.current_run_id, self.current_variables_id, self.entities, configuration_filename
         
     #    print self.return_code 
-        self.output =  [i.strip() for i in open("%s.stdout"%self.current_run_id, "r")] 
+        self.output =  [i.strip() for i in open("%s.tmp_stdout"%self.current_run_id, "r")]
      #   print >> sys.stderr, "STDOUT",  self.output
-        self.stderr =  [i.strip() for i in open("%s.stderr"%self.current_run_id, "r")] 
+        self.stderr =  [i.strip() for i in open("%s.tmp_stderr"%self.current_run_id, "r")]
     #    print >> sys.stderr, "STDERR",  self.stderr
 #        self.return_code = 0
 #        self.output = ""
@@ -206,7 +213,7 @@ class ParameterAtomExecutor(ParameterAtom):
 
         os.remove(configuration_filename)
         
-        os.remove("%s.stdout"%self.current_run_id)
-        os.remove("%s.stderr"%self.current_run_id)
+#        os.remove("%s.stdout"%self.current_run_id)
+#        os.remove("%s.stderr"%self.current_run_id)
 
         self.run_time = finish_time - started_time

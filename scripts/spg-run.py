@@ -6,19 +6,7 @@ import spg.utils as utils
 
 import os, os.path, optparse, sys
 
-def translate_name(st):
-    """translates the parameters filename and the  database name
-       into the other and viceversa (returns a duple: param_name, db_name)"""
-    full_name = os.path.realpath(st)
 
-    if not os.path.exists(full_name):
-        utils.newline_msg("ERR", "database '%s' does not exist" % full_name)
-        return None
-
-    path, st = os.path.split(full_name)
-    base_name, ext = os.path.splitext(st)
-
-    return full_name, path, base_name, ext
 
 if __name__ == "__main__":
 
@@ -39,17 +27,17 @@ if __name__ == "__main__":
     parser.add_option("--verbose", action='store_true', dest="verbose",
                       help="more verbose output")
 
-    parser.add_option("-d","--directory-var", action='store', type = "string", dest="directory_vars",
-                       default = False, help = "which variables to store as directories, only if tree" )
+#    parser.add_option("-d","--directory-var", action='store', type = "string", dest="directory_vars",
+#                       default = False, help = "which variables to store as directories, only if tree" )
 
 
     options, args = parser.parse_args()
     
 
     for i_arg in args:
-      full_name, path, base_name, extension = translate_name(i_arg)
+      full_name, path, base_name, extension = utils.translate_name(i_arg)
 
-      db_name = "%s/%s.sqlite" % (path, base_name)
+      db_name = "%s/%s.spgql" % (path, base_name)
       sim_name = "%s/%s.spg" % (path, base_name)
       if options.purge and os.path.exists( db_name ):
           os.remove( db_name )
@@ -69,7 +57,8 @@ if __name__ == "__main__":
       executor.init_db()
       for values in executor:
           if options.verbose:
-              utils.inline_msg("RUN", "[%s] %s"%(executor.current_run_id,executor.values) )
+              utils.inline_msg("RUN", "[%s] %s"%(executor.current_run_id,executor.variable_values()) )
+          executor.launch_process()
           try:
              executor.launch_process()
           except (KeyboardInterrupt,):
@@ -78,8 +67,8 @@ if __name__ == "__main__":
               utils.newline_msg("SYS", "keyboard interrupted, exiting")
               sys.exit(1)
 
-      if options.tree:
-          os.chdir(path)
+ #     if options.tree:
+ #         os.chdir(path)
       
       if options.dummy:
           executor.reset()

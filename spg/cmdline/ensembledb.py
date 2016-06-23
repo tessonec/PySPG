@@ -44,45 +44,45 @@ class BaseSPGCommandParser(cmd.Cmd):
         
         return flags, cmd
 
-    def shorten_name(self, st):
-        ret = os.path.relpath(st,RUN_DIR)
-        if ret[:3] == "../":
-            return st
-        return ret
 
-    def lengthen_name(self, st):
-        return "%s/%s"%(RUN_DIR, st)
+
+
+    def get_db_from_cmdline(self, c):
+        """it returns the db name (or None) of a database identified either from its id or """
+
+        try:
+                full_name, path, base_name, extension = utils.translate_name(c.strip())
+                db_name = "%s/%s.spgql" % (path, base_name)
+                sim_name = "%s/%s.spg" % (path, base_name)
+        except:
+                utils.newline_msg("ERR", "results db '%s' doesn't exist." % c)
+                return None
+
+        return self.EnsembleConstructor(db_name, init_db=True)
+
+
 
 
     def do_ls(self, c):
-        """ls REGEXP|DB_ID
-        lists the databases already registered in the master database and the possible ones found in the current directory"""
-    #    print self.filter_db_list(), self.master_db.result_dbs
-        ls_res_db = self.filter_db_list( filter = c ) 
-    ###    print ls_res_db, self.master_db.result_dbs
-        if ls_res_db: 
-            print " --- registered dbs" 
-            for i in sorted( ls_res_db  ):
-                #print "%5d: %s"%(i_id, i_name)
-                # :::~FIXME workaround for non-existing dbs 
-             #   try:
-                curr_db = self.master_db.result_dbs[i]
-              #  except:
-              #      continue
-    #            if not curr_db: continue
-    ###            print " %5d: %s (%5.5f)"%(curr_db.id, self.shorten_name( curr_db.full_name ) , curr_db.weight )
-                try:
-                    print "%5d: %s (%5.5f)"%(curr_db.id, self.shorten_name( curr_db.full_name ) , curr_db.weight )
-                except:
-                    print "%5d: %s "%(curr_db.id,   self.shorten_name( curr_db.full_name ) ) 
-                    
-        ls_res_db = fnmatch.filter( os.listdir("."), "results*.sqlite" )
-        ls_res_db.extend( fnmatch.filter( os.listdir("."), "parameter*.dat" ) )
-        ls_res_db = self.filter_db_list(  ls_res_db, filter = c )
+
+        full_ls = fnmatch.filter(os.listdir("."), "*.spgql")
+        full_ls.extend( fnmatch.filter( os.listdir("."), "*.spg" ) )
+
+        ls_res_db = set()
+        ls_keys = set()
+
+        for el in full_ls:
+            full_name, path, base_name, extension = utils.translate_name(el)
+            full_base = "%s/%s"%(path, base_name)
+            if full_base not in ls_keys:
+                ls_res_db.add(os.path.relpath(full_name, "."))
+                ls_keys.add( full_base )
+        if c:
+            ls_res_db = fnmatch.filter(ls_res_db, c )
         if ls_res_db:
-            print " --- cwd dbs"
+            print " --- matches found"
             for i in sorted( ls_res_db  ):
-                print "     : %s "%self.shorten_name(i)
+                print "     : %s "% i
                 
     def do_load(self,c):
         """load DB_NAME|DB_ID 
@@ -91,43 +91,15 @@ class BaseSPGCommandParser(cmd.Cmd):
         if len(c) >1:
             utils.newline_msg("ERR", "only one db can be loaded at a time", 2)
             return
+
         ret = self.get_db_from_cmdline(c[0])
+
         if ret:
             self.current_param_db = ret 
-            print " --- loaded db '%s'"%self.shorten_name( self.current_param_db.full_name )
+            print " --- loaded '%s'"% self.current_param_db.full_name
         else:    
-            utils.newline_msg("ERR", "db does not exist", 2)
+            utils.newline_msg("ERR", "'%s' does not exist"%ret, 2)
 
-# :::~ FIXME!: Hast to be implemented
-#    def complete_load(self, text, line, begidx, endidx):
-#        return self.complete(text)
-
-    def do_info(self, c):
-        """info REGEXP 
-        prints the information of the results databases, filtered by a regular expression, or its id """
-        if not c:
-            if not self.current_param_db:
-                return
-            else:
-                ls_res_db = [ self.current_param_db.full_name ]
-        else:
-            ls_res_db = self.filter_db_list( filter = c )
-        if not ls_res_db: return
-        
-        for i in ls_res_db: 
-            curr_db = self.master_db.result_dbs[i]
-        
-            self.master_db.update_result_db( curr_db )
-        
-            print " ---%5d: %s"%( curr_db.id, os.path.relpath(curr_db.full_name,RUN_DIR) )
-            frac_done =  float(curr_db.stat_processes_done) / float(curr_db.stat_values_set)
-            
-            n_repet = curr_db.stat_values_set_with_rep/ curr_db.stat_values_set
-            
-            print "   -+ status: %s / total = %d*%d / D: %d (%.5f) - R: %d - E: %d "%(curr_db.status, curr_db.stat_values_set,n_repet , curr_db.stat_processes_done, frac_done, curr_db.stat_processes_running,  curr_db.stat_processes_error ) 
-            print "   -+ queue = %s / w=%5.5f "%(curr_db.queue, curr_db.weight ) 
-
-    
     def do_EOF(self, line):
         return True
 
@@ -174,67 +146,27 @@ class BaseSPGCommandParser(cmd.Cmd):
 
 
 
-class BaseDBCommandParser(cmd.Cmd):
+class BaseDBCommandParser(BaseSPGCommandParser):
     """DB command handler"""
  
     def __init__(self, EnsembleConstructor = ParameterEnsemble):
-        cmd.Cmd.__init__(self)
-        self.EnsembleConstructor = EnsembleConstructor 
-        self.current_param_db = None 
+        BaseSPGCommandParser.__init__(self, EnsembleConstructor )
+
+        self.current_param_db = None
         self.master_db =  MasterDB(EnsembleConstructor = EnsembleConstructor)
 
 
-    def parse_command_line(self, st):
-        """returns command the flags set under a command and the arguments"""
-        cmd = []
-        flags = set()
-        
-        
-        for ic in st.strip().split():
-            if ic[0] == "-":
-                flags.add( ic.strip("-") )
-            else:
-                cmd.append( ic )
-        
-        return flags, cmd
-
-    def shorten_name(self, st):
-#        ret = os.path.relpath(st,RUN_DIR)
-#        if ret[:3] == "../":
-#            return st
-        return st
-
-    def lengthen_name(self, st):
-        return st        
-#         return "%s/%s"%(RUN_DIR, st)
-
-    def translate_name( self,st):
-        """translates the parameters filename and the  database name 
-           into the other and viceversa (returns a duple: param_name, db_name)"""
-       # print "translate_name:::",st
-        full_name = os.path.realpath( st )
-
-#        if not os.path.exists(full_name):
-#            full_name = self.lengthen_name(full_name)
-
-#        if not os.path.exists(full_name):
-#            utils.newline_msg("ERR","database '%s' does not exist"%full_name)
-#            return None
-        
-        path, st = os.path.split(full_name)
-        base_name, ext = os.path.splitext(st)
-        return  full_name, path, base_name, ext
 
     def update_active_result_db(self, c):
         c = c.strip()
         if not c: return 
         try:
-            full_name, path, base_name, extension = self.translate_name(i_arg)
-            db_name = "%s/%s.sqlite" % (path, base_name)
+            full_name, path, base_name, extension = utils.translate_name(c)
+            db_name = "%s/%s.spgql" % (path, base_name)
             sim_name = "%s/%s.spg" % (path, base_name)
 
         except: 
-#            utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not load it" )
+            utils.newline_msg("ERR", "results db '%s' doesn't exist. Cannot load it" )
             return
 
         if os.path.exists( db_name ):
@@ -244,91 +176,70 @@ class BaseDBCommandParser(cmd.Cmd):
         return   
         
     def filter_db_list(self, ls = None, filter = None):
-  #      print self.master_db.result_dbs.keys()
         if ls == None:
             ls = self.master_db.result_dbs.keys()
-     #   try:
         if  re.match("^\d+?$", filter): #:::~ Is filter an integer???
             id = int(filter)
             rdb = self.master_db.result_dbs
             filtered = [ x for x in ls if rdb.has_key(x) and rdb[x] is not None and rdb[x].id == id  ]
             return filtered
-      #  except:
-        #:::~  It is not an integer 
-        ret = [ self.shorten_name(i) for i in ls ]
+
         if filter:
-####                ret = fnmatch.filter(ret, filter)
                 ret = fnmatch.filter(ls, filter)
         else:
-                ret = ls                 
-   #     print ret
-###            return sorted( [ os.path.realpath( self.lengthen_name( i ) ) for i in ret ] )
-        ##    return sorted( [ os.path.realpath( self.lengthen_name( i ) ) for i in ret ] )
+                ret = ls
         return sorted( ret )
 
     def get_db_from_cmdline(self, c):
         """it returns the db name (or None) of a database identified either from its id or """
-        try: 
+        try:
             id = int(c)
             rdb = self.master_db.result_dbs
-            filtered = [ rdb[x] for x in rdb.keys() if rdb[x] is not None and rdb[x].id == id  ]
-            if filtered: return filtered[0] 
-            else: return None
+            filtered = [rdb[x] for x in rdb.keys() if rdb[x] is not None and rdb[x].id == id]
+            if filtered:
+                return filtered[0]
+            else:
+                return None
         except:
             try:
-                full_name, path, base_name, extension = self.translate_name(i_arg)
-                db_name = "%s/%s.sqlite" % (path, base_name)
+                full_name, path, base_name, extension = utils.translate_name(c.strip())
+                db_name = "%s/%s.spgql" % (path, base_name)
                 sim_name = "%s/%s.spg" % (path, base_name)
-            except: 
-                utils.newline_msg("ERR", "results db '%s' doesn't exist."%c )
-                return 
-            
+            except:
+                utils.newline_msg("ERR", "results db '%s' doesn't exist." % c)
+                return
+
             if self.master_db.result_dbs.has_key(db_name):
                 return self.master_db.result_dbs[db_name]
             else:
-                return self.EnsembleConstructor(db_name, init_db = True)
-                utils.newline_msg("WRN", "database '%s' is not registered, loading it anyhow"%self.shorten_name(db_name))
+                return self.EnsembleConstructor(db_name, init_db=True)
+                utils.newline_msg("WRN",
+                                  "database '%s' is not registered, loading it anyhow" %  db_name )
         return None
-
-# :::~ FIXME!: Hast to be implemented
-#    def complete(self, text):    
-#        completions = self.master_db.result_dbs.keys()
-#        if text:
-#            completions = [ f
-#                            for f in completions
-#                            if f.startswith(text)
-#                            ]
-#        return completions
 
     def do_ls(self, c):
         """ls REGEXP|DB_ID
         lists the databases already registered in the master database and the possible ones found in the current directory"""
-    #    print self.filter_db_list(), self.master_db.result_dbs
-        ls_res_db = self.filter_db_list( filter = c ) 
-    ###    print ls_res_db, self.master_db.result_dbs
+
+        ls_res_db = self.filter_db_list( filter = c )
+
         if ls_res_db: 
             print " --- registered dbs" 
             for i in sorted( ls_res_db  ):
-                #print "%5d: %s"%(i_id, i_name)
-                # :::~FIXME workaround for non-existing dbs 
-             #   try:
+                # :::~FIXME workaround for non-existing dbs
                 curr_db = self.master_db.result_dbs[i]
-              #  except:
-              #      continue
-    #            if not curr_db: continue
-    ###            print " %5d: %s (%5.5f)"%(curr_db.id, self.shorten_name( curr_db.full_name ) , curr_db.weight )
                 try:
-                    print "%5d: %s (%5.5f)"%(curr_db.id, self.shorten_name( curr_db.full_name ) , curr_db.weight )
+                    print "%5d: %s (%5.5f)"%(curr_db.id,  curr_db.full_name  , curr_db.weight )
                 except:
-                    print "%5d: %s "%(curr_db.id,   self.shorten_name( curr_db.full_name ) ) 
+                    print "%5d: %s "%(curr_db.id,   curr_db.full_name )
                     
-        ls_res_db = fnmatch.filter( os.listdir("."), "results*.sqlite" )
-        ls_res_db.extend( fnmatch.filter( os.listdir("."), "parameter*.dat" ) )
+        ls_res_db = fnmatch.filter( os.listdir("."), "*.spgql" )
+        ls_res_db.extend( fnmatch.filter( os.listdir("."), "*.spg" ) )
         ls_res_db = self.filter_db_list(  ls_res_db, filter = c )
         if ls_res_db:
             print " --- cwd dbs"
             for i in sorted( ls_res_db  ):
-                print "     : %s "%self.shorten_name(i)
+                print "     : %s "% i
                 
     def do_load(self,c):
         """load DB_NAME|DB_ID 
@@ -340,83 +251,11 @@ class BaseDBCommandParser(cmd.Cmd):
         ret = self.get_db_from_cmdline(c[0])
         if ret:
             self.current_param_db = ret 
-            print " --- loaded db '%s'"%self.shorten_name( self.current_param_db.full_name )
+            print " --- loaded db '%s'"% self.current_param_db.full_name
         else:    
             utils.newline_msg("ERR", "db does not exist", 2)
 
 # :::~ FIXME!: Hast to be implemented
 #    def complete_load(self, text, line, begidx, endidx):
 #        return self.complete(text)
-
-    def do_info(self, c):
-        """info REGEXP 
-        prints the information of the results databases, filtered by a regular expression, or its id """
-        if not c:
-            if not self.current_param_db:
-                return
-            else:
-                ls_res_db = [ self.current_param_db.full_name ]
-        else:
-            ls_res_db = self.filter_db_list( filter = c )
-        if not ls_res_db: return
-        
-        for i in ls_res_db: 
-            curr_db = self.master_db.result_dbs[i]
-        
-            self.master_db.update_result_db( curr_db )
-        
-            print " ---%5d: %s"%( curr_db.id, os.path.relpath(curr_db.full_name,RUN_DIR) )
-            frac_done =  float(curr_db.stat_processes_done) / float(curr_db.stat_values_set)
-            
-            n_repet = curr_db.stat_values_set_with_rep/ curr_db.stat_values_set
-            
-            print "   -+ status: %s / total = %d*%d / D: %d (%.5f) - R: %d - E: %d "%(curr_db.status, curr_db.stat_values_set,n_repet , curr_db.stat_processes_done, frac_done, curr_db.stat_processes_running,  curr_db.stat_processes_error ) 
-            print "   -+ queue = %s / w=%5.5f "%(curr_db.queue, curr_db.weight ) 
-
-    
-    def do_EOF(self, line):
-        return True
-
-    def do_shell(self, line):
-        """Runs a shell command"""
-        output = os.popen(line).read()
-        print output
-
-    def do_cd(self,line):
-        """ Changes into a given directory """
-        try:
-            os.chdir(line)
-        except:
-            utils.newline_msg("DIR", "no directory named '%s'"%line, 2)
-
-    def complete_cd(self, text, line, begidx, endidx):    
-        completions =  filter(lambda x: os.path.isdir(x) , os.listdir(".") )
-        if text:
-            completions = [ f
-                            for f in completions
-                            if f.startswith(text)
-                            ]
-        return completions
-
-
-    def do_run_script(self,c):
-        """executes a script file with commands accepted in this cmdline parser"""
-        if not os.path.exists(c):
-            utils.newline_msg("FIL", "file doesn't exist")
-            return
-        for l in open(c):
-            l = l.strip()
-            if not l: continue 
-            if l[0] == "#": continue
-            
-            self.onecmd(l.strip())
-
-
-    def do_set_max_jobs(self, c):
-        """sets the maximum number of jobs in the given queue 
-           usage: N_JOBS"""
-        c = c.split()
-        if len(c) == 1:
-            max_jobs = int(c[0])
-            self.master_db.execute_query( 'UPDATE queues SET max_jobs= ? WHERE name = "default"', max_jobs )
 

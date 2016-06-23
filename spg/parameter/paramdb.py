@@ -38,13 +38,13 @@ class SPGConflictingValue(Exception):
 
 class EnsembleBuilder(MultIteratorParser):
     """Generates a DB file with the representation of the parameters"""
-    def __init__(self, stream=None, db_name = "results.sqlite", timeout = 5):
+    def __init__(self, stream=None, db_name = "simulation.spgql", timeout = 5):
         MultIteratorParser.__init__(self, stream)
         self.path, foo = os.path.split( os.path.abspath(db_name) )
         self.base_name, foo = os.path.splitext( foo )
     #    print  check_params.consistency(self.command, self)
         if not check_params.consistency(self.command, self):
-            utils.newline_msg("ERR","parameters.dat file is not consistent.")
+            utils.newline_msg("ERR","simulation.spg file is not consistent.")
             sys.exit(1)
         self.stdout_contents = check_params.contents_in_output(self.command)
                 
@@ -205,13 +205,12 @@ class EnsembleBuilderCSV(MultIteratorParser):
         MultIteratorParser.__init__(self, stream)
     
         if not check_params.consistency(self.command, self):
-            utils.newline_msg("ERR","parameters.dat file is not consistent.")
+            utils.newline_msg("ERR","simulation's spg file is not consistent.")
             sys.exit(1)
         self.stdout_contents = check_params.contents_in_output(self.command)
         
-               
         self.csv_filename
-        
+
     def init_db(self):
         
         csv_file = open(self.csv_filename,"w")

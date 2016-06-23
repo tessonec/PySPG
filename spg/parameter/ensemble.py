@@ -5,7 +5,7 @@ from spg import TIMEOUT
 import os, sys, os.path, time
 from subprocess import Popen, PIPE
 import sqlite3 as sql
-
+import spg.utils as utils
 import numpy as n
 #import math as m
 
@@ -27,7 +27,6 @@ class ParameterEnsembleCSV:
         self.values = {}
         self.directory_vars = None
 
-         
 
 
     def __close_db(self):
@@ -179,9 +178,9 @@ class ParameterEnsemble:
     def __init__(self, full_name = "", id=-1, weight=1., queue = '*',
                  status = 'R', repeat = 1, init_db = False):
 
-        self.full_name, self.path, base_name, ext = self.translate_name(full_name)
+        self.full_name, self.path, self.base_name, ext = utils.translate_name(full_name)
 
-        self.db_name = "%s.sqlite"%base_name
+        self.db_name = "%s.spgql"%self.base_name
 
         self.values = {}
         self.directory_vars = None
@@ -199,6 +198,7 @@ class ParameterEnsemble:
         self.queue = queue
         self.status = status
         self.repeat = repeat
+
 
         if init_db  :
             self.init_db()
@@ -219,20 +219,7 @@ class ParameterEnsemble:
         self.connection.close()
         del self.cursor
         del self.connection
-
-    def translate_name(self, st):
-        """translates the parameters filename and the  database name
-           into the other and viceversa (returns a duple: param_name, db_name)"""
-        full_name = os.path.realpath(st)
-
-#        if not os.path.exists(full_name):
-#            utils.newline_msg("ERR", "database '%s' does not exist" % full_name)
-#            return None
-
-        path, st = os.path.split(full_name)
-        base_name, ext = os.path.splitext(st)
-        return full_name, path, base_name, ext
-
+#
 
     def execute_query(self, query, *args):
         self.__connect_db()
@@ -312,6 +299,13 @@ class ParameterEnsemble:
 
         return self.values
 
+    def variable_values(self):
+        ret = {}
+        for v in self.variables:
+            ret[ v ] = self.values[v]
+
+        return ret
+
     def create_trees(self):
         if not self.directory_vars: return False
         ret = self.execute_query_fetchone("SELECT * FROM entities WHERE name LIKE 'store_%'")
@@ -369,6 +363,14 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
         self.init_db()
         os.chdir(self.path)
 
+        if os.path.exists("./%s" % self.command):
+            self.bin_dir = "."
+        elif os.path.exists("%s%/bin/%s" % (ROOT_DIR, self.command)):
+            self.bin_dir = "%s%/bin" % (ROOT_DIR)
+        else:
+            utils.newline_msg("ERR", "Fatal, binary '%s' not found" % self.command)
+            sys.exit(1)
+
     def launch_process(self):
          os.chdir(self.path)
          started_time = time.time()
@@ -379,11 +381,10 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
                 print >> fconf, k, utils.replace_values(self.values[k], self.values)
          fconf.close()
 
-         file_stdout = open("%s.stdout" % self.current_run_id, "w")
-         file_stderr = open("%s.stderr" % self.current_run_id, "w")
+         file_stdout = open("%s.tmp_stdout" % self.current_run_id, "w")
+         file_stderr = open("%s.tmp_stderr" % self.current_run_id, "w")
 
-         cmd = "./%s -i %s" % (self.command, configuration_filename)
-
+         cmd = "%s/%s -i %s" % (self.bin_dir, self.command, configuration_filename)
 
          proc = Popen(cmd, shell=True, stdin=PIPE, stdout=file_stdout, stderr=file_stderr)
          self.return_code = proc.wait()
@@ -392,15 +393,17 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
          file_stderr.close()
          finish_time = time.time()
 
-         self.output = [i.strip() for i in open("%s.stdout" % self.current_run_id, "r")]
-         self.stderr = [i.strip() for i in open("%s.stderr" % self.current_run_id, "r")]
+         self.output = [i.strip() for i in open("%s.tmp_stdout" % self.current_run_id, "r")]
+         self.stderr = [i.strip() for i in open("%s.tmp_stderr" % self.current_run_id, "r")]
 
          os.remove(configuration_filename)
 
-         os.remove("%s.stdout" % self.current_run_id)
-         os.remove("%s.stderr" % self.current_run_id)
+   #      os.remove("%s.tmp_stdout" % self.current_run_id)
+   #      os.remove("%s.tmp_stderr" % self.current_run_id)
 
          self.run_time = finish_time - started_time
+         self.dump_result()
+         self.execute_query('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
 
          try:
             self.dump_result()
@@ -424,18 +427,18 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
                                                                    ", ".join(["'%s'" % str(i) for i in output_columns]))
                  # print cc
                  try:
-                     param_ens.execute_query(cc)
-                     param_ens.execute_query(
+                     self.execute_query(cc)
+                     self.execute_query(
                                 'UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
                  except:
-                     param_ens.execute_query(
+                     self.execute_query(
                                 'UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
-                 flog = open(self.full_db_name.replace("sqlite", "log"), "aw")
-                 flog_err = open(self.full_db_name.replace("sqlite", "err"), "aw")
+                 flog = open("%s/%s.log_stdout"%(self.path,self.base_name), "aw")
+                 flog_err = open("%s/%s.log_stderr"%(self.path,self.base_name), "aw")
                  if not hasattr(self, 'run_time'):
                         self.run_time = -1
-                 utils.newline_msg("INF", "{%s} %s: ret=%s -- %s,%s -- run_time=%s" % (
-                     self.command, self.in_name, self.return_code, self.current_run_id, self.current_valuesset_id,
+                 utils.newline_msg("INF", "{%s} ret=%s -- %s,%s -- run_time=%s" % (
+                     self.command,  self.return_code, self.current_run_id, self.current_valuesset_id,
                      self.run_time), stream=flog)
                  print >> flog, "     values: ", self.values
                  print >> flog, "OUT--  ", "       \n ".join(self.output)
@@ -455,8 +458,8 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
               #:::~    'E': run but with non-zero error code
               self.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
 
-              flog = open(self.full_db_name.replace("sqlite", "log"), "aw")
-              flog_err = open(self.full_db_name.replace("sqlite", "err"), "aw")
+              flog = open(self.full_db_name.replace("spgql", "log"), "aw")
+              flog_err = open(self.full_db_name.replace("spgql", "err"), "aw")
               if not hasattr(self, 'run_time'):
                   self.run_time = -1
               utils.newline_msg("INF", "{%s} %s: ret=%s -- %s,%s -- run_time=%s" % (
@@ -508,6 +511,7 @@ class ParameterEnsembleInputFilesGenerator(ParameterEnsemble):
 
 class ResultsDBQuery(ParameterEnsemble):
     def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = True):
+
         ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  , init_db )
         self.separated_vars = self.variables[:-2]
         self.coalesced_vars = self.variables[-2:-1]

@@ -169,6 +169,18 @@ def parse_to_dict(string, allowed_keys = None):
 
 
 
+def translate_name(st):
+    """translates the parameters filename and the  database name
+         into the other and viceversa (returns a duple: param_name, db_name)"""
+    # print "translate_name:::",st
+    full_name = os.path.realpath(st)
+
+
+    path, st = os.path.split(full_name)
+    base_name, ext = os.path.splitext(st)
+    return full_name, path, base_name, ext
+
+
 
 #v = eevaluate_stringexp({x}+{y_3})",d)
 #print get_variables("exp({x}+{y_3})",d)

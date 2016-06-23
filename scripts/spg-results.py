@@ -8,10 +8,10 @@ Created on Mon Jul 11 11:37:27 2011
 
 #from spg import  CONFIG_DIR
 import spg.utils as utils
-from spg.cmdline import BaseDBCommandParser
+from spg.cmdline import BaseSPGCommandParser
 # from spg.master import MasterDB
 from spg.parameter import ResultsDBQuery
-
+import spg.utils as utils
 
 import numpy as np
 import math as m
@@ -23,11 +23,11 @@ import sys, optparse
 import os, os.path
 import fnmatch
 
-class ResultCommandParser(BaseDBCommandParser):
+class ResultCommandParser(BaseSPGCommandParser):
     """Results command handler"""
 
     def __init__(self):
-        BaseDBCommandParser.__init__(self, EnsembleConstructor = ResultsDBQuery)
+        BaseSPGCommandParser.__init__(self, EnsembleConstructor = ResultsDBQuery)
         self.prompt = "| spg-results :::~ "
         
         self.possible_keys = set( [ "raw_data", "split_colums", "restrict_by_val", "table", "split_columns"] )
@@ -39,16 +39,29 @@ class ResultCommandParser(BaseDBCommandParser):
 
         self.autoscale = None
 
-#        self.figures = {}
-#        self.values = {'repeat': 1, 'sql_retries': 1, 'timeout' : 60, 'weight': 1}
-#        self.doc_header = "default values: %s"%(self.values )
 
     def do_load(self,c):
         """loads a results_database"""
-        BaseDBCommandParser.do_load(self, c)
+        BaseSPGCommandParser.do_load(self, c)
         self.output_column = self.current_param_db.output_column['results'][1:]
         
         os.chdir( self.current_param_db.path )
+
+
+    def do_save_csv(self, c):
+        """save_csv [-flag1 -flag2] f1 f2 g3
+           saves the table values in ascii format
+           FLAGS::: -raw:        do not average values for same parameter set
+        """
+        flags, cs = self.parse_command_line(c)
+        for c in cs:
+
+            self.do_load(c)
+            if "raw_data" in flags:
+                self.do_set("raw_data=True")
+            self.do_setup_vars_in_table("-all")
+            self.do_save_table("-header")
+
 
 
     def do_save_table(self,c):
@@ -57,9 +70,8 @@ class ResultCommandParser(BaseDBCommandParser):
           FLAGS::: -header:        the first row is the column name
                    -append:      appends the output, instead of rewriting the file        
        """
-       
-       
        flags,c = self.parse_command_line(c)
+
        if "append" in flags:
           open_type = "aw"
        else:
@@ -76,29 +88,25 @@ class ResultCommandParser(BaseDBCommandParser):
               d,f = os.path.split(output_fname)
               if d != "" and not os.path.exists(d): os.makedirs(d)
               output_file = open(output_fname , open_type)
-            #  print "1:::~",output_fname
-              if "header" in flags:
-                  output_file.write(  self.current_param_db.table_header( [column] ) )
-                  output_file.flush()
 
               data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
-              print "    output", output_fname
+              utils.newline_msg("OUT", output_fname)
+              utils.newline_msg("OUT", output_file)
+
               np.savetxt( output_file, data)
          else:
            data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
-           gen_s = self.current_param_db.full_name.split("/")[-1][:-len(".sqlite")][len('results'):]
-           
+
            
            gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
            if gen_d:  gen_d+= "/"
-           
-#           gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
-           output_fname = utils.fix_filename( "%s%s%s.dat"%(gen_d, self.table, gen_s) )
-           #print "2:::~",output_fname , "%s%s%s.dat"%(gen_d, self.table, gen_s), gen_d, self.table, gen_s
+
+           output_fname = utils.fix_filename( "%s%s_%s.dat"%(gen_d, self.current_param_db.base_name, self.table ) )
+
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
            output_file = open(output_fname , open_type)
-           print "    output", output_fname
+           utils.newline_msg("OUT", output_fname)
            if "header" in flags:
                  output_file.write(  self.current_param_db.table_header(table = self.table, output_column= self.output_column ) )
                  output_file.flush()
@@ -110,8 +118,6 @@ class ResultCommandParser(BaseDBCommandParser):
            FLAGS::: -all:        puts all variables in the output_table 
                    -restore:    puts only the last variable in the output_table
           """
-        
-        
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
@@ -122,6 +128,7 @@ class ResultCommandParser(BaseDBCommandParser):
             self.current_param_db.setup_vars_in_table(self.current_param_db.variables[-1])
         else:    
             self.current_param_db.setup_vars_in_table(c)
+
 
     def do_setup_vars_separated(self,c):
         """sets up which variables are going to have a separated directory
@@ -139,6 +146,7 @@ class ResultCommandParser(BaseDBCommandParser):
         else:    
             self.current_param_db.setup_vars_separated(c)
 
+
     def do_setup_vars_coalesced(self,c):
         """sets up which variables are coalesced into the same file
            save_table [-single_flag] 
@@ -147,6 +155,8 @@ class ResultCommandParser(BaseDBCommandParser):
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
+
+        flags,c = self.parse_command_line(c)
         if "restore" or "empty" in flags:
             self.current_param_db.setup_vars_coalesced("")
         elif "empty" in flags:
@@ -206,7 +216,7 @@ class ResultCommandParser(BaseDBCommandParser):
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... skipping")
             return
-        print " -- db: %s"%( self.shorten_name( self.current_param_db.full_name ) )
+        print " -- db: %s"%( os.path.relpath( self.current_param_db.full_name , ".") )
         print "  + variables = %s "%( ", ".join(self.current_param_db.variables ) )
         print "  + entities = %s "%( ", ".join(self.current_param_db.entities ) )
         
