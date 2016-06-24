@@ -27,15 +27,15 @@ import optparse
 if __name__ == "__main__":
     parser = optparse.OptionParser(usage = "usage: %prog [options] project_id1 ")
     parser.add_option("--sleep", type="int", action='store', dest="sleep",
-                            default = 120 , help = "waiting time before refresh" )
-    parser.add_option("--populate", type="int", action='store', dest="populate",
-                            default = 50 , help = "how many processes to populate" )
-    parser.add_option("--queue-type", type='string', dest="queue",default="base",
-                            help = "type of queue: can be base, torque" )
-    parser.add_option("--skip-harvest", action='store_true', dest="skip_harvest",
-                            help = "do not harvest data" )
-    parser.add_option("--skip-init", action='store_true', dest="skip_init",
-                            help = "do not initialise files" )
+                            default = 10 , help = "waiting time before refresh" )
+ #   parser.add_option("--populate", type="int", action='store', dest="populate",
+ #                           default = 50 , help = "how many processes to populate" )
+#    parser.add_option("--queue-type", type='string', dest="queue",default="base",
+#                            help = "type of queue: can be base, torque" )
+#    parser.add_option("--skip-harvest", action='store_true', dest="skip_harvest",
+#                            help = "do not harvest data" )
+ #   parser.add_option("--skip-init", action='store_true', dest="skip_init",
+ #                           help = "do not initialise files" )
     parser.add_option("--skip-sync", action='store_true', dest="skip_sync",
                             help = "do not sync dbs" )
     parser.add_option("--kill-workers", action='store', default = False, dest="kill_workers_after", type = "int",
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     set_queueing_system( options.queue )
     
     newline_msg("@@@", "starting session: %s"% time.ctime(), stream = file_log)
-    newline_msg("@@@", "queueing system: %s"%options.queue, stream = file_log)
+#    newline_msg("@@@", "queueing system: %s"%options.queue, stream = file_log)
     
     
     pex = DataExchanger(  )

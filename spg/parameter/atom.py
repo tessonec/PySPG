@@ -1,5 +1,5 @@
 from spg import utils
-from spg import VAR_PATH, ROOT_DIR
+from spg import ROOT_DIR
 
 
 

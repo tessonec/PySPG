@@ -1,4 +1,4 @@
-from spg import  TIMEOUT, VAR_PATH
+from spg import CONFIG_DIR, TIMEOUT
 
 import sqlite3 as sql
 import spg.utils as utils
@@ -13,7 +13,7 @@ class MasterDB:
 
     def __init__(self,  connection = None, EnsembleConstructor = ParameterEnsemble):
         if not connection:
-            self.connection = sql.connect("%s/spg-pool.sqlite"%VAR_PATH, timeout = TIMEOUT)
+            self.connection = sql.connect("%s/spg-pool.sqlite"%CONFIG_DIR, timeout = TIMEOUT)
         else:
             self.connection = connection
             
@@ -46,6 +46,8 @@ class MasterDB:
     
         self.cursor.execute("CREATE TABLE IF NOT EXISTS infiles "
                           "(id INTEGER PRIMARY KEY, last INTEGER)")
+
+        self.cursor.execute("INSERT INTO queues (name, max_jobs, status) VALUES ('default',1,'R') ")
 
         self.connection.commit()
 

@@ -35,7 +35,6 @@ class SPGDBCommandLine(DBCommandLine):
         """
         
         flags,c = self.parse_command_line(c)
-      #  print flags, c
         i_arg = c[0]
         
         try:
@@ -44,7 +43,7 @@ class SPGDBCommandLine(DBCommandLine):
             db_name = "%s/%s.spgql" % (path, base_name)
             sim_name = "%s/%s.spg" % (path, base_name)
 
-        except: 
+        except:
             utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not init it" )
             return
 
@@ -57,6 +56,8 @@ class SPGDBCommandLine(DBCommandLine):
             self.do_remove(i_arg)
 
         self.current_param_db = ParameterEnsemble( db_name, init_db = False )
+        if "repeat" in flags:
+            self.current_param_db.repeat = int(flags['repeat'])
 
         if len(c) >1: self.do_set( ":".join( c[1:] ) )
         
@@ -192,14 +193,46 @@ class SPGDBCommandLine(DBCommandLine):
          """pauses the currently loaded registered database"""
          self.__set_status(c, 'P')
 
-
-    def do_set_max_jobs(self, c):
-        """sets the maximum number of jobs in the given queue
+    def do_set_jobs(self, c):
+        """sets the maximum number of jobs running concurrently
            usage: N_JOBS"""
         c = c.split()
         if len(c) == 1:
             max_jobs = int(c[0])
             self.master_db.execute_query('UPDATE queues SET max_jobs= ? WHERE name = "default"', max_jobs)
+
+    def do_get_jobs(self,c):
+
+        nj, = self.master_db.execute_query_fetchone('SELECT max_jobs FROM queues WHERE name = "default"')
+        print " +--- no_jobs = %d "%nj
+
+
+    def do_info(self, c):
+        """info REGEXP
+           prints the information of the results databases, filtered by a regular expression, or its id """
+        if not c:
+            if not self.current_param_db:
+                return
+            else:
+                ls_res_db = [self.current_param_db.full_name]
+        else:
+            ls_res_db = self.filter_db_list(filter=c)
+        if not ls_res_db: return
+
+        for i in ls_res_db:
+            curr_db = self.master_db.result_dbs[i]
+
+            self.master_db.update_result_db(curr_db)
+
+            print " ---%5d: %s" % (curr_db.id, os.path.relpath(curr_db.full_name, "."))
+            frac_done = float(curr_db.stat_processes_done) / float(curr_db.stat_values_set)
+
+            n_repet = curr_db.stat_values_set_with_rep / curr_db.stat_values_set
+
+            print "   -+ status: %s /  weight: %5.5f "%(curr_db.status, curr_db.weight)
+            print "   -+ total = %d*%d / D: %d (%.5f) - R: %d - E: %d " % (
+            curr_db.stat_values_set, n_repet, curr_db.stat_processes_done, frac_done,
+            curr_db.stat_processes_running, curr_db.stat_processes_error)
 
 
 if __name__ == '__main__':

@@ -32,12 +32,17 @@ class BaseSPGCommandLine(cmd.Cmd):
     def parse_command_line(self, st):
         """returns command the flags set under a command and the arguments"""
         cmd = []
-        flags = set()
+        flags = {}
         
         
         for ic in st.strip().split():
-            if ic[0] == "-":
-                flags.add( ic.strip("-") )
+            if ic[:2] == "--":
+                st = ic[2:]
+                if "=" in st:
+                    k,v = st.split("=")
+                    flags[k] = v
+                else:
+                    flags[st] = None
             else:
                 cmd.append( ic )
         
@@ -79,7 +84,7 @@ class BaseSPGCommandLine(cmd.Cmd):
         if c:
             ls_res_db = fnmatch.filter(ls_res_db, c )
         if ls_res_db:
-            print " --- matches found"
+            print " --- cwd matches found"
             for i in sorted( ls_res_db  ):
                 print "     : %s "% i
                 
@@ -231,15 +236,9 @@ class DBCommandLine(BaseSPGCommandLine):
                     print "%5d: %s (%5.5f)"%(curr_db.id,  curr_db.full_name  , curr_db.weight )
                 except:
                     print "%5d: %s "%(curr_db.id,   curr_db.full_name )
-                    
-        ls_res_db = fnmatch.filter( os.listdir("."), "*.spgql" )
-        ls_res_db.extend( fnmatch.filter( os.listdir("."), "*.spg" ) )
-        ls_res_db = self.filter_db_list(  ls_res_db, filter = c )
-        if ls_res_db:
-            print " --- cwd dbs"
-            for i in sorted( ls_res_db  ):
-                print "     : %s "% i
-                
+
+        BaseSPGCommandLine.do_ls(self, c )
+
     def do_load(self,c):
         """load DB_NAME|DB_ID 
         loads one of the registered databases from the master"""
