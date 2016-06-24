@@ -8,7 +8,7 @@
 import optparse
 import os, time, sys
 
-
+import spg.utils as utils
 
 #process_id = int(os.environ['PBS_JOBID'].split(".")[0])
 #this_queue = os.environ['PBS_QUEUE']
@@ -55,7 +55,7 @@ if __name__ == "__main__":
          
  #    print env
      
-     from spg.parameter import ParameterAtomExecutor
+     from spg.simulation import ParameterAtomExecutor
      #from spg.queue import get_queueing_system
      #import spg.queue.torque as torque
  

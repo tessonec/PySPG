@@ -2,7 +2,7 @@
 
 
 import spg.utils as utils
-from spg.parameter import EnsembleBuilder, ParameterEnsemble
+from spg.simulation import EnsembleDBBuilder, ParameterEnsemble
 # from spg.master import MasterDB
 from spg.cmdline import DBCommandLine
 # from spg import VAR_PATH, RUN_DIR
@@ -61,7 +61,7 @@ class SPGDBCommandLine(DBCommandLine):
 
         if len(c) >1: self.do_set( ":".join( c[1:] ) )
         
-        parser = EnsembleBuilder( stream = open(sim_name), db_name=db_name  )
+        parser = EnsembleDBBuilder(stream = open(sim_name), db_name=db_name)
         parser.init_db(  )
         parser.fill_status(repeat = self.current_param_db.repeat ) 
         if not "skip-master" in  flags:

@@ -19,4 +19,4 @@ Traceback (most recent call last):
     parser.init_db(  )
   File "/home/tessonec/opt/lib/spg/parameter/paramdb.py", line 84, in init_db
     self.check_and_insert_information('path', self.path)
-AttributeError: EnsembleBuilder instance has no attribute 'path'
+AttributeError: EnsembleDBBuilder instance has no attribute 'path'

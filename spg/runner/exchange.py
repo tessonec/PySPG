@@ -10,7 +10,7 @@ Created on Tue Jun 28 08:10:30 2011
 
 from spg import utils
 from spg import TIMEOUT
-from spg.parameter import ParameterAtom, ParameterEnsemble
+from spg.simulation import ParameterAtom, ParameterEnsemble
 
 from spg.master import MasterDB #, PickledMaster
 

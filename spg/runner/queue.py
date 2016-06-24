@@ -1,7 +1,7 @@
 
 from subprocess import Popen, PIPE
 import sqlite3 as sql
-from spg import BINARY_PATH,
+from spg import BINARY_PATH
 
 
 class Queue:

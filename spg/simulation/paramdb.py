@@ -36,7 +36,7 @@ class SPGConflictingValue(Exception):
         utils.newline_msg("ERR","conflict in %s name (in db '%s', in param '%s')"%(key, previous, value ))
 
 
-class EnsembleBuilder(MultIteratorParser):
+class EnsembleDBBuilder(MultIteratorParser):
     """Generates a DB file with the representation of the parameters"""
     def __init__(self, stream=None, db_name = "simulation.spgql", timeout = 5):
         MultIteratorParser.__init__(self, stream)
@@ -57,7 +57,7 @@ class EnsembleBuilder(MultIteratorParser):
         
         self.cursor.execute( "SELECT value FROM information WHERE key = ?", (key,) )
         prev_val = self.cursor.fetchone()
-     #   print "EnsembleBuilder::check_and_insert_information", key, expected_value, prev_val
+     #   print "EnsembleDBBuilder::check_and_insert_information", key, expected_value, prev_val
         if prev_val and expected_value is not None:
             if prev_val[0] != expected_value:
                 
@@ -199,7 +199,7 @@ class EnsembleBuilder(MultIteratorParser):
 # 
 #===============================================================================
 
-class EnsembleBuilderCSV(MultIteratorParser):
+class EnsembleCSVBuilder(MultIteratorParser):
     """Generates a DB file with the representation of the parameters"""
     def __init__(self, stream=None, db_name = "results.csv", timeout = 5):
         MultIteratorParser.__init__(self, stream)

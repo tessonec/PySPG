@@ -10,7 +10,7 @@ Created on Mon Jul 11 11:37:27 2011
 import spg.utils as utils
 from spg.cmdline import BaseSPGCommandLine
 # from spg.master import MasterDB
-from spg.parameter import ResultsDBQuery
+from spg.simulation import ResultsDBQuery
 import spg.utils as utils
 
 import numpy as np

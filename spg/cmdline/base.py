@@ -11,7 +11,7 @@ import re, fnmatch
 
 
 import spg.utils as utils
-from spg.parameter import ParameterEnsemble
+from spg.simulation import ParameterEnsemble
 from spg.master import MasterDB
 
 

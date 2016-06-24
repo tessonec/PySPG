@@ -8,7 +8,7 @@ from spg import VAR_PATH, RUN_DIR, CONFIG_DIR
 import spg.utils as utils
 from spg.cmdline import DBCommandLine
 from spg.master import MasterDB
-from spg.parameter import ResultsDBQuery
+from spg.simulation import ResultsDBQuery
 
 from spg.plot import PyplotUnit, PyplotGraphicsUnit 
 

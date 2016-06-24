@@ -3,7 +3,7 @@ from spg import CONFIG_DIR, TIMEOUT
 import sqlite3 as sql
 import spg.utils as utils
 
-from spg.parameter import ParameterEnsemble
+from spg.simulation import ParameterEnsemble
 
 
 class MasterDB:

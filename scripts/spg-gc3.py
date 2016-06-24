@@ -2,10 +2,10 @@
 
 
 import spg.utils as utils
-from spg.parameter import EnsembleBuilderCSV, ParameterEnsemble, ParameterEnsembleCSV
+from spg.simulation import EnsembleCSVBuilder, ParameterEnsemble, ParameterEnsembleCSV
 from spg.master import MasterDB
 from spg.cmdline import BaseSPGCommandLine
-from spg import VAR_PATH, RUN_DIR
+#from spg import VAR_PATH, RUN_DIR
 
 import sqlite3 as sql
 import sys, optparse
@@ -70,7 +70,7 @@ class DBCommandLine(BaseSPGCommandLine):
          
         if len(c) >1: self.do_set( ":".join( c[1:] ) )
         
-        parser = EnsembleBuilderCSV( stream = open(i_arg), db_name=db_name  )
+        parser = EnsembleCSVBuilder(stream = open(i_arg), db_name=db_name)
         parser.init_db(  )
         
 

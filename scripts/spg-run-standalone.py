@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 
-from spg.parameter import *
+from spg.simulation import *
 import spg.utils as utils
 
 import os, os.path, optparse, sys
@@ -43,7 +43,7 @@ if __name__ == "__main__":
           os.remove( db_name )
       if options.initialise:
           utils.newline_msg("MSG", "initialising database")
-          parser = EnsembleBuilder(stream=open(sim_name), db_name=db_name)
+          parser = EnsembleDBBuilder(stream=open(sim_name), db_name=db_name)
           parser.init_db()
           parser.fill_status(repeat=options.repeat)
           del parser
