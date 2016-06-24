@@ -20,42 +20,42 @@ import random
 
 import fnmatch
 
-
-class MasterDBThreadedExchanger(SPGMasterDB):
-
-    def __init__(self, connection=None):
-        SPGMasterDB.__init__(self, connection)
-
-        self.normalising = 0.
-        self.active_dbs = []
-
-    def update_list_ensemble_dbs(self):
-
-        SPGMasterDB.update_list_ensemble_dbs(self)
-        self.normalising = 0.
-        self.active_dbs = []
-
-        for i in self.result_dbs.keys():
-            if self.result_dbs[i] is None:
-                del self.result_dbs[i]
-                utils.newline_msg("MSG", "removing db '%s' from the running list" % i)
-                continue
-            if self.result_dbs[i].status == 'R':
-                self.normalising += self.result_dbs[i].weight
-                self.active_dbs.append(self.result_dbs[i])
-
-    def pick_ensemble(self):
-
-        rnd = self.normalising * random.random()
-
-        curr_db = self.active_dbs.pop()
-        ac = curr_db.weight
-
-        while rnd > ac:
-            curr_db = self.active_dbs.pop()
-            ac += curr_db.weight
-
-        return curr_db
+#
+# class MasterDBThreadedExchanger(SPGMasterDB):
+#
+#     def __init__(self, connection=None):
+#         SPGMasterDB.__init__(self, connection)
+#
+#         self.normalising = 0.
+#         self.active_dbs = []
+#
+#     def update_list_ensemble_dbs(self):
+#
+#         SPGMasterDB.update_list_ensemble_dbs(self)
+#         self.normalising = 0.
+#         self.active_dbs = []
+#
+#         for i in self.result_dbs.keys():
+#             if self.result_dbs[i] is None:
+#                 del self.result_dbs[i]
+#                 utils.newline_msg("MSG", "removing db '%s' from the running list" % i)
+#                 continue
+#             if self.result_dbs[i].status == 'R':
+#                 self.normalising += self.result_dbs[i].weight
+#                 self.active_dbs.append(self.result_dbs[i])
+#
+#     def pick_ensemble(self):
+#
+#         rnd = self.normalising * random.random()
+#
+#         curr_db = self.active_dbs.pop()
+#         ac = curr_db.weight
+#
+#         while rnd > ac:
+#             curr_db = self.active_dbs.pop()
+#             ac += curr_db.weight
+#
+#         return curr_db
 
     # def seed_atoms(self, queue_name):
     #     self.seeded_atoms = self.max_atoms_to_seed - len(os.listdir("%s/queue/%s" % (VAR_PATH, queue_name)))

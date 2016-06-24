@@ -4,7 +4,7 @@ import sqlite3 as sql
 import spg.utils as utils
 
 from spg.simulation import ParameterEnsemble
-
+import random, copy
 
 class SPGMasterDB:
     """
@@ -20,9 +20,12 @@ class SPGMasterDB:
         self.EnsembleConstructor = EnsembleConstructor
         self.cursor = self.connection.cursor()
         self.__init_db()
-        self.result_dbs = {} 
+        self.result_dbs = {}
         self.update_list_ensemble_dbs()
-   #     print "SPGMasterDB::__init__",self.result_dbs
+
+
+        self.normalising = 0.
+        self.active_dbs = []
 
     def __init_db(self):
 
@@ -66,13 +69,13 @@ class SPGMasterDB:
     def update_list_ensemble_dbs(self, status = None): # These are the dbs that are registered and running
         self.result_dbs = {} 
         if status:
-            res = self.cursor.execute("SELECT id, full_name, weight, status FROM dbs  WHERE status = ?",status)
+            res = self.cursor.execute("SELECT id, full_name, weight, queue, status FROM dbs  WHERE status = ?",status)
         else:  
-            res = self.cursor.execute("SELECT id, full_name, weight, status FROM dbs ")
+            res = self.cursor.execute("SELECT id, full_name, weight, queue, status FROM dbs ")
         vec = [i for i in res]
-     #   print "SPGMasterDB::initialise_result_dbs",vec
+
      #   print self.result_dbs.keys()
-        for (id, full_name, weight,  status) in vec:
+        for (id, full_name, weight, queue, status) in vec:
             if full_name in self.result_dbs.keys():
                 self.result_dbs[full_name].id = id
                 self.result_dbs[full_name].queue = queue
@@ -85,8 +88,18 @@ class SPGMasterDB:
             self.result_dbs[full_name] = new_db
            ### except:
             ###    self.result_dbs[full_name] = None
-   
 
+        self.normalising = 0.
+        self.active_dbs = []
+
+        for i in self.result_dbs.keys():
+            if self.result_dbs[i] is None:
+                del self.result_dbs[i]
+                utils.newline_msg("MSG", "removing db '%s' from the running list" % i)
+                continue
+            if self.result_dbs[i].status == 'R':
+                self.normalising += self.result_dbs[i].weight
+                self.active_dbs.append(self.result_dbs[i])
 
     def write_ensemble_to_master(self, param_db):
         
@@ -114,5 +127,23 @@ class SPGMasterDB:
                 self.write_ensemble_to_master(self.result_dbs[i])
             except: pass
 
+
+
+
+
+
+    def pick_ensemble(self):
+        rnd = self.normalising * random.random()
+
+        act_dbs = copy.copy( self.active_dbs )
+
+        curr_db = act_dbs.pop()
+        ac = curr_db.weight
+
+        while rnd > ac:
+            curr_db = act_dbs
+            ac += curr_db.weight
+
+        return curr_db
 
 

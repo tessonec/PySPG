@@ -51,9 +51,8 @@ if __name__ == "__main__":
 
 
     while True:
-                number_of_jobs, = master_db.query_master_fetchone('SELECT max_jobs FROM queues WHERE name = "default"')
 
-                run_pool.launch_workers( target_jobs = number_of_jobs)
+                run_pool.launch_workers( )
                 time.sleep(options.sleep)
 
         #         seeded_atoms_ac.append(pex.seeded_atoms )

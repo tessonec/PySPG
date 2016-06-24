@@ -70,6 +70,7 @@ class SPGDBCommandLine(DBCommandLine):
             self.master_db.update_list_ensemble_dbs()
 
 
+
     def complete_init(self, text, line, begidx, endidx):    
         
         completions = fnmatch.filter( os.listdir("."), ".spgql" )

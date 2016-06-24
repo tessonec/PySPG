@@ -10,22 +10,24 @@ from spg.master import SPGMasterDB
 
 class SPGRunningAtom(threading.Thread):
     n_threads = 0
-    def __init__(self, lock ):
+    def __init__(self, ensemble, lock ):
 
         SPGRunningAtom.n_threads += 1
         threading.Thread.__init__(self)
         self.thread_id = SPGRunningAtom.n_threads
+
+        self.ensemble = ensemble
         self.lock = lock
 
     def run(self):
         self.lock.acquire()
-        print "-------- thread %5d START " % (self.thread_id)
+        print "-S- [%4d]- ----- " % (self.thread_id, self.ensemble.full_name)
         self.lock.release()
 
         time.sleep( rnd.randint( 2, 15 ) )
 
         self.lock.acquire()
-        print "-------- thread %5d EXIT " % (self.thread_id)
+        print "-X- [%4d]- ----- " % (self.thread_id, self.ensemble.full_name)
         self.lock.release()
 
 
@@ -48,8 +50,13 @@ class SPGRunningPool():
         to_launch = target_jobs - current_count
         utils.newline_msg( "STAT", "[%3d::%3d:%3d]" % (target_jobs,current_count, to_launch ) )
 
+
+        self.master_db.update_list_ensemble_dbs()
         for i_t in range(to_launch):
-            nt = SPGRunningAtom(lock=self.db_lock)
+
+            pick = self.master_db.pick_ensemble()
+
+            nt = SPGRunningAtom(pick, lock=self.db_lock)
             nt.start()
 
     def active_threads(self):
