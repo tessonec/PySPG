@@ -7,7 +7,7 @@ Created on Oct 5, 2011
 from spg import VAR_PATH, RUN_DIR, CONFIG_DIR
 import spg.utils as utils
 from spg.cmdline import DBCommandLine
-from spg.master import MasterDB
+from spg.master import SPGMasterDB
 from spg.simulation import ResultsDBQuery
 
 from spg.plot import PyplotUnit, PyplotGraphicsUnit 
@@ -165,7 +165,7 @@ class PlotCommandParser(DBCommandLine):
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(ls_vars)-set(self.current_param_db.entities) )
             return
         for v in ls_vars:
-            self.current_param_db.execute_query( 'UPDATE entities SET varies=1 WHERE name = ?', v)
+            self.current_param_db.query_master_db('UPDATE entities SET varies=1 WHERE name = ?', v)
         self.current_param_db.init_db()
 
     def do_set(self, c):

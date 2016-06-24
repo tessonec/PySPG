@@ -3,13 +3,12 @@
 """
 Created on Mon Jul 11 11:37:27 2011
 
-@author: Claudio Tessone - <tessonec@ethz.ch>
+@author: Claudio Tessone - <claudio.tessone@uzh.ch>
 """
 
 #from spg import  CONFIG_DIR
 import spg.utils as utils
 from spg.cmdline import BaseSPGCommandLine
-# from spg.master import MasterDB
 from spg.simulation import ResultsDBQuery
 import spg.utils as utils
 
@@ -185,7 +184,7 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(ls_vars)-set(self.current_param_db.entities) )
             return
         for v in ls_vars:
-            self.current_param_db.execute_query( 'UPDATE entities SET varies=1 WHERE name = ?', v)
+            self.current_param_db.query_master_db('UPDATE entities SET varies=1 WHERE name = ?', v)
         self.current_param_db.init_db()
 
     def do_set(self, c):

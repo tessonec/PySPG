@@ -12,7 +12,7 @@ import re, fnmatch
 
 import spg.utils as utils
 from spg.simulation import ParameterEnsemble
-from spg.master import MasterDB
+from spg.master import SPGMasterDB
 
 
 
@@ -157,7 +157,7 @@ class DBCommandLine(BaseSPGCommandLine):
         BaseSPGCommandLine.__init__(self, EnsembleConstructor)
 
         self.current_param_db = None
-        self.master_db =  MasterDB(EnsembleConstructor = EnsembleConstructor)
+        self.master_db =  SPGMasterDB(EnsembleConstructor = EnsembleConstructor)
 
 
 

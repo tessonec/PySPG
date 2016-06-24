@@ -61,7 +61,7 @@ if __name__ == "__main__":
     all_queues = {}
     
     while True:
-        ls_queues  = pex.execute_query("SELECT name, max_jobs FROM queues WHERE status = 'R'")
+        ls_queues  = pex.query_master_db("SELECT name, max_jobs FROM queues WHERE status = 'R'")
         tbr_queues = set( all_queues.keys() ) - set( [i for (i,j) in ls_queues] )
         for q in tbr_queues:
             all_queues[q].kill_processes()
@@ -108,7 +108,7 @@ if __name__ == "__main__":
              harvests_without_results = 0
             
         if not options.skip_sync:
-            pex.synchronise_master()
+            pex.synchronise_masted_db()
       
         newline_msg("INF", "[%d] sleep %s"%(harvests_without_results, options.sleep),indent = 2)
 

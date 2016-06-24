@@ -2,7 +2,7 @@
 
 
 from spg import VAR_PATH
-from spg.master import MasterDB
+from spg.master import SPGMasterDB
 from spg.utils import newline_msg
 
 import cmd, sys, fnmatch, os
@@ -16,12 +16,12 @@ class QueueCommandParser(cmd.Cmd):
         cmd.Cmd.__init__(self)
         self.prompt = "| spg-queue :::~ "
         self.current_queue = None 
-        self.master_db =  MasterDB()
+        self.master_db =  SPGMasterDB()
         #self.possible_keys = ['max_jobs', 'status']
         self.__update_queue_list()
 
     def __update_queue_list(self):
-        self.queues = self.master_db.execute_query("SELECT * FROM queues ORDER BY id")
+        self.queues = self.master_db.query_master_db("SELECT * FROM queues ORDER BY id")
         
 
     def do_load(self,c):
@@ -63,7 +63,7 @@ class QueueCommandParser(cmd.Cmd):
         if len( filter(lambda x: x[1] == c, self.queues) ):
                 newline_msg("ERR", "queue '%s' already exists"%queue, 2)
                 return 
-        self.master_db.execute_query( "INSERT INTO queues (name, max_jobs, status) VALUES (?,?,?)",c,  1, 'S')
+        self.master_db.query_master_db("INSERT INTO queues (name, max_jobs, status) VALUES (?,?,?)", c, 1, 'S')
         os.makedirs("%s/queue/%s"%(VAR_PATH,c))
         self.current_queue = c
 
@@ -74,7 +74,7 @@ class QueueCommandParser(cmd.Cmd):
         c = c.split()
         if len(c) == 1 and self.current_queue:
             max_jobs = int(c[0])
-            self.master_db.execute_query( 'UPDATE queues SET max_jobs= ? WHERE name = ?', max_jobs, self.current_queue )
+            self.master_db.query_master_db('UPDATE queues SET max_jobs= ? WHERE name = ?', max_jobs, self.current_queue)
         elif len(c) == 2:
             re = c[0]
             max_jobs = int(c[1])
@@ -84,7 +84,7 @@ class QueueCommandParser(cmd.Cmd):
 #        print lsq
             for q in lsq:
                 #print status, q
-                self.master_db.execute_query( 'UPDATE queues SET max_jobs= ? WHERE name = ?',  max_jobs, q )
+                self.master_db.query_master_db('UPDATE queues SET max_jobs= ? WHERE name = ?', max_jobs, q)
 
 
 
@@ -107,7 +107,7 @@ class QueueCommandParser(cmd.Cmd):
            usage: [regexp] N_JOBS"""
         c = c.split()
         if len(c) == 0 and self.current_queue:
-            self.master_db.execute_query( 'DELETE FROM queues WHERE name = ?', self.current_queue  )
+            self.master_db.query_master_db('DELETE FROM queues WHERE name = ?', self.current_queue)
         elif len(c) == 1:
             re = c[0]
 #            print re, max_jobs
@@ -116,7 +116,7 @@ class QueueCommandParser(cmd.Cmd):
 #        print lsq
             for q in lsq:
                 #print status, q
-                self.master_db.execute_query( 'DELETE FROM queues WHERE name = ?', q  )        
+                self.master_db.query_master_db('DELETE FROM queues WHERE name = ?', q)
 
 
 #        ret = utils.parse_to_dict(c, allowed_keys=self.possible_keys)
@@ -135,7 +135,7 @@ class QueueCommandParser(cmd.Cmd):
         #print name, status
         if not name and self.current_queue:
 #            print  'UPDATE queues SET status= ? WHERE name = ?'
-            self.master_db.execute_query( 'UPDATE queues SET status= ? WHERE name = ?', status, self.current_queue  )
+            self.master_db.query_master_db('UPDATE queues SET status= ? WHERE name = ?', status, self.current_queue)
             return
         lsq = [ n for  (id, n, max_jobs, s) in self.queues ]
         if name:
@@ -143,7 +143,7 @@ class QueueCommandParser(cmd.Cmd):
 #        print lsq
         for q in lsq:
 #            print status, q
-            self.master_db.execute_query( 'UPDATE queues SET status= ? WHERE name = ?',  status, q )
+            self.master_db.query_master_db('UPDATE queues SET status= ? WHERE name = ?', status, q)
 
     def do_stop(self, c):
         """stops the currently loaded registered database"""

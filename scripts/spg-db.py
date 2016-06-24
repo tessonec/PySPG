@@ -3,7 +3,7 @@
 
 import spg.utils as utils
 from spg.simulation import EnsembleDBBuilder, ParameterEnsemble
-# from spg.master import MasterDB
+# from spg.master import SPGMasterDB
 from spg.cmdline import DBCommandLine
 # from spg import VAR_PATH, RUN_DIR
 import spg.utils as utils
@@ -65,9 +65,9 @@ class SPGDBCommandLine(DBCommandLine):
         parser.init_db(  )
         parser.fill_status(repeat = self.current_param_db.repeat ) 
         if not "skip-master" in  flags:
-            self.master_db.update_result_db( self.current_param_db )
+            self.master_db.write_ensemble_to_master(self.current_param_db)
             self.current_param_db.id = self.master_db.cursor.lastrowid
-            self.master_db.initialise_result_dbs()
+            self.master_db.update_list_ensemble_dbs()
 
 
     def complete_init(self, text, line, begidx, endidx):    
@@ -98,9 +98,9 @@ class SPGDBCommandLine(DBCommandLine):
         if len(c) >1: 
             self.do_set( ":".join( c[1:] ) )
 
-        self.master_db.update_result_db( self.current_param_db )
+        self.master_db.write_ensemble_to_master(self.current_param_db)
         self.current_param_db.id = self.master_db.cursor.lastrowid
-        self.master_db.initialise_result_dbs()
+        self.master_db.update_list_ensemble_dbs()
         print " *--- registered '%s' with id=%d  "%(   self.current_param_db.full_name, self.current_param_db.id )
         
 
@@ -117,9 +117,9 @@ class SPGDBCommandLine(DBCommandLine):
             return 
                 
         if "all" in flags:
-            self.current_param_db.execute_query('UPDATE run_status SET status = "N"  ')
+            self.current_param_db.query_master_db('UPDATE run_status SET status = "N"  ')
         else :
-            self.current_param_db.execute_query('UPDATE run_status SET status = "N" WHERE status ="R" OR status ="E" ')
+            self.current_param_db.query_master_db('UPDATE run_status SET status = "N" WHERE status ="R" OR status ="E" ')
             
 
     def do_remove(self, c):
@@ -135,9 +135,9 @@ class SPGDBCommandLine(DBCommandLine):
         
         for i in ls_res_db: 
             # print i
-            self.master_db.execute_query("DELETE FROM dbs WHERE full_name = ?", i  )
+            self.master_db.query_master_db("DELETE FROM dbs WHERE full_name = ?", i)
             del self.master_db.result_dbs[i]
-        self.master_db.synchronise_master()
+        self.master_db.synchronise_masted_db()
  
   #  def complete_remove(self, text, line, begidx, endidx):
          #:::~ FIXME: doesn't work. Why?
@@ -167,7 +167,7 @@ class SPGDBCommandLine(DBCommandLine):
         for k in ret.keys():
             self.current_param_db.__dict__[k] = ret[k]
             if k == "repeat": continue # repeat is not in the master db (should it be added)
-            self.master_db.execute_query( 'UPDATE dbs SET %s= ? WHERE id = ?'%k, ret[k], self.current_param_db.id  )
+            self.master_db.query_master_db('UPDATE dbs SET %s= ? WHERE id = ?' % k, ret[k], self.current_param_db.id)
 
 
     def __set_status(self, c, st):
@@ -179,7 +179,7 @@ class SPGDBCommandLine(DBCommandLine):
         
         for i in ls_res_db: 
             self.current_param_db.status = st
-            self.master_db.execute_query( 'UPDATE dbs SET status= ? WHERE id = ?', st, self.current_param_db.id  )
+            self.master_db.query_master_db('UPDATE dbs SET status= ? WHERE id = ?', st, self.current_param_db.id)
 
     def do_stop(self, c):
         """stops the currently loaded registered database"""
@@ -199,11 +199,11 @@ class SPGDBCommandLine(DBCommandLine):
         c = c.split()
         if len(c) == 1:
             max_jobs = int(c[0])
-            self.master_db.execute_query('UPDATE queues SET max_jobs= ? WHERE name = "default"', max_jobs)
+            self.master_db.query_master_db('UPDATE queues SET max_jobs= ? WHERE name = "default"', max_jobs)
 
     def do_get_jobs(self,c):
 
-        nj, = self.master_db.execute_query_fetchone('SELECT max_jobs FROM queues WHERE name = "default"')
+        nj, = self.master_db.query_master_fetchone('SELECT max_jobs FROM queues WHERE name = "default"')
         print " +--- no_jobs = %d "%nj
 
 
@@ -222,7 +222,7 @@ class SPGDBCommandLine(DBCommandLine):
         for i in ls_res_db:
             curr_db = self.master_db.result_dbs[i]
 
-            self.master_db.update_result_db(curr_db)
+            self.master_db.write_ensemble_to_master(curr_db)
 
             print " ---%5d: %s" % (curr_db.id, os.path.relpath(curr_db.full_name, "."))
             frac_done = float(curr_db.stat_processes_done) / float(curr_db.stat_values_set)

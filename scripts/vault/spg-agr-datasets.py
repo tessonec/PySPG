@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# :::~ Author: Claudio Juan Tessone <tessonec@ethz.ch> (c) 2010
+# :::~ Author: Claudio Juan Tessone <claudio.tessone@uzh.ch> (c) 2010
 ###
 ### 
 ###
@@ -14,7 +14,7 @@ PROGRAM_NAME         = "CTP-AGR-Files"
 PROGRAM_VERSION      = "0.2.0"
 PROGRAM_AUTHOR       = "Claudio J. Tessone"
 PROGRAM_RELEASE_DATE = "2010/05/18"
-PROGRAM_EMAIL        = "tessonec@ethz.ch"
+PROGRAM_EMAIL        = "claudio.tessone@uzh.ch"
 
 import sys, os, os.path, glob, re
 

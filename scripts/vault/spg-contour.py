@@ -10,7 +10,7 @@ PROGRAM_NAME         = "SPG-Coalesce"
 PROGRAM_VERSION      = "0.1.0"
 PROGRAM_AUTHOR       = "Claudio J. Tessone"
 PROGRAM_RELEASE_DATE = "2011/03/25"
-PROGRAM_EMAIL        = "tessonec@ethz.ch"
+PROGRAM_EMAIL        = "claudio.tessone@uzh.ch"
 
 import spg.utils as spgu
 

@@ -1,5 +1,5 @@
 
-from masterdb import MasterDB
+from spgmasterdb import SPGMasterDB
 
 # from masterpckl import PickledMaster
 

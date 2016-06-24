@@ -3,8 +3,6 @@
 import threading
 import time
 
-exitFlag = 0
-
 import random as rnd
 
 class SPGRunningAtom(threading.Thread):

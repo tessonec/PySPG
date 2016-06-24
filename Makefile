@@ -32,7 +32,7 @@ install:
 	mkdir -p ${LIBDIR}/master
 	install -m 0644 spg/master/__init__.py ${LIBDIR}/master
 	install -m 0644 spg/master/exchange.py ${LIBDIR}/master
-	install -m 0644 spg/master/masterdb.py ${LIBDIR}/master
+	install -m 0644 spg/master/spgmasterdb.py ${LIBDIR}/master
 	# library (parameter)
 	mkdir -p ${LIBDIR}/parameter
 	install -m 0644 spg/parameter/__init__.py ${LIBDIR}/parameter

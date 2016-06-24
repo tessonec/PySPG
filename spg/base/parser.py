@@ -4,7 +4,7 @@
 """Parses the parameters.dat into something meaningful"""
 
 ###########################################################################
-# :::~ Copyright (C) 2003-2011 by Claudio J. Tessone <tessonec@ethz.ch> 
+# :::~ Copyright (C) 2003-2011 by Claudio J. Tessone <claudio.tessone@uzh.ch>
 # 
 # Modified on: v2.9.2 14 May 2011
 # Modified on: v2.9.1 30 May 2010

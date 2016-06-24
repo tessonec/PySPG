@@ -53,15 +53,15 @@ class ParameterAtom:
         
         #:::~ Table with the name of the executable
 
-        (self.command, ) = param_ens.execute_query_fetchone( "SELECT value FROM information WHERE key = 'command' " )
+        (self.command, ) = param_ens.query_master_fetchone("SELECT value FROM information WHERE key = 'command' ")
         #:::~ get the names of the columns
-        sel = param_ens.execute_query("SELECT name FROM entities ORDER BY id")
+        sel = param_ens.query_master_db("SELECT name FROM entities ORDER BY id")
         self.entities = [ i[0] for i in sel ]
         
-        sel = param_ens.execute_query("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
+        sel = param_ens.query_master_db("SELECT name FROM entities WHERE varies = 1 ORDER BY id")
         self.variables = [ i[0] for i in sel ]
 
-        res = param_ens.execute_query_fetchone(
+        res = param_ens.query_master_fetchone(
                     "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
                     "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
                    )
@@ -71,7 +71,7 @@ class ParameterAtom:
 
         self.current_run_id  = res[0]
         self.current_valuesset_id= res[1]
-        param_ens.execute_query( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
+        param_ens.query_master_db('UPDATE run_status SET status ="R" WHERE id = %d' % self.current_run_id)
 #        connection.commit()
         for i in range( len(self.entities) ):
             self.values[ self.entities[i] ] = res[i+2]
@@ -94,10 +94,10 @@ class ParameterAtom:
                 cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(output_column_names) , ", ".join(["'%s'" % str(i) for i in output_columns ]))
                 #print cc
                 try:
-                    param_ens.execute_query(cc)
-                    param_ens.execute_query('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
+                    param_ens.query_master_db(cc)
+                    param_ens.query_master_db('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
                 except:
-                    param_ens.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
+                    param_ens.query_master_db('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
             flog = open(self.full_db_name.replace("spgql", "log"), "aw")
             flog_err = open(self.full_db_name.replace("spgql", "err"), "aw")
             if not hasattr(self,'run_time'):
@@ -119,7 +119,7 @@ class ParameterAtom:
             #:::~    'R': running
             #:::~    'D': successfully run (done)
             #:::~    'E': run but with non-zero error code
-            param_ens.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
+            param_ens.query_master_db('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
              
             flog = open(self.full_db_name.replace("spgql", "log"), "aw")
             flog_err = open(self.full_db_name.replace("spgql", "err"), "aw")

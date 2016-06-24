@@ -2,7 +2,7 @@
 """
 Created on Mon Jul 11 11:23:41 2011
 
-@author: Claudio Tessone <tessonec@ethz.ch>
+@author: Claudio Tessone <claudio.tessone@uzh.ch>
 
 Implementation of the paramaters.dat in the form of a database
 """

@@ -3,7 +3,7 @@
 
 import spg.utils as utils
 from spg.simulation import EnsembleCSVBuilder, ParameterEnsemble, ParameterEnsembleCSV
-from spg.master import MasterDB
+from spg.master import SPGMasterDB
 from spg.cmdline import BaseSPGCommandLine
 #from spg import VAR_PATH, RUN_DIR
 
