@@ -184,36 +184,17 @@ class ParameterAtomExecutor(ParameterAtom):
         
         cmd = "%s/%s -i %s"%(self.bin_dir , self.command, configuration_filename )
 
-#        proc = Popen(cmd, shell = True, stdin = PIPE, stdout = PIPE, stderr = PIPE )
-
         proc = Popen(cmd, shell = True, stdin = PIPE, stdout = file_stdout, stderr = file_stderr )
         self.return_code = proc.wait()
         
         file_stdout.close()
         file_stderr.close()
         finish_time = time.time()
-#     poll = proc.poll()
-#      while poll is None:
-#           time.sleep(1)
-#       utils.newline_msg( "SLP", "%s -- %s -- %s"%(cmd,self.path,poll))
-            
-#            poll = proc.poll()
-        
-#        print self.command,  self.path, self.db_name,  configuration_filename  , self.values, <$$$$$$$
-#        print self.current_run_id, self.current_variables_id, self.entities, configuration_filename
-        
-    #    print self.return_code 
+
         self.output =  [i.strip() for i in open("%s.tmp_stdout"%self.current_run_id, "r")]
-     #   print >> sys.stderr, "STDOUT",  self.output
         self.stderr =  [i.strip() for i in open("%s.tmp_stderr"%self.current_run_id, "r")]
-    #    print >> sys.stderr, "STDERR",  self.stderr
-#        self.return_code = 0
-#        self.output = ""
 
 
         os.remove(configuration_filename)
-        
-#        os.remove("%s.stdout"%self.current_run_id)
-#        os.remove("%s.stderr"%self.current_run_id)
 
         self.run_time = finish_time - started_time

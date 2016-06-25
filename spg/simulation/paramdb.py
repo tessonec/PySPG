@@ -48,7 +48,7 @@ class EnsembleDBBuilder(MultIteratorParser):
             sys.exit(1)
         self.stdout_contents = check_params.contents_in_output(self.command)
                 
-        self.connection =  sql.connect(db_name, timeout = timeout)
+        self.connection =  sql.connect(db_name, timeout = timeout, check_same_thread = False)
         self.cursor = self.connection.cursor()
         
     def check_and_insert_information(self, key, expected_value = None, do_not_compare = False):

@@ -58,9 +58,10 @@ if __name__ == "__main__":
       for values in executor:
           if options.verbose:
               utils.inline_msg("RUN", "[%s] %s"%(executor.current_run_id,executor.variable_values()) )
-          executor.launch_process()
+          # executor.launch_process()
           try:
              executor.launch_process()
+             executor.dump_result()
           except (KeyboardInterrupt,):
               executor.restore_last_run()
               print >> sys.stderr

@@ -7,6 +7,7 @@ import spg.utils as utils
 
 
 from spg.master import SPGMasterDB
+from spg.simulation import ParameterEnsembleExecutor, ParameterEnsembleThreaded
 
 class SPGRunningAtom(threading.Thread):
     n_threads = 0
@@ -21,14 +22,21 @@ class SPGRunningAtom(threading.Thread):
 
     def run(self):
         self.lock.acquire()
-        print "-S- [%4d]- ----- " % (self.thread_id, self.ensemble.full_name)
+        print "-S- [%4d]- ----- %s" % (self.thread_id, self.ensemble.full_name)
+        self.ensemble.next()
         self.lock.release()
 
-        time.sleep( rnd.randint( 2, 15 ) )
+        current_run_id, output, stderr, run_time = self.ensemble.launch_process()
+
 
         self.lock.acquire()
-        print "-X- [%4d]- ----- " % (self.thread_id, self.ensemble.full_name)
+#        print "-X- [%4d]- ----- %s" % (self.thread_id, self.ensemble.full_name)
+        self.ensemble.dump_result( current_run_id, output, stderr, run_time  )
+#        self.ensemble.set_as_run()
+        print "-X- [%4d]- ----- %s" % (self.thread_id, self.ensemble.full_name)
         self.lock.release()
+
+
 
 
 
@@ -37,26 +45,32 @@ class SPGRunningAtom(threading.Thread):
 
 class SPGRunningPool():
     def __init__(self):
-        self.master_db = SPGMasterDB()
+        self.master_db = SPGMasterDB( EnsembleConstructor = ParameterEnsembleThreaded )
+        self.lock = threading.Lock()
+        # self.db_locks = {}
 
-        self.db_lock = threading.Lock()
-
-
+    def get_lock(self, i_db):
+        if not self.db_locks.has_key( i_db.full_name ):
+            self.db_locks[ i_db.full_name  ] = threading.Lock()
+        return self.db_locks[ i_db.full_name  ]
 
     def launch_workers(self):
         target_jobs, = self.master_db.query_master_fetchone('SELECT max_jobs FROM queues WHERE name = "default"')
 
         current_count = self.active_threads()
         to_launch = target_jobs - current_count
-        utils.newline_msg( "STAT", "[%3d::%3d:%3d]" % (target_jobs,current_count, to_launch ) )
+        utils.newline_msg( "STAT", "[target:run/new]=[%d:%d/%d]" % (target_jobs,current_count, to_launch ) )
 
 
         self.master_db.update_list_ensemble_dbs()
         for i_t in range(to_launch):
-
+            self.lock.acquire()
             pick = self.master_db.pick_ensemble()
+            self.lock.release()
 
-            nt = SPGRunningAtom(pick, lock=self.db_lock)
+            nt = SPGRunningAtom(pick, self.lock)
+            # nt = SPGRunningAtom(pick, lock=self.get_lock( pick ) )
+
             nt.start()
 
     def active_threads(self):

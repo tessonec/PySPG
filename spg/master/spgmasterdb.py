@@ -83,11 +83,8 @@ class SPGMasterDB:
                 self.result_dbs[full_name].weight = weight
                 
                 continue
-           ### try:
             new_db = self.EnsembleConstructor(full_name, id, weight, queue, status)
             self.result_dbs[full_name] = new_db
-           ### except:
-            ###    self.result_dbs[full_name] = None
 
         self.normalising = 0.
         self.active_dbs = []
@@ -135,14 +132,14 @@ class SPGMasterDB:
     def pick_ensemble(self):
         rnd = self.normalising * random.random()
 
-        act_dbs = copy.copy( self.active_dbs )
 
-        curr_db = act_dbs.pop()
-        ac = curr_db.weight
-
+        curr_id = 0
+        ac = 0.
         while rnd > ac:
-            curr_db = act_dbs
+            curr_db = self.active_dbs[curr_id]
             ac += curr_db.weight
+            curr_id += 1
+
 
         return curr_db
 

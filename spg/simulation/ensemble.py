@@ -1,5 +1,5 @@
 from spg import utils
-from spg import TIMEOUT
+from spg import TIMEOUT, ROOT_DIR
 
 #import os.path, os, sys
 import os, sys, os.path, time
@@ -181,7 +181,7 @@ class ParameterEnsemble:
         self.full_name, self.path, self.base_name, ext = utils.translate_name(full_name)
 
         self.db_name = "%s.spgql"%self.base_name
-
+        self.full_name = "%s/%s.spgql"%(self.path,self.base_name)
         self.values = {}
         self.directory_vars = None
 
@@ -199,25 +199,29 @@ class ParameterEnsemble:
         self.status = status
         self.repeat = repeat
 
+#        print self.full_name, self.db_name
 
+        self.__connect_db()
         if init_db  :
             self.init_db()
 
         # :::~ Before they were in __connect_db(self)
-        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
-        self.cursor = self.connection.cursor()
+#        self.connection = sql.connect(self.db_name, timeout = TIMEOUT)
+#        self.cursor = self.connection.cursor()
 
     def __connect_db(self):
        # pass
-        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
+        self.connection = sql.connect(self.full_name, timeout = TIMEOUT,  check_same_thread = False)
         self.cursor = self.connection.cursor()
          
 
 
     def __close_db(self):
+
+        self.cursor.close()
+        del self.cursor
         self.connection.commit()
         self.connection.close()
-        del self.cursor
         del self.connection
 #
 
@@ -279,7 +283,7 @@ class ParameterEnsemble:
         return self
 
 
-    def reset(self):     
+    def reset(self, querys):
         self.execute_query( 'UPDATE run_status SET status ="N" WHERE id>0 '  )
 
     def next(self):
@@ -298,6 +302,7 @@ class ParameterEnsemble:
             self.values[ self.entities[i] ] = res[i+2]
 
         return self.values
+
 
     def variable_values(self):
         ret = {}
@@ -359,8 +364,8 @@ class ParameterEnsemble:
 
 class ParameterEnsembleExecutor(ParameterEnsemble):
     def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = True):
-        ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  )
-        self.init_db()
+        ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat , init_db )
+#        self.init_db()
         os.chdir(self.path)
 
         if os.path.exists("./%s" % self.command):
@@ -381,30 +386,29 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
                 print >> fconf, k, utils.replace_values(self.values[k], self.values)
          fconf.close()
 
-         file_stdout = open("%s.tmp_stdout" % self.current_run_id, "w")
-         file_stderr = open("%s.tmp_stderr" % self.current_run_id, "w")
+         fname_stdout = "%s_%s.tmp_stdout"% (self.base_name, self.current_run_id)
+         fname_stderr = "%s_%s.tmp_stderr"% (self.base_name, self.current_run_id)
+         file_stdout = open(fname_stdout, "w")
+         file_stderr = open(fname_stderr, "w")
 
          cmd = "%s/%s -i %s" % (self.bin_dir, self.command, configuration_filename)
 
-         proc = Popen(cmd, shell=True, stdin=PIPE, stdout=file_stdout, stderr=file_stderr)
+         proc = Popen(cmd, shell=True, stdin=PIPE, stdout=file_stdout, stderr=file_stderr, cwd=self.path)
          self.return_code = proc.wait()
 
          file_stdout.close()
          file_stderr.close()
          finish_time = time.time()
 
-         self.output = [i.strip() for i in open("%s.tmp_stdout" % self.current_run_id, "r")]
-         self.stderr = [i.strip() for i in open("%s.tmp_stderr" % self.current_run_id, "r")]
+         self.output = [i.strip() for i in open(fname_stdout, "r")]
+         self.stderr = [i.strip() for i in open(fname_stderr, "r")]
 
          os.remove(configuration_filename)
-
-   #      os.remove("%s.tmp_stdout" % self.current_run_id)
-   #      os.remove("%s.tmp_stderr" % self.current_run_id)
+         os.remove( fname_stdout )
+         os.remove( fname_stderr )
 
          self.run_time = finish_time - started_time
          self.dump_result()
-         self.execute_query('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
-
          try:
             self.dump_result()
             self.execute_query('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
@@ -416,12 +420,13 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 
     def dump_result(self):
          """ loads the next parameter atom from a parameter ensemble"""
+#         flog = open(self.full_db_name.replace("spgql", "log"), "aw")
+#         flog_err = open(self.full_db_name.replace("spgql", "err"), "aw")
 
          if self.return_code == 0:
-              #       print self.output
               for line in self.output:
                  table_name, output_column_names, output_columns = self.parse_output_line(line)
-                 #        print output_column_names
+
                  output_columns.insert(0, self.current_run_id)  # WARNING: MZ FOUND THAT BEFORE WE HAVE BEEN SETTING current_run_id
                  cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(output_column_names),
                                                                    ", ".join(["'%s'" % str(i) for i in output_columns]))
@@ -433,50 +438,33 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
                  except:
                      self.execute_query(
                                 'UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
-                 flog = open("%s/%s.log_stdout"%(self.path,self.base_name), "aw")
-                 flog_err = open("%s/%s.log_stderr"%(self.path,self.base_name), "aw")
-                 if not hasattr(self, 'run_time'):
-                        self.run_time = -1
-                 utils.newline_msg("INF", "{%s} ret=%s -- %s,%s -- run_time=%s" % (
-                     self.command,  self.return_code, self.current_run_id, self.current_valuesset_id,
-                     self.run_time), stream=flog)
-                 print >> flog, "     values: ", self.values
-                 print >> flog, "OUT--  ", "       \n ".join(self.output)
-
-                 try:
-                        print >> flog_err, "     \n ".join(self.stderr)
-                 except:
-                        utils.newline_msg("WRN", "NO_STDERR", stream=flog_err)
-                 flog.close()
-                 flog_err.close()
 
          else:
-              #:::~ status can be either
+             #:::~ status can be either
               #:::~    'N': not run
               #:::~    'R': running
               #:::~    'D': successfully run (done)
               #:::~    'E': run but with non-zero error code
               self.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
 
-              flog = open(self.full_db_name.replace("spgql", "log"), "aw")
-              flog_err = open(self.full_db_name.replace("spgql", "err"), "aw")
-              if not hasattr(self, 'run_time'):
-                  self.run_time = -1
-              utils.newline_msg("INF", "{%s} %s: ret=%s -- %s,%s -- run_time=%s" % (
-              self.command, self.in_name, self.return_code, self.current_run_id, self.current_valuesset_id,
-                    self.run_time), stream=flog)
-              print >> flog, "     values: ", self.values
-              print >> flog, "OUT--  ", "       ".join(self.output)
-
-              try:
-                        print >> flog_err, "     \n ".join(self.stderr)
-              except:
-                        utils.newline_msg("WRN", "NO_STDERR", stream=flog_err)
-              flog.close()
-              flog_err.close()
 
 
+#         inf_str = "{%s} %s: ret=%s -- %s,%s "  % (
+#                    self.command, self.in_name, self.return_code, self.current_run_id, self.current_valuesset_id )
+#         if hasattr(self, 'run_time'):
+#             inf_str += " run_time=%s"%self.run_time
+#         utils.newline_msg("INF", inf_str, stream=flog)
 
+#         print >> flog, "     values: ", self.values
+#         print >> flog, "OUT--  ", "       ".join(self.output)
+
+#         try:
+#             print >> flog_err, "     \n ".join(self.stderr)
+#         except:
+#             utils.newline_msg("WRN", "NO_STDERR", stream=flog_err)
+
+#         flog.close()
+#         flog_err.close()
 
 
 class ParameterEnsembleInputFilesGenerator(ParameterEnsemble):
@@ -504,6 +492,164 @@ class ParameterEnsembleInputFilesGenerator(ParameterEnsemble):
 ################################################################################
 ################################################################################
 ################################################################################
+
+
+
+
+
+
+
+
+################################################################################
+################################################################################
+
+class ParameterEnsembleThreaded(ParameterEnsemble):
+    def __init__(self, full_name="", id=-1, weight=1., queue='*', status='R', repeat=1, init_db=True):
+        ParameterEnsemble.__init__(self, full_name, id, weight, queue, status, repeat, init_db)
+        #        self.init_db()
+        os.chdir(self.path)
+
+        if os.path.exists("./%s" % self.command):
+            self.bin_dir = "."
+        elif os.path.exists("%s%/bin/%s" % (ROOT_DIR, self.command)):
+            self.bin_dir = "%s%/bin" % (ROOT_DIR)
+        else:
+            utils.newline_msg("ERR", "Fatal, binary '%s' not found" % self.command)
+            sys.exit(1)
+
+    def launch_process(self):
+        os.chdir(self.path)
+        started_time = time.time()
+
+        configuration_filename = "%s-%d.input" % (self.base_name,self.current_run_id)
+        fconf = open(configuration_filename, "w")
+        for k in self.values.keys():
+            print >> fconf, k, utils.replace_values(self.values[k], self.values)
+        fconf.close()
+
+        fname_stdout = "%s_%s.tmp_stdout" % (self.base_name, self.current_run_id)
+        fname_stderr = "%s_%s.tmp_stderr" % (self.base_name, self.current_run_id)
+        file_stdout = open(fname_stdout, "w")
+        file_stderr = open(fname_stderr, "w")
+
+        cmd = "%s/%s -i %s" % (self.bin_dir, self.command, configuration_filename)
+
+        proc = Popen(cmd, shell=True, stdin=PIPE, stdout=file_stdout, stderr=file_stderr, cwd=self.path)
+        self.return_code = proc.wait()
+
+        file_stdout.close()
+        file_stderr.close()
+        finish_time = time.time()
+
+        output = [i.strip() for i in open(fname_stdout, "r")]
+        stderr = [i.strip() for i in open(fname_stderr, "r")]
+
+        os.remove(configuration_filename)
+        os.remove(fname_stdout)
+        os.remove(fname_stderr)
+
+        run_time = finish_time - started_time
+        # self.dump_result()
+        #try:
+        #    self.dump_result()
+        #    self.execute_query('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
+        #except:
+        #    self.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
+
+        return self.current_run_id, output, stderr, run_time
+
+
+    def restore_last_run(self):
+        self.execute_query('UPDATE run_status SET status ="N" WHERE id = %d' % self.current_run_id)
+
+    def dump_result(self, current_run_id, output, stderr, run_time):
+        """ loads the next parameter atom from a parameter ensemble"""
+        #         flog = open(self.full_db_name.replace("spgql", "log"), "aw")
+        #         flog_err = open(self.full_db_name.replace("spgql", "err"), "aw")
+
+        if self.return_code == 0:
+            for line in output:
+                table_name, output_column_names, output_columns = self.parse_output_line(line)
+
+                output_columns.insert(0,current_run_id)
+                cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(output_column_names),
+                                                           ", ".join(["'%s'" % str(i) for i in output_columns]))
+                # print cc
+                try:
+                    self.execute_query(cc)
+                    self.execute_query(
+                        'UPDATE run_status SET status ="D" WHERE id = %d' % current_run_id)
+                except:
+                    self.execute_query(
+                        'UPDATE run_status SET status ="E" WHERE id = %d' % current_run_id)
+
+        else:
+            #:::~ status can be either
+            #:::~    'N': not run
+            #:::~    'R': running
+            #:::~    'D': successfully run (done)
+            #:::~    'E': run but with non-zero error code
+            self.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % current_run_id)
+
+
+
+
+# inf_str = "{%s} %s: ret=%s -- %s,%s "  % (
+#                    self.command, self.in_name, self.return_code, self.current_run_id, self.current_valuesset_id )
+#         if hasattr(self, 'run_time'):
+#             inf_str += " run_time=%s"%self.run_time
+#         utils.newline_msg("INF", inf_str, stream=flog)
+
+#         print >> flog, "     values: ", self.values
+#         print >> flog, "OUT--  ", "       ".join(self.output)
+
+#         try:
+#             print >> flog_err, "     \n ".join(self.stderr)
+#         except:
+#             utils.newline_msg("WRN", "NO_STDERR", stream=flog_err)
+
+#         flog.close()
+#         flog_err.close()
+
+
+class ParameterEnsembleInputFilesGenerator(ParameterEnsemble):
+    def __init__(self, full_name="", id=-1, weight=1., queue='*', status='R', repeat=1, init_db=False):
+        ParameterEnsemble.__init__(self, full_name, id, weight, queue, status, repeat, init_db)
+        os.chdir(self.path)
+
+    def launch_process(self):
+        #        pwd = os.path.abspath(".")
+        #     if self.directory_vars or self.create_trees():
+        #         dir = utils.generate_string(self.values,self.directory_vars, joining_string = "/")
+        #         if not os.path.exists(dir): os.makedirs(dir)
+        #        os.chdir(dir)
+        configuration_filename = "input_%.8d.dat" % (self.current_valuesset_id)
+        fconf = open(configuration_filename, "w")
+
+        for k in self.values.keys():
+            print >> fconf, k, utils.replace_values(self.values[k], self.values)
+        fconf.close()
+
+
+################################################################################
+################################################################################
+################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ################################################################################
 ################################################################################
 ################################################################################
