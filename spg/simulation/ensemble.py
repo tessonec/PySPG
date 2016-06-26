@@ -282,7 +282,7 @@ class ParameterEnsemble:
         if id is None:
             id = self.current_run_id
 
-        self.execute_query( 'UPDATE run_status SET status ="R" WHERE id = %d'% id  )
+        self.execute_query( 'UPDATE run_status SET status ="%s" WHERE id = %d'% (status,id)  )
 
     def __iter__(self):
         return self
@@ -577,6 +577,7 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
         #         flog = open(self.full_db_name.replace("spgql", "log"), "aw")
         #         flog_err = open(self.full_db_name.replace("spgql", "err"), "aw")
 
+#        print current_run_id, return_code
         if return_code == 0:
             for line in output:
                 table_name, output_column_names, output_columns = self.parse_output_line(line)
@@ -586,6 +587,7 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
                                                            ", ".join(["'%s'" % str(i) for i in output_columns]))
                 # print cc
                 # try:
+                #print current_run_id, return_code
                 self.execute_query(cc)
                 self.query_set_run_status("D",current_run_id)
                 #except:
