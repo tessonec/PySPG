@@ -20,7 +20,7 @@ import math as m
 import sqlite3 as sql
 import sys, optparse
 import os, os.path
-import fnmatch
+import fnmatch, csv
 
 class SPGResultsCommandLine(BaseSPGCommandLine):
     """Results command handler"""
@@ -29,12 +29,13 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
         BaseSPGCommandLine.__init__(self, EnsembleConstructor = ResultsDBQuery)
         self.prompt = "| spg-results :::~ "
         
-        self.possible_keys = set( [ "raw_data", "split_colums", "restrict_by_val", "table", "split_columns"] )
+        self.possible_keys = set( [ "raw_data", "split_colums", "restrict_by_val", "table", "split_columns", "sep"] )
         self.output_column = []
         self.raw_data = False
         self.split_columns = False
         self.restrict_by_val = False # was True
         self.table  = "results" # default value
+        self.sep = ","
 
         self.autoscale = None
 
@@ -47,20 +48,56 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
         os.chdir( self.current_param_db.path )
 
 
-    def do_save_csv(self, c):
+    def do_import_output_csv(self, c):
+
+        flags, cs = self.parse_command_line(c)
+        if "sep" in flags:
+            if flags["sep"] == "blank":
+                self.sep = " "
+            else:
+                self.sep = flags["sep"]
+
+        self.current_param_db.update_results_from_data( cs[0], sep = self.sep )
+
+    def do_export_output_csv(self, c):
         """save_csv [-flag1 -flag2] f1 f2 g3
            saves the table values in ascii format
            FLAGS::: -raw:        do not average values for same parameter set
         """
         flags, cs = self.parse_command_line(c)
-        for c in cs:
+        if "sep" in flags:
+            if flags["sep"] == "blank":
+                self.sep = " "
+            else:
+                self.sep = flags["sep"]
 
+        for c in cs:
             self.do_load(c)
             if "raw_data" in flags:
                 self.do_set("raw_data=True")
-            self.do_setup_vars_in_table("-all")
-            self.do_save_table("-header")
+            self.do_setup_vars_in_table("--all")
+            self.do_save_table( "--header %s"%c)
 
+    def do_export_input_csv(self,c):
+        flags, cs = self.parse_command_line(c)
+        if "sep" in flags:
+            if flags["sep"] == "blank":
+                self.sep = " "
+            else:
+                self.sep = flags["sep"]
+
+        for c in cs:
+            self.do_load(c)
+
+            self.do_setup_vars_in_table("--all")
+            header, data = self.current_param_db.values_set_table()
+
+            output_fname = utils.fix_filename("%s/%s_valueset.csv" % (self.current_param_db.path, self.current_param_db.base_name))
+            print "    table: %s" % output_fname
+            writer = csv.writer(open(output_fname, "w"), delimiter=self.sep, lineterminator="\n")
+
+            writer.writerow(header)
+            writer.writerows(data)
 
 
     def do_save_table(self,c):
@@ -70,46 +107,51 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
                    -append:      appends the output, instead of rewriting the file        
        """
        flags,c = self.parse_command_line(c)
-
        if "append" in flags:
           open_type = "aw"
        else:
-          open_type = "w" 
-       
+          open_type = "w"
+       #
+
        for i in self.current_param_db:
          if self.split_columns:
            for column in self.output_column:
-              print ":::", self.output_column
+        #      print ":::", self.output_column
               gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
               if gen_d :  gen_d+= "/"
               gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
-              output_fname = utils.fix_filename(  "%s%s-%s-%s.dat"%(gen_d, self.table, column, gen_s) )
+              output_fname = utils.fix_filename(  "%s%s-%s-%s.csv"%(gen_d, self.table, column, gen_s) )
               d,f = os.path.split(output_fname)
               if d != "" and not os.path.exists(d): os.makedirs(d)
-              output_file = open(output_fname , open_type)
 
+              writer = csv.writer(open(output_fname, open_type), delimiter=self.sep, lineterminator="\n")
+              if "header" in flags and "append" not in flags:
+                  writer.writerow(
+                      self.current_param_db.table_header(table=self.table, output_column=self.output_column) )
               data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
-              utils.newline_msg("OUT", output_fname)
-              utils.newline_msg("OUT", output_file)
 
-              np.savetxt( output_file, data)
+              writer.writerows(data)
          else:
-           data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
 
            
            gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
            if gen_d:  gen_d+= "/"
 
-           output_fname = utils.fix_filename( "%s%s_%s.dat"%(gen_d, self.current_param_db.base_name, self.table ) )
+           output_fname = utils.fix_filename( "%s%s_%s.csv"%(gen_d, self.current_param_db.base_name, self.table ) )
+
 
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
-           output_file = open(output_fname , open_type)
-           utils.newline_msg("OUT", output_fname)
-           if "header" in flags:
-                 output_file.write(  self.current_param_db.table_header(table = self.table, output_column= self.output_column ) )
-                 output_file.flush()
-           np.savetxt( output_file, data )
+#           output_file = open(output_fname , open_type)
+           data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
+
+           print "    table: %s"%output_fname
+
+           writer = csv.writer(open(output_fname, open_type), delimiter=self.sep, lineterminator="\n")
+           if "header" in flags and "append" not in flags:
+               writer.writerow( self.current_param_db.table_header(table = self.table, output_column= self.output_column ) )
+           writer.writerows( data )
+#           np.savetxt( output_file, data )
 
     def do_setup_vars_in_table(self,c):
         """sets up the variables that output into the table as independent columns
@@ -189,7 +231,8 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
 
     def do_set(self, c):
         """sets a VAR1=VALUE1[:VAR2=VALUE2]
-        sets a value in the currently loaded database """
+        sets a value in the currently loaded database
+        If key = sep (separator for csv table) "blank" means a single space"""
 
         if c == "help":
             utils.newline_msg("HELP", " possible_keys = %s"%self.possible_keys )
@@ -208,6 +251,12 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
                      utils.newline_msg("ERR", "table '%s' not among the ones found in the DB: (%s)"%(ret[k], ", ".join(self.current_param_db.output_column.keys())) )
                      return
                  self.output_column = self.current_param_db.output_column[ ret[k] ][1:]
+            if k == "sep":
+                if v == "blank":
+                    self.sep = " "
+                else:
+                    self.sep = v
+                return
             self.__dict__[k] = ret[k]
 
     def do_conf(self,c):

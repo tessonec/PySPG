@@ -393,7 +393,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
          os.chdir(self.path)
          started_time = time.time()
 
-         configuration_filename = "input-%d.dat"%(self.current_run_id)
+         configuration_filename = "%s-%d.input" % (self.base_name, self.current_run_id)
          fconf = open(configuration_filename, "w")
          for k in self.values.keys():
                 print >> fconf, k, utils.replace_values(self.values[k], self.values)
@@ -476,7 +476,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 #         flog.close()
 #         flog_err.close()
 
-
+#FIXME Deprecated
 class ParameterEnsembleInputFilesGenerator(ParameterEnsemble):
     def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = False):
         ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  , init_db )
@@ -743,16 +743,20 @@ class ResultsDBQuery(ParameterEnsemble):
     def table_from_query(self, query):
         """ print query """
 #        self.__connect_db()
-        
-        ret = n.array( [ map(float,i) for i in self.execute_query(query) ] )
+        ret = self.execute_query(query)
+        # ret = n.array( [ map(float,i) for i in self.execute_query(query) ] )
 #        self.__close_db()
         return ret
 
 
 
+    def values_set_table(self):
+        query = "SELECT * FROM values_set"
+        header = ["values_set_id"] + self.in_table_vars
+        return header, self.table_from_query(query)
+
     def result_table(self, table = "results", restrict_to_values = {}, raw_data = False, restrict_by_val = False, output_column = []):
-        
-    #    print output_column
+
         self.clean_dict(restrict_to_values)
 
         if len(self.in_table_vars) == 0:
@@ -765,7 +769,7 @@ class ResultsDBQuery(ParameterEnsemble):
             output_column = self.output_column[table][:]
         if "values_set_id" in output_column: 
                 output_column.remove("values_set_id")
-   #     print output_column
+
         out_cols = ""
         if not raw_data :
             if len(output_column ) == 1:
@@ -792,26 +796,23 @@ class ResultsDBQuery(ParameterEnsemble):
             else:  
                 query = "%s %s GROUP BY v.id"%(query, restrict_cols)
         query=query.replace("''", "'").replace("'\"", "'")
-  #      print query
+
         return self.table_from_query(query)        
 
 
     def table_header(self, table='results',output_column = []):
    
-        var_cols = "\t".join( self.in_table_vars )
-      #  print self.output_column, type(self.output_column), table
-      #  print self.output_column[table]
+        var_cols = self.in_table_vars
+
         if not output_column:
             output_column = self.output_column[table][:]
         if "values_set_id" in output_column: 
             output_column.remove("values_set_id")
-  #      print var_cols+"\t"+"\t".join(output_column)+"\n"
-        return var_cols+"\t"+"\t".join(output_column)+"\n"
+        return var_cols+output_column
           
 
 
     def __iter__(self):
-#        self.__connect_db()
         vars_to_separate = self.separated_vars[:]
         vars_to_separate.extend(self.coalesced_vars)
 
@@ -824,11 +825,22 @@ class ResultsDBQuery(ParameterEnsemble):
             query = "SELECT DISTINCT %s FROM values_set "%(",".join([v for v in vars_to_separate] ))
 
         pairs = self.execute_query(query)
-#        pairs = [ i for i in self.cursor ]
-#        self.__close_db()
         d = {}
         for i in pairs:
             d.clear()
             for j in range( len( vars_to_separate ) ):
                 d[vars_to_separate[j] ] = i[j]
             yield d
+
+
+    def update_results_from_data(self, table_file, table_name = "results", sep = "," ):
+        table = csv.reader(open(table_file), delimiter=sep, lineterminator="\n")
+
+        header = table.readrow()
+        for row in table:
+            cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(header),
+                                                   ", ".join(["'%s'" % str(i) for i in row]))
+
+            self.execute_query(cc)
+
+

@@ -127,7 +127,7 @@ class SPGDBCommandLine(DBCommandLine):
                 sim_name = "%s/%s.spg" % (path, base_name)
                 self.current_param_db = ParameterEnsemble(db_name)
             except:
-                utils.newline_msg("ERR", "results db '%s' doesn't exist. Cannot load it")
+                utils.newline_msg("ERR", "db '%s' doesn't exist. Cannot load it")
                 return
 
         if not self.current_param_db:

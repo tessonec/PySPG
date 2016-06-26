@@ -198,30 +198,30 @@ class EnsembleDBBuilder(MultIteratorParser):
 # 
 # 
 #===============================================================================
-
-class EnsembleCSVBuilder(MultIteratorParser):
-    """Generates a DB file with the representation of the parameters"""
-    def __init__(self, stream=None, db_name = "results.csv", timeout = 5):
-        MultIteratorParser.__init__(self, stream)
-    
-        if not check_params.consistency(self.command, self):
-            utils.newline_msg("ERR","simulation's spg file is not consistent.")
-            sys.exit(1)
-        self.stdout_contents = check_params.contents_in_output(self.command)
-        
-        self.csv_filename
-
-    def init_db(self):
-        
-        csv_file = open(self.csv_filename,"w")
-        fieldnames = [i.name for i in self.data]
-        fieldnames.append("id")
-        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-        writer.writeheader()
-        
-        for counter,i in enumerate(self):
-                d = self.get_dict()
-                d["id"]  = counter
-                writer.writerow(d)
-
-        csv_file.close()
+#
+# class EnsembleCSVBuilder(MultIteratorParser):
+#     """Generates a DB file with the representation of the parameters"""
+#     def __init__(self, stream=None, db_name = "results.csv", timeout = 5):
+#         MultIteratorParser.__init__(self, stream)
+#
+#         if not check_params.consistency(self.command, self):
+#             utils.newline_msg("ERR","simulation's spg file is not consistent.")
+#             sys.exit(1)
+#         self.stdout_contents = check_params.contents_in_output(self.command)
+#
+#         self.csv_filename
+#
+#     def init_db(self):
+#
+#         csv_file = open(self.csv_filename,"w")
+#         fieldnames = [i.name for i in self.data]
+#         fieldnames.append("id")
+#         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+#         writer.writeheader()
+#
+#         for counter,i in enumerate(self):
+#                 d = self.get_dict()
+#                 d["id"]  = counter
+#                 writer.writerow(d)
+#
+#         csv_file.close()
