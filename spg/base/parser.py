@@ -22,8 +22,8 @@ import iterator
 
 from math import * 
 
-import os.path 
 import re
+import fnmatch, os, os.path
 
 
 
@@ -90,8 +90,20 @@ class MultIteratorParser(iterator.MultIterator):
                 iterator.IterOperator( rest[0], symbol, \
                        (eval(rest[1] ), eval( rest[2]), eval(rest[3]) ) ) )
             if (symbol == '.'):
-              self.add( \
+              self.add(
                  iterator.Iterator(rest[0], rest[1:]) )
+
+            if (symbol == '<'):
+                ls_files = []
+                for rgx in ls_files:
+                    base_path, rx = os.path.split(rgx)
+                    if base_path == "":
+                        base_path == "."
+                    ls_files.extend( fnmatch.filter(os.listdir(base_path), rx) )
+
+
+                self.add( iterator.Iterator(rest[0], rest[1:]))
+
             if (symbol == ':'):
               self.add( iterator.IterConstant( name = rest[0], data = rest[1:] )  )
 
