@@ -16,24 +16,28 @@ class SPGRunningAtom(threading.Thread):
         SPGRunningAtom.n_threads += 1
         threading.Thread.__init__(self)
         self.thread_id = SPGRunningAtom.n_threads
-
         self.ensemble = ensemble
         self.lock = lock
 
     def run(self):
         self.lock.acquire()
-        print "-S- [%4d]- ----- %s" % (self.thread_id, self.ensemble.full_name)
         self.ensemble.next()
+        current_run_id, values = self.ensemble.get_current_information()
+        print "-S- [%4d]- ----- %s / %d" % (self.thread_id, self.ensemble.full_name, current_run_id)
         self.lock.release()
 
-        current_run_id, output, stderr, run_time = self.ensemble.launch_process()
+        current_run_id, output, stderr, run_time , return_code  = self.ensemble.launch_process(current_run_id, values )
 
 
         self.lock.acquire()
-#        print "-X- [%4d]- ----- %s" % (self.thread_id, self.ensemble.full_name)
-        self.ensemble.dump_result( current_run_id, output, stderr, run_time  )
-#        self.ensemble.set_as_run()
-        print "-X- [%4d]- ----- %s" % (self.thread_id, self.ensemble.full_name)
+        self.ensemble.dump_result( current_run_id, output, stderr, run_time , return_code  )
+        if return_code == 0:
+            self.ensemble.query_set_run_status("D")
+        elif return_code == -2:
+            self.ensemble.query_set_run_status("N")
+        else:
+            self.ensemble.query_set_run_status("E")
+        print "-X- [%4d]- ----- %s / %d -> %d" % (self.thread_id, self.ensemble.full_name, current_run_id, return_code)
         self.lock.release()
 
 
@@ -59,8 +63,10 @@ class SPGRunningPool():
 
         current_count = self.active_threads()
         to_launch = target_jobs - current_count
-        utils.newline_msg( "STAT", "[target:run/new]=[%d:%d/%d]" % (target_jobs,current_count, to_launch ) )
-
+        if to_launch >= 0:
+           utils.newline_msg( "STATUS", "[n_jobs=%d] run=%d ::: new=%d" % (target_jobs,current_count, to_launch ) )
+        else:
+            utils.newline_msg("STATUS", "[n_jobs=%d] run=%d :!: exceed" % (target_jobs,current_count))
 
         self.master_db.update_list_ensemble_dbs()
         for i_t in range(to_launch):

@@ -66,6 +66,7 @@ if __name__ == "__main__":
               executor.restore_last_run()
               print >> sys.stderr
               utils.newline_msg("SYS", "keyboard interrupted, exiting")
+              executor.query_set_run_status("N")
               sys.exit(1)
 
  #     if options.tree:

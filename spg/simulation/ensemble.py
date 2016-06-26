@@ -211,7 +211,7 @@ class ParameterEnsemble:
 
     def __connect_db(self):
        # pass
-        self.connection = sql.connect(self.full_name, timeout = TIMEOUT,  check_same_thread = False)
+        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
         self.cursor = self.connection.cursor()
          
 
@@ -278,13 +278,25 @@ class ParameterEnsemble:
         self.directory_vars = self.variables[:-1]
 
 
+    def query_set_run_status(self, status, id = None):
+        if id is None:
+            id = self.current_run_id
+
+        self.execute_query( 'UPDATE run_status SET status ="R" WHERE id = %d'% id  )
 
     def __iter__(self):
         return self
 
-
-    def reset(self, querys):
-        self.execute_query( 'UPDATE run_status SET status ="N" WHERE id>0 '  )
+    #
+    # def clean_status(self, type = "all"):
+    #     if type == 'all':
+    #         self.execute_query( 'UPDATE run_status SET status ="N" WHERE id>0 '  )
+    #
+    #     elif type == 'failed':
+    #         self.execute_query('UPDATE run_status SET status ="N" WHERE status = "E" ')
+    #
+    #     elif type == 'not-done':
+    #         self.execute_query('UPDATE run_status SET status ="N" WHERE status <> "D" ')
 
     def next(self):
 
@@ -296,8 +308,9 @@ class ParameterEnsemble:
         self.current_run_id  = res[0]
 
         self.current_valuesset_id = res[1]
-        self.execute_query( 'UPDATE run_status SET status ="R" WHERE id = %d'%self.current_run_id  )
-        
+        self.query_set_run_status("R")
+
+
         for i in range( len(self.entities) ):
             self.values[ self.entities[i] ] = res[i+2]
 
@@ -411,41 +424,38 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
          self.dump_result()
          try:
             self.dump_result()
-            self.execute_query('UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
          except:
-            self.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
+            self.query_set_run_status("E")
 
-    def restore_last_run(self):
-        self.execute_query('UPDATE run_status SET status ="N" WHERE id = %d' % self.current_run_id)
 
     def dump_result(self):
          """ loads the next parameter atom from a parameter ensemble"""
 #         flog = open(self.full_db_name.replace("spgql", "log"), "aw")
 #         flog_err = open(self.full_db_name.replace("spgql", "err"), "aw")
 
-         if self.return_code == 0:
-              for line in self.output:
-                 table_name, output_column_names, output_columns = self.parse_output_line(line)
 
-                 output_columns.insert(0, self.current_run_id)  # WARNING: MZ FOUND THAT BEFORE WE HAVE BEEN SETTING current_run_id
-                 cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(output_column_names),
+         #:::~ status can be either
+         #:::~    'N': not run
+         #:::~    'R': running
+         #:::~    'D': successfully run (done)
+         #:::~    'E': run but with non-zero error code
+
+         if self.return_code != 0:
+             self.query_set_run_status("E")
+             return
+
+         for line in self.output:
+             table_name, output_column_names, output_columns = self.parse_output_line(line)
+
+             output_columns.insert(0, self.current_run_id)  # WARNING: MZ FOUND THAT BEFORE WE HAVE BEEN SETTING current_run_id
+             cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(output_column_names),
                                                                    ", ".join(["'%s'" % str(i) for i in output_columns]))
                  # print cc
-                 try:
-                     self.execute_query(cc)
-                     self.execute_query(
-                                'UPDATE run_status SET status ="D" WHERE id = %d' % self.current_run_id)
-                 except:
-                     self.execute_query(
-                                'UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
-
-         else:
-             #:::~ status can be either
-              #:::~    'N': not run
-              #:::~    'R': running
-              #:::~    'D': successfully run (done)
-              #:::~    'E': run but with non-zero error code
-              self.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
+             try:
+                 self.execute_query(cc)
+                 self.query_set_run_status("D")
+             except:
+                 self.query_set_run_status("E")
 
 
 
@@ -517,25 +527,28 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
             utils.newline_msg("ERR", "Fatal, binary '%s' not found" % self.command)
             sys.exit(1)
 
-    def launch_process(self):
+    def get_current_information(self):
+        return self.current_run_id, self.values
+
+    def launch_process(self, current_run_id, values):
         os.chdir(self.path)
         started_time = time.time()
 
-        configuration_filename = "%s-%d.input" % (self.base_name,self.current_run_id)
+        configuration_filename = "%s-%d.input" % (self.base_name,current_run_id)
         fconf = open(configuration_filename, "w")
         for k in self.values.keys():
-            print >> fconf, k, utils.replace_values(self.values[k], self.values)
+            print >> fconf, k, utils.replace_values(values[k], values)
         fconf.close()
 
-        fname_stdout = "%s_%s.tmp_stdout" % (self.base_name, self.current_run_id)
-        fname_stderr = "%s_%s.tmp_stderr" % (self.base_name, self.current_run_id)
+        fname_stdout = "%s_%s.tmp_stdout" % (self.base_name, current_run_id)
+        fname_stderr = "%s_%s.tmp_stderr" % (self.base_name, current_run_id)
         file_stdout = open(fname_stdout, "w")
         file_stderr = open(fname_stderr, "w")
 
         cmd = "%s/%s -i %s" % (self.bin_dir, self.command, configuration_filename)
 
         proc = Popen(cmd, shell=True, stdin=PIPE, stdout=file_stdout, stderr=file_stderr, cwd=self.path)
-        self.return_code = proc.wait()
+        return_code = proc.wait()
 
         file_stdout.close()
         file_stderr.close()
@@ -556,18 +569,15 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
         #except:
         #    self.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % self.current_run_id)
 
-        return self.current_run_id, output, stderr, run_time
+        return current_run_id, output, stderr, run_time, return_code
 
 
-    def restore_last_run(self):
-        self.execute_query('UPDATE run_status SET status ="N" WHERE id = %d' % self.current_run_id)
-
-    def dump_result(self, current_run_id, output, stderr, run_time):
+    def dump_result(self, current_run_id, output, stderr, run_time, return_code ):
         """ loads the next parameter atom from a parameter ensemble"""
         #         flog = open(self.full_db_name.replace("spgql", "log"), "aw")
         #         flog_err = open(self.full_db_name.replace("spgql", "err"), "aw")
 
-        if self.return_code == 0:
+        if return_code == 0:
             for line in output:
                 table_name, output_column_names, output_columns = self.parse_output_line(line)
 
@@ -575,13 +585,11 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
                 cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(output_column_names),
                                                            ", ".join(["'%s'" % str(i) for i in output_columns]))
                 # print cc
-                try:
-                    self.execute_query(cc)
-                    self.execute_query(
-                        'UPDATE run_status SET status ="D" WHERE id = %d' % current_run_id)
-                except:
-                    self.execute_query(
-                        'UPDATE run_status SET status ="E" WHERE id = %d' % current_run_id)
+                # try:
+                self.execute_query(cc)
+                self.query_set_run_status("D",current_run_id)
+                #except:
+#                self.query_set_run_status("E",current_run_id)
 
         else:
             #:::~ status can be either
@@ -589,9 +597,7 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
             #:::~    'R': running
             #:::~    'D': successfully run (done)
             #:::~    'E': run but with non-zero error code
-            self.execute_query('UPDATE run_status SET status ="E" WHERE id = %d' % current_run_id)
-
-
+            self.query_set_run_status("E", current_run_id)
 
 
 # inf_str = "{%s} %s: ret=%s -- %s,%s "  % (

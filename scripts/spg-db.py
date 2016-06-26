@@ -55,15 +55,19 @@ class SPGDBCommandLine(DBCommandLine):
 
             self.do_remove(i_arg)
 
-        self.current_param_db = ParameterEnsemble( db_name, init_db = False )
-        if "repeat" in flags:
-            self.current_param_db.repeat = int(flags['repeat'])
 
         if len(c) >1: self.do_set( ":".join( c[1:] ) )
-        
+
+        repeat = int(flags['repeat'])
         parser = EnsembleDBBuilder(stream = open(sim_name), db_name=db_name)
         parser.init_db(  )
-        parser.fill_status(repeat = self.current_param_db.repeat ) 
+        parser.fill_status(repeat = repeat )
+
+        self.current_param_db = ParameterEnsemble( db_name )
+        if "repeat" in flags:
+            self.current_param_db.repeat = repeat
+
+
         if not "skip-master" in  flags:
             self.master_db.write_ensemble_to_master(self.current_param_db)
             self.current_param_db.id = self.master_db.cursor.lastrowid
@@ -108,19 +112,32 @@ class SPGDBCommandLine(DBCommandLine):
     def do_clean(self, c):
         """clean [-flag ...] PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
            if not arguments are given  sets all the rows in run_status with status R, E to N
-           FLAGS::: -all: sets all the rows in run_status to N  """
+           FLAGS::: --all: sets all the rows in run_status to N  """
         #:::~ OK, as of 13.10.11
 
-        flags,c = self.parse_command_line(c)
-        
-        if not self.current_param_db: 
-            utils.newline_msg("WRN", "current db not set... skipping")
-            return 
+        flags, c = self.parse_command_line(c)
+
+        if len(c) > 0:
+            i_arg = c[0]
+
+            try:
+                full_name, path, base_name, extension = utils.translate_name(i_arg)
+                # print "do_init::: ",self.translate_name(i_arg)
+                db_name = "%s/%s.spgql" % (path, base_name)
+                sim_name = "%s/%s.spg" % (path, base_name)
+                self.current_param_db = ParameterEnsemble(db_name)
+            except:
+                utils.newline_msg("ERR", "results db '%s' doesn't exist. Cannot load it")
+                return
+
+        if not self.current_param_db:
+                utils.newline_msg("WRN", "current db not set... skipping")
+                return
                 
         if "all" in flags:
-            self.current_param_db.query_master_db('UPDATE run_status SET status = "N"  ')
+            self.current_param_db.execute_query('UPDATE run_status SET status = "N"  ')
         else :
-            self.current_param_db.query_master_db('UPDATE run_status SET status = "N" WHERE status ="R" OR status ="E" ')
+            self.current_param_db.execute_query('UPDATE run_status SET status = "N" WHERE status ="R" OR status ="E" ')
             
 
     def do_remove(self, c):
