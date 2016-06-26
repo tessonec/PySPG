@@ -797,8 +797,14 @@ class ResultsDBQuery(ParameterEnsemble):
                 query = "%s %s GROUP BY v.id"%(query, restrict_cols)
         query=query.replace("''", "'").replace("'\"", "'")
 
-        return self.table_from_query(query)        
+        return self.table_from_query(query)
 
+    def result_id_table(self, table="results"):
+
+
+        query = "SELECT %s FROM %s ORDER BY values_set_id " % (",".join(self.output_column[table]), table)
+
+        return self.output_column[table], self.table_from_query(query)
 
     def table_header(self, table='results',output_column = []):
    
@@ -836,7 +842,7 @@ class ResultsDBQuery(ParameterEnsemble):
     def update_results_from_data(self, table_file, table_name = "results", sep = "," ):
         table = csv.reader(open(table_file), delimiter=sep, lineterminator="\n")
 
-        header = table.readrow()
+        header = table.next()
         for row in table:
             cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(header),
                                                    ", ".join(["'%s'" % str(i) for i in row]))

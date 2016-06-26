@@ -76,7 +76,10 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
             if "raw_data" in flags:
                 self.do_set("raw_data=True")
             self.do_setup_vars_in_table("--all")
-            self.do_save_table( "--header %s"%c)
+            if "only-id":
+                self.do_save_table("--header --only-id %s"  % c)
+            else:
+                self.do_save_table("--header %s" % c)
 
     def do_export_input_csv(self,c):
         flags, cs = self.parse_command_line(c)
@@ -143,13 +146,19 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
 #           output_file = open(output_fname , open_type)
-           data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
+           if "only-id" in flags:
+               header, data= self.current_param_db.result_id_table(table = self.table )
 
+           else:
+               data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
+               header = self.current_param_db.table_header(table = self.table, output_column= self.output_column )
            print "    table: %s"%output_fname
+
+#           print data, header
 
            writer = csv.writer(open(output_fname, open_type), delimiter=self.sep, lineterminator="\n")
            if "header" in flags and "append" not in flags:
-               writer.writerow( self.current_param_db.table_header(table = self.table, output_column= self.output_column ) )
+               writer.writerow( header )
            writer.writerows( data )
 #           np.savetxt( output_file, data )
 
