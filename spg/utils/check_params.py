@@ -146,7 +146,7 @@ def contents_in_output(exec_file):
     exec_file,ext=os.path.splitext(exec_file)
 
     try:
-        cfgFile = "%s.stdout"%(CONFIG_DIR,exec_file)
+        cfgFile = "%s.stdout"%(exec_file)
     except:
         cfgFile = "%s/spg-conf/%s.stdout"%(CONFIG_DIR,exec_file)
         

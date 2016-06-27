@@ -11,52 +11,23 @@ BINDIR          = $(BASEDIR)/bin
 install:
 	# scripts
 	install scripts/spg-db.py ${BINDIR}
-	install scripts/spg-queue.py ${BINDIR}
-	install scripts/spg-run.py ${BINDIR}
-	install scripts/spg-master.py ${BINDIR}
-	install scripts/spg-worker.py ${BINDIR}
-	install scripts/spg-results.py ${BINDIR}
-	install scripts/spg-plotter.py ${BINDIR}
-	install scripts/spg-get_parameters.py ${BINDIR}
+	install scripts/spg-run-standalone.py ${BINDIR}
+	install scripts/spg-run-threaded.py ${BINDIR}
+	install scripts/spg-table.py ${BINDIR}
+	#library
 	mkdir -p ${LIBDIR}
-	# library (base)
-	install -m 0644 spg/__init__.py ${LIBDIR}
-	mkdir -p ${LIBDIR}/base
-	install -m 0644 spg/base/__init__.py ${LIBDIR}/base
-	install -m 0644 spg/base/iterator.py ${LIBDIR}/base
-	install -m 0644 spg/base/parser.py ${LIBDIR}/base
-	# library (master)
-	mkdir -p ${LIBDIR}/cmdline
-	install -m 0644 spg/cmdline/__init__.py ${LIBDIR}/cmdline
-	install -m 0644 spg/cmdline/ensembledb.py ${LIBDIR}/cmdline
-	mkdir -p ${LIBDIR}/master
-	install -m 0644 spg/master/__init__.py ${LIBDIR}/master
-	install -m 0644 spg/master/exchange.py ${LIBDIR}/master
-	install -m 0644 spg/master/spgmasterdb.py ${LIBDIR}/master
-	# library (parameter)
-	mkdir -p ${LIBDIR}/parameter
-	install -m 0644 spg/parameter/__init__.py ${LIBDIR}/parameter
-	install -m 0644 spg/parameter/atom.py ${LIBDIR}/parameter
-	install -m 0644 spg/parameter/ensemble.py ${LIBDIR}/parameter
-	install -m 0644 spg/parameter/paramdb.py ${LIBDIR}/parameter
-	# library (plot)
-	mkdir -p ${LIBDIR}/plot
-	install -m 0644 spg/plot/__init__.py ${LIBDIR}/plot
-	#install -m 0644 spg/plot/grace.py ${LIBDIR}/plot
-	#install -m 0644 spg/plot/spgpyplot.py ${LIBDIR}/plot
-	install -m 0644 spg/plot/base.py ${LIBDIR}/plot
-	# library (queue)
-	mkdir -p ${LIBDIR}/queue
-	install -m 0644 spg/queue/__init__.py ${LIBDIR}/queue
-	install -m 0644 spg/queue/base.py ${LIBDIR}/queue
-	install -m 0644 spg/queue/base.py ${LIBDIR}/queue
-	install -m 0644 spg/queue/tools.py ${LIBDIR}/queue
-	# install -m 0644 spg/queue/torque.py ${LIBDIR}/queue
-	# library (utils)
-	mkdir -p ${LIBDIR}/utils
-	install -m 0644 spg/utils/__init__.py ${LIBDIR}/utils
-	install -m 0644 spg/utils/load_configs.py ${LIBDIR}/utils
-	install -m 0644 spg/utils/check_params.py ${LIBDIR}/utils
-	install -m 0644 spg/utils/tools.py ${LIBDIR}/utils
+	install -D spg/*.py ${LIBDIR}
+	install -d ${LIBDIR}/base
+	install -D spg/base/*.py ${LIBDIR}/base
+	install -d ${LIBDIR}/cmdline
+	install -D spg/cmdline/*.py ${LIBDIR}/cmdline
+	install -d ${LIBDIR}/master
+	install -D spg/master/*.py ${LIBDIR}/master
+	install -d ${LIBDIR}/simulation
+	install -D spg/simulation/*.py ${LIBDIR}/simulation
+	install -d ${LIBDIR}/runner
+	install -D spg/runner/*.py ${LIBDIR}/runner
+	install -d ${LIBDIR}/utils
+	install -D spg/utils/*.py ${LIBDIR}/utils
 
 
