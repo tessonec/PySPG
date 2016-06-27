@@ -417,11 +417,11 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
          self.stderr = [i.strip() for i in open(fname_stderr, "r")]
 
          os.remove(configuration_filename)
-         os.remove( fname_stdout )
-         os.remove( fname_stderr )
+        # os.remove( fname_stdout )
+        # os.remove( fname_stderr )
 
          self.run_time = finish_time - started_time
-         self.dump_result()
+#         self.dump_result()
          try:
             self.dump_result()
          except:

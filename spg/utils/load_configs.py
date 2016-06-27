@@ -61,7 +61,7 @@ def load_parameters(argv):
     """ Loads a parameter dataset. other_params is an array of tuples (cmd_line_arg, type, dest, default, help) """
     
     prog_name = os.path.split(argv[0])[-1]
-    if prog_name[:2] == "ct" and prog_name[3] == "-" :  prog_name = prog_name[4:]
+   # if prog_name[:2] == "ct" and prog_name[3] == "-" :  prog_name = prog_name[4:]
 
     prog_name, ext = os.path.splitext(prog_name)
         
@@ -73,8 +73,12 @@ def load_parameters(argv):
                         default = default_input_file , help = "Input file parameter" )
     
     options, args = parser.parse_args()
-    
-    possible_lines = import_backends("%s/spg-conf/%s.ct"%(CONFIG_DIR,prog_name))
+
+    possible_lines = import_backends("%s.ct"%(prog_name))
+    try:
+        possible_lines = import_backends("%s.ct"%(prog_name))
+    except: 
+        possible_lines = import_backends("%s/spg-conf/%s.ct"%(CONFIG_DIR,prog_name))
     ret = Parameters()
     
     for k in possible_lines.keys():
