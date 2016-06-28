@@ -76,7 +76,7 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
             if "raw_data" in flags:
                 self.do_set("raw_data=True")
             self.do_setup_vars_in_table("--all")
-            if "only-id":
+            if "only-id" in flags:
                 self.do_save_table("--header --only-id %s"  % c)
             else:
                 self.do_save_table("--header %s" % c)
@@ -110,6 +110,7 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
                    -append:      appends the output, instead of rewriting the file        
        """
        flags,c = self.parse_command_line(c)
+
        if "append" in flags:
           open_type = "aw"
        else:
@@ -145,11 +146,13 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
 
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
-#           output_file = open(output_fname , open_type)
+
            if "only-id" in flags:
+
                header, data= self.current_param_db.result_id_table(table = self.table )
 
            else:
+
                data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
                header = self.current_param_db.table_header(table = self.table, output_column= self.output_column )
            print "    table: %s"%output_fname
