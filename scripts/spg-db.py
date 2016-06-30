@@ -61,7 +61,7 @@ class SPGDBCommandLine(DBCommandLine):
         if 'repeat' in flags:
             repeat = int(flags['repeat'])
         else: repeat = 1
-        
+
         parser = EnsembleDBBuilder(stream = open(sim_name), db_name=db_name)
         parser.init_db(  )
         parser.fill_status(repeat = repeat )

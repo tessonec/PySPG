@@ -4,7 +4,7 @@
 BASEDIR         = $(HOME)/opt
 # Replace for this in case of global installation
 # BASEDIR         = /opt
-# LIBDIR          = $(BASEDIR)/lib/
+ LIBDIR          = $(BASEDIR)/lib/
 BINDIR          = $(BASEDIR)/bin/
 
 .PHONY: clean all install
