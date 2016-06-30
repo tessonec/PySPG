@@ -1,8 +1,10 @@
 # put common definitions in here
 
-
+# Default, $HOME directory
 BASEDIR         = $(HOME)/opt
-LIBDIR          = $(BASEDIR)/lib/
+# Replace for this in case of global installation
+# BASEDIR         = /opt
+# LIBDIR          = $(BASEDIR)/lib/
 BINDIR          = $(BASEDIR)/bin/
 
 .PHONY: clean all install

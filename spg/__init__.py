@@ -13,7 +13,7 @@ import os.path
 
 ROOT_DIR = os.path.expanduser("~/opt")
 
-CONFIG_DIR = os.path.expanduser(ROOT_DIR+"/etc")
+CONFIG_DIR = os.path.expanduser("~/.pyspg")
 #VAR_PATH = os.path.abspath(ROOT_DIR+"/var")
 BINARY_PATH = os.path.abspath(ROOT_DIR+"/bin")
 # RUN_DIR = os.path.expanduser("~/run")

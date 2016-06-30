@@ -24,18 +24,18 @@ def load_config(config_name, key):
                 ret[ v[0] ] =  kpv[ 1 ].strip()
     return ret
     
-    
-    
-def get_root_directory():
-    ret = os.path.expanduser( "~/opt" )
-    try:
-        cp = ConfigParser( os.path.expanduser("~/.spg/config") )
-        cp.get("Global", "root_dir")
-    except:
-        pass
-    
-    return os.path.expanduser(ret)
-
+#
+#
+# def get_root_directory():
+#     ret = os.path.expanduser( "~/opt" )
+#     try:
+#         cp = ConfigParser( os.path.expanduser("~/.spg/config") )
+#         cp.get("Global", "root_dir")
+#     except:
+#         pass
+#
+#     return os.path.expanduser(ret)
+#
 
 
 
@@ -68,19 +68,20 @@ def load_parameters(argv):
     default_input_file = "input.dat" #open("%s/spg-conf/%s.in"%(CONFIG_DIR, prog_name)  ).readline().strip()
 #    default_input_file = open("%s/spg-conf/%s.in"%(CONFIG_DIR, prog_name)  ).readline().strip()
 
-    parser = optparse.OptionParser()
-    parser.add_option("--input", '-i', type="string", action='store', dest="input_filename",
-                        default = default_input_file , help = "Input file parameter" )
-    
-    options, args = parser.parse_args()
+    # parser = optparse.OptionParser()
+    # parser.add_option("--input", '-i', type="string", action='store', dest="input_filename",
+    #                     default = default_input_file , help = "Input file parameter" )
+    #
+    # options, args = parser.parse_args()
+    input_filename = argv[1]
 
-    possible_lines = import_backends("%s.ct"%(prog_name))
+  #  possible_lines = import_backends("%s.ct"%(prog_name))
     try:
         possible_lines = import_backends("%s.ct"%(prog_name))
     except: 
         possible_lines = import_backends("%s/spg-conf/%s.ct"%(CONFIG_DIR,prog_name))
     ret = Parameters()
-    
+
     for k in possible_lines.keys():
         (family, var_type, default)  = possible_lines[k]
         if family == "flag":
@@ -93,7 +94,7 @@ def load_parameters(argv):
         elif family == "choice":
             ret[k] = eval("%s('%s')"%(var_type, default[0]))
             
-    for line in open(options.input_filename):
+    for line in open(input_filename):
         line = line.strip()
         if not line: continue
         if line[0] == "#": continue

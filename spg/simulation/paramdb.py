@@ -119,8 +119,8 @@ class EnsembleDBBuilder(MultIteratorParser):
         
       #  i_try = 0
         for i in self:
-                self.cursor.execute( elements, [ utils.replace_values(self[i], self)  for i in self.names] )
-                self.possible_varying_ids.append(self.cursor.lastrowid)
+            self.cursor.execute( elements, [ utils.replace_values(self[j], self)  for j in i] )
+            self.possible_varying_ids.append(self.cursor.lastrowid)
         self.connection.commit()
               
         #if not commited:

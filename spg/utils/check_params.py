@@ -76,6 +76,7 @@ def consistency(exec_file, miparser):
     # if exec_file[:2] == "ct" and exec_file[3] == "-" :  exec_file = exec_file[4:]
 
     exec_file, ext = os.path.splitext(exec_file)
+    possible_lines = import_backends("%s.ct" % (exec_file))
     try:
         possible_lines = import_backends("%s.ct"%(exec_file))
     except:

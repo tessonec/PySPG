@@ -194,7 +194,7 @@ class ParameterEnsemble:
         self.stat_values_set = 0
 
         self.weight = weight
-        self.id = id
+        self.current_run_id = 0
         self.queue = queue
         self.status = status
         self.repeat = repeat
@@ -253,6 +253,12 @@ class ParameterEnsemble:
             sys.exit(1)
         
         return table_name, output_column_names, output_columns 
+
+    def __getitem__(self, item):
+        if item in self.values:
+            return self.values[item]
+        if item == 'id':
+            return self.current_run_id
 
     def init_db(self):
 
@@ -396,7 +402,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
          configuration_filename = "%s-%d.input" % (self.base_name, self.current_run_id)
          fconf = open(configuration_filename, "w")
          for k in self.values.keys():
-                print >> fconf, k, utils.replace_values(self.values[k], self.values)
+                print >> fconf, k, utils.replace_values(self.values[k], self, skip_id=False)
          fconf.close()
 
          fname_stdout = "%s_%s.tmp_stdout"% (self.base_name, self.current_run_id)
@@ -404,7 +410,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
          file_stdout = open(fname_stdout, "w")
          file_stderr = open(fname_stderr, "w")
 
-         cmd = "%s/%s -i %s" % (self.bin_dir, self.command, configuration_filename)
+         cmd = "%s/%s %s" % (self.bin_dir, self.command, configuration_filename)
 
          proc = Popen(cmd, shell=True, stdin=PIPE, stdout=file_stdout, stderr=file_stderr, cwd=self.path)
          self.return_code = proc.wait()
@@ -475,29 +481,29 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 
 #         flog.close()
 #         flog_err.close()
-
-#FIXME Deprecated
-class ParameterEnsembleInputFilesGenerator(ParameterEnsemble):
-    def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = False):
-        ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  , init_db )
-        os.chdir(self.path)
-           
-    def launch_process(self):
-#        pwd = os.path.abspath(".")
-   #     if self.directory_vars or self.create_trees():
-   #         dir = utils.generate_string(self.values,self.directory_vars, joining_string = "/")
-   #         if not os.path.exists(dir): os.makedirs(dir)
-    #        os.chdir(dir)
-        configuration_filename = "input_%.8d.dat"%(self.current_valuesset_id)
-        fconf = open(configuration_filename,"w")
-        
-        for k in self.values.keys():
-            print >> fconf, k, utils.replace_values(self.values[k], self.values) 
-        fconf.close()
-   
-
-
-
+#
+# #FIXME Deprecated
+# class ParameterEnsembleInputFilesGenerator(ParameterEnsemble):
+#     def __init__(self, full_name = "", id=-1, weight=1., queue = '*', status = 'R', repeat = 1, init_db = False):
+#         ParameterEnsemble.__init__(self, full_name , id, weight, queue , status , repeat  , init_db )
+#         os.chdir(self.path)
+#
+#     def launch_process(self):
+# #        pwd = os.path.abspath(".")
+#    #     if self.directory_vars or self.create_trees():
+#    #         dir = utils.generate_string(self.values,self.directory_vars, joining_string = "/")
+#    #         if not os.path.exists(dir): os.makedirs(dir)
+#     #        os.chdir(dir)
+#         configuration_filename = "input_%.8d.dat"%(self.current_valuesset_id)
+#         fconf = open(configuration_filename,"w")
+#
+#         for k in self.values.keys():
+#             print >> fconf, k, utils.replace_values(self.values[k])
+#         fconf.close()
+#
+#
+#
+#
 
 ################################################################################
 ################################################################################
@@ -537,7 +543,7 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
         configuration_filename = "%s-%d.input" % (self.base_name,current_run_id)
         fconf = open(configuration_filename, "w")
         for k in self.values.keys():
-            print >> fconf, k, utils.replace_values(values[k], values)
+            print >> fconf, k, utils.replace_values(values[k], self, skip_id=False)
         fconf.close()
 
         fname_stdout = "%s_%s.tmp_stdout" % (self.base_name, current_run_id)
@@ -635,7 +641,7 @@ class ParameterEnsembleInputFilesGenerator(ParameterEnsemble):
         fconf = open(configuration_filename, "w")
 
         for k in self.values.keys():
-            print >> fconf, k, utils.replace_values(self.values[k], self.values)
+            print >> fconf, k, utils.replace_values(self.values[k], skip_id=False)
         fconf.close()
 
 

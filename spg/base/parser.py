@@ -69,6 +69,7 @@ class MultIteratorParser(iterator.MultIterator):
         return ret
 
 
+
     def fetch(self, stream):
         for l in stream:
             linea = l.strip()

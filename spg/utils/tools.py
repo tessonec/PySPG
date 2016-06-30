@@ -66,7 +66,7 @@ def parameters_from_string(string):
     return ret
 
 
-def evaluate_string(string,val_dict, ):
+def evaluate_string(string,val_dict, skip_id = True):
     """evaluates an expression with the values given in the dictionary.
     The variable names are to be enclosed in square-brackets.
     automatic type conversion is attemped"""
@@ -78,6 +78,8 @@ def evaluate_string(string,val_dict, ):
     st_out = string
     try:
         for i_var in rx.findall(string):
+            if i_var == 'id' and skip_id:
+                continue
             st_out = re.sub( r'\[%s\]'%i_var, str(val_dict[i_var]), st_out )
         return eval( st_out ) 
         #print st_out
@@ -88,12 +90,12 @@ def evaluate_string(string,val_dict, ):
             return str(string) 
 
 
-def replace_values(string,val_dict):
+def replace_values(string,val_dict, skip_id = True):
     """replaces a set of values (given in val_dict) into a string.
     Square-bracketed keys are changed into its value
     Curly-bracketed keys are changed into its key-value. 
     Attempts to evaluate the result to give a type conversion"""
-    
+    #TODO This function is called from MultIterator and ParameterEnsemble. One has id the other not. Rewrite ?
     string = str(string).strip()
     
     st_out = string.strip()
@@ -105,13 +107,17 @@ def replace_values(string,val_dict):
    # try:
 
     if not st_out: return "" 
-         
+#    print val_dict
     rx_s = re.compile(r'\[([a-zA-Z]\w*)\]')
     for i_var in rx_s.findall(string):
-            st_out = re.sub( r'\[%s\]'%i_var, str( val_dict[i_var] ), st_out )
+        if i_var == 'id' and skip_id:
+            continue
+        st_out = re.sub( r'\[%s\]'%i_var, str( val_dict[i_var] ), st_out )
             
     rx_c = re.compile(r'\{([a-zA-Z]\w*)\}')
     for i_var in rx_c.findall(string):
+            if i_var == 'id' and skip_id:
+                continue
             st_out = re.sub( r'\{%s\}'%i_var, "%s-%s"%(i_var, str( val_dict[i_var] ) ), st_out )
         
     try:

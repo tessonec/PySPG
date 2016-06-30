@@ -246,7 +246,8 @@ class MultIterator:
       i.reset()
       self.__dict[ i.name ] = i.value
     self.__is_reset = True
-    
+
+
   def next(self):
     if self.__is_reset:
       self.__is_reset = False
@@ -263,7 +264,6 @@ class MultIterator:
         self.data[index].reset()
         self.__dict[self.data[index].name] = self.data[index].value 
         index -= 1
-        
     raise StopIteration
 
   def __getitem__(self, name):
@@ -271,7 +271,10 @@ class MultIterator:
       only by the operator[] (or by the returned value of next()
       """
 #      print name, self.names
-      assert name in self.names, "the requested variable was not found in the multiterator"
+#      if name == "id":
+#          return self.current_iteration_id
+
+      assert name in self.names, "the requested variable '%s' was not found in the multiterator"%name
       
       return self.__dict[name]
 

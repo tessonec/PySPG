@@ -5,6 +5,7 @@ import spg.utils as utils
 
 from spg.simulation import ParameterEnsemble
 import random, copy
+import os, os.path
 
 class SPGMasterDB:
     """
@@ -13,6 +14,8 @@ class SPGMasterDB:
 
     def __init__(self,  connection = None, EnsembleConstructor = ParameterEnsemble):
         if not connection:
+            if not os.path.exists(CONFIG_DIR):
+                os.makedirs(CONFIG_DIR)
             self.connection = sql.connect("%s/spg-pool.sqlite"%CONFIG_DIR, timeout = TIMEOUT)
         else:
             self.connection = connection
