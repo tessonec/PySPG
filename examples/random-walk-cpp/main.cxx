@@ -31,8 +31,7 @@ int main(int argc, char *argv[])
     X+=pos_change;
     S += pos_change*pos_change; 
   }
-  
-  
+
   std::cout << X << "\t";
   std::cout << S << std::endl;
 
