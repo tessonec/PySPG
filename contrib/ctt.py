@@ -227,10 +227,7 @@ if __name__=="__main__":
 
    fname=os.path.splitext(args[0])[0]
 
-   ifname = "in.dat"
-   try:
-      ifname = "".join(open("conf.in").readlines()).strip()
-   except: pass
+   ifname = "input.dat"
 
    release_date = '""'
    version      = '""'
@@ -451,11 +448,11 @@ if __name__=="__main__":
    print """} """
 
    print
-     ####################### BACKENDS
-   for backend, var_name, var_name_2 in backends:
-  #     print backend
-       cxx_content = "".join(open(os.path.expanduser("~/opt/etc/ctt/%s.be.cxx"%backend)).readlines() ).replace("%ARG%",var_name).replace("%ARG1%",var_name).replace("%ARG2%",var_name_2)
-       print cxx_content
+  #    ####################### BACKENDS
+  #  for backend, var_name, var_name_2 in backends:
+  # #     print backend
+  #      cxx_content = "".join(open(os.path.expanduser("~/opt/etc/ctt/%s.be.cxx"%backend)).readlines() ).replace("%ARG%",var_name).replace("%ARG1%",var_name).replace("%ARG2%",var_name_2)
+  #      print cxx_content
 
    print
    print """//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"""
