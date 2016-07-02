@@ -388,7 +388,6 @@ if __name__=="__main__":
    print
    print
   # if useNamespaces:
-   #  print "using namespace CTGlobal;"
    # print
    # print
    # if createInit:
