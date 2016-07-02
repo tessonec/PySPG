@@ -37,38 +37,38 @@ class SPGDBCommandLine(DBCommandLine):
         flags,c = self.parse_command_line(c)
         i_arg = c[0]
         
-        try:
-            full_name, path, base_name, extension = utils.translate_name(i_arg)
+        full_name, path, base_name, extension = utils.translate_name(i_arg)
             # print "do_init::: ",self.translate_name(i_arg)
-            db_name = "%s/%s.spgql" % (path, base_name)
-            sim_name = "%s/%s.spg" % (path, base_name)
-
-        except:
-            utils.newline_msg("ERR", "results db '%s' doesn't exist. Can not init it" )
+        db_name = "%s/%s.spgql" % (path, base_name)
+        sim_name = "%s/%s.spg" % (path, base_name)
+        if os.path.exists(db_name) and "purge" not in flags:
+            utils.newline_msg("ERR", "database '%s' already exists. Cannot init it twice"%os.path.relpath(db_name, "."))
+            return
+        if not os.path.exists(sim_name):
+            utils.newline_msg("ERR", "configuration '%s' doesn't exist. Cannot init it"%os.path.relpath(sim_name, "."))
             return
 
         if "purge" in flags:
             try:
                 os.remove(db_name)
             except:
-                utils.newline_msg("WRN", "db '%s' could not be removed... skipping"%db_name)  
+                utils.newline_msg("WRN", "database '%s' could not be removed... skipping"%db_name)
 
             self.do_remove(i_arg)
 
 
         if len(c) >1: self.do_set( ":".join( c[1:] ) )
-
         if 'repeat' in flags:
             repeat = int(flags['repeat'])
-        else: repeat = 1
+        else:
+            repeat = 1
 
         parser = EnsembleDBBuilder(stream = open(sim_name), db_name=db_name)
         parser.init_db(  )
         parser.fill_status(repeat = repeat )
 
         self.current_param_db = ParameterEnsemble( db_name )
-        if "repeat" in flags:
-            self.current_param_db.repeat = repeat
+        self.current_param_db.repeat = repeat
 
 
         if not "skip-master" in  flags:
@@ -130,7 +130,7 @@ class SPGDBCommandLine(DBCommandLine):
                 sim_name = "%s/%s.spg" % (path, base_name)
                 self.current_param_db = ParameterEnsemble(db_name)
             except:
-                utils.newline_msg("ERR", "db '%s' doesn't exist. Cannot load it")
+                utils.newline_msg("ERR", "results db '%s' doesn't exist. Cannot load it")
                 return
 
         if not self.current_param_db:

@@ -182,6 +182,7 @@ class ParameterEnsemble:
 
         self.db_name = "%s.spgql"%self.base_name
         self.full_name = "%s/%s.spgql"%(self.path,self.base_name)
+        self.id = id
         self.values = {}
         self.directory_vars = None
 
@@ -211,7 +212,10 @@ class ParameterEnsemble:
 
     def __connect_db(self):
        # pass
-        self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
+        try:
+           self.connection = sql.connect(self.full_name, timeout = TIMEOUT)
+        except:
+            utils.newline_msg("ERR", "database '%s' does not exist... exiting"%self.full_name)
         self.cursor = self.connection.cursor()
          
 

@@ -210,7 +210,7 @@ class DBCommandLine(BaseSPGCommandLine):
                 db_name = "%s/%s.spgql" % (path, base_name)
                 sim_name = "%s/%s.spg" % (path, base_name)
             except:
-                utils.newline_msg("ERR", "results db '%s' doesn't exist." % c)
+                utils.newline_msg("ERR", "database '%s' doesn't exist." % c)
                 return
 
             if self.master_db.result_dbs.has_key(db_name):
@@ -233,9 +233,9 @@ class DBCommandLine(BaseSPGCommandLine):
                 # :::~FIXME workaround for non-existing dbs
                 curr_db = self.master_db.result_dbs[i]
                 try:
-                    print "%5d: %s (%5.5f)"%(curr_db.id,  curr_db.full_name  , curr_db.weight )
+                    print "%5d: %s (%5.5f)"%(curr_db.id,  os.path.relpath(curr_db.full_name , ".") , curr_db.weight )
                 except:
-                    print "%5d: %s "%(curr_db.id,   curr_db.full_name )
+                    print "%5d: %s "%(curr_db.id,   os.path.relpath(curr_db.full_name , ".") )
 
         BaseSPGCommandLine.do_ls(self, c )
 
