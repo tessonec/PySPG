@@ -20,7 +20,6 @@ EXEPREFIX       = ctx-
 OBJS            = base.o main.o 
 
 .PHONY: clean all install
-.PRECIOUS: base.cxx
 
 
 
@@ -41,6 +40,9 @@ ${EXEPREFIX}${TARGET}${EXEEXT}: ${OBJS}
 
 %.o : %.cxx
 	${CPP} ${INCLUDES} ${CPPFLAGS} -c $<
+
+base.o : ${EXEPREFIX}${TARGET}.cxx
+        ${CPP} ${INCLUDES} ${CPPFLAGS}  -c -o base.o ${EXEPREFIX}${TARGET}.cxx
 
 %.cxx : %.ct
 	${CTT} -n -i $<
