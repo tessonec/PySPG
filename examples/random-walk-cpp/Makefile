@@ -25,15 +25,6 @@ OBJS            = base.o main.o
 
 all:  ${EXEPREFIX}${TARGET}${EXEEXT}
 
-install:
-	install ${EXEPREFIX}${TARGET}${EXEEXT} ${BASEDIR}/bin
-	
-	mkdir -p ${BASEDIR}/etc/spg-conf
-	install -T -m 0644 conf.in ${BASEDIR}/etc/spg-conf/${TARGET}.in
-	install -T -m 0644 conf.stdout ${BASEDIR}/etc/spg-conf/${TARGET}.stdout
-	install -T -m 0644 conf.params ${BASEDIR}/etc/spg-conf/${TARGET}.params
-	install -T -m 0644 base.ct ${BASEDIR}/etc/spg-conf/${TARGET}.ct
-
 
 ${EXEPREFIX}${TARGET}${EXEEXT}: ${OBJS}
 	${LD} ${OBJS} -o $@ ${CPPFLAGS} ${LDFLAGS}
@@ -42,7 +33,7 @@ ${EXEPREFIX}${TARGET}${EXEEXT}: ${OBJS}
 	${CPP} ${INCLUDES} ${CPPFLAGS} -c $<
 
 base.o : ${EXEPREFIX}${TARGET}.cxx
-        ${CPP} ${INCLUDES} ${CPPFLAGS}  -c -o base.o ${EXEPREFIX}${TARGET}.cxx
+	${CPP} ${INCLUDES} ${CPPFLAGS}  -c -o base.o ${EXEPREFIX}${TARGET}.cxx
 
 %.cxx : %.ct
 	${CTT} -n -i $<

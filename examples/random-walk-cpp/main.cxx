@@ -7,7 +7,7 @@
  ***************************************************************************/
 
 
-#include "base.h"
+#include "ctx-random-walk.h"
 
 
 #include<iostream>
