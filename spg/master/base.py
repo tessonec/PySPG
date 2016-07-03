@@ -75,37 +75,25 @@ class SPGMasterDB:
             res = self.cursor.execute("SELECT id, full_name, weight, queue, status FROM dbs  WHERE status = ?",status)
         else:  
             res = self.cursor.execute("SELECT id, full_name, weight, queue, status FROM dbs ")
-#        vec = [i for i in res]
-
-        for (id, full_name, weight, queue, status) in res:
-            if full_name in self.result_dbs.keys():
-                self.result_dbs[full_name].id = id
-                self.result_dbs[full_name].queue = queue
-                self.result_dbs[full_name].status = status
-                self.result_dbs[full_name].weight = weight
-                
-                continue
-            new_db = self.EnsembleConstructor(full_name, id, weight, queue, status)
-            self.result_dbs[full_name] = new_db
 
         self.normalising = 0.
         self.active_dbs = []
-
-        for i in self.result_dbs.keys():
-            if self.result_dbs[i] is None:
-                del self.result_dbs[i]
-                utils.newline_msg("MSG", "removing db '%s' from the running list" % i)
-                continue
+        for (id, full_name, weight, queue, status) in res:
+            self.result_dbs[full_name] = {}
+            self.result_dbs[full_name]['id'] = id
+            self.result_dbs[full_name]['queue'] = queue
+            self.result_dbs[full_name]['status'] = status
+            self.result_dbs[full_name]['weight'] = weight
             if self.result_dbs[i].status == 'R':
-                self.normalising += self.result_dbs[i].weight
-                self.active_dbs.append(self.result_dbs[i])
+                self.normalising += weight
+                self.active_dbs.append(full_name)
+
 
     def write_ensemble_to_master(self, param_db):
         
         param_db.update_status()
         res = self.cursor.execute("SELECT * FROM dbs WHERE full_name = ?",(param_db.full_name,)).fetchone()
-     #  print res
-     #   print "UPDATE dbs SET total_values_set = ? , total_combinations = ?, done_combinations = ?, running_combinations = ?, error_combinations = ?, status = ? , weight = ?, queue = ? WHERE full_name = ? ",(param_db.stat_values_set_with_rep, param_db.stat_values_set, param_db.stat_processes_done, param_db.stat_processes_running, param_db.stat_processes_error , param_db.status, param_db.weight, param_db.queue)
+
         if res == None:
             self.cursor.execute(
                     "INSERT INTO dbs (full_name, path, base_name, total_values_set, total_combinations, done_combinations, running_combinations, error_combinations, status, weight , queue ) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
@@ -134,12 +122,11 @@ class SPGMasterDB:
     def pick_ensemble(self):
         rnd = self.normalising * random.random()
 
-
         curr_id = 0
         ac = 0.
         while rnd > ac:
             curr_db = self.active_dbs[curr_id]
-            ac += curr_db.weight
+            ac += self.result_dbs[curr_db]['weight']
             curr_id += 1
 
 
