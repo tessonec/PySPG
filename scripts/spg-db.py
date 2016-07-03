@@ -42,10 +42,10 @@ class SPGDBCommandLine(DBCommandLine):
         db_name = "%s/%s.spgql" % (path, base_name)
         sim_name = "%s/%s.spg" % (path, base_name)
         if os.path.exists(db_name) and "purge" not in flags:
-            utils.newline_msg("ERR", "database '%s' already exists. Cannot init it twice"%os.path.relpath(db_name, "."))
+            utils.newline_msg("ERR", "database '%s' already exists. Cannot init it twice"%utils.shorten_name(db_name))
             return
         if not os.path.exists(sim_name):
-            utils.newline_msg("ERR", "configuration '%s' doesn't exist. Cannot init it"%os.path.relpath(sim_name, "."))
+            utils.newline_msg("ERR", "configuration '%s' doesn't exist. Cannot init it"%utils.shorten_name(sim_name))
             return
 
         if "purge" in flags:
@@ -99,7 +99,7 @@ class SPGDBCommandLine(DBCommandLine):
             sim_name = "%s/%s.spg" % (path, base_name)
 
         except:
-            utils.newline_msg("WRN", "database '%s' already registered"%self.shorten_name( db_name ), 2)
+            utils.newline_msg("WRN", "database '%s' already registered"%utils.shorten_name( db_name ))
             return 
 
         self.current_param_db = ParameterEnsemble( db_name ) 
@@ -245,7 +245,7 @@ class SPGDBCommandLine(DBCommandLine):
 
             self.master_db.write_ensemble_to_master(curr_db)
 
-            print " ---%5d: %s" % (curr_db.id, os.path.relpath(curr_db.full_name, "."))
+            print " ---%5d: %s" % (curr_db.id, utils.shorten_name(curr_db.full_name))
             frac_done = float(curr_db.stat_processes_done) / float(curr_db.stat_values_set)
 
             n_repet = curr_db.stat_values_set_with_rep / curr_db.stat_values_set

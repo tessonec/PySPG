@@ -29,10 +29,11 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
         BaseSPGCommandLine.__init__(self, EnsembleConstructor = ResultsDBQuery)
         self.prompt = "| spg-results :::~ "
         
-        self.possible_keys = set( [ "raw_data", "split_colums", "restrict_by_val", "table", "split_columns", "sep"] )
+#        self.possible_keys = set( [ "raw_data", "split_colums", "restrict_by_val", "table", "split_columns", "sep"] )
+        self.possible_keys = set( [ "raw_data", "restrict_by_val", "table", "split_columns", "sep"] )
         self.output_column = []
         self.raw_data = False
-        self.split_columns = False
+        # self.split_columns = False
         self.restrict_by_val = False # was True
         self.table  = "results" # default value
         self.sep = ","
@@ -96,7 +97,7 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
             header, data = self.current_param_db.values_set_table()
 
             output_fname = utils.fix_filename("%s/%s_valueset.csv" % (self.current_param_db.path, self.current_param_db.base_name))
-            print "    table: %s" % output_fname
+            print "  +- table: %s" % output_fname
             writer = csv.writer(open(output_fname, "w"), delimiter=self.sep, lineterminator="\n")
 
             writer.writerow(header)
@@ -106,8 +107,8 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
     def do_save_table(self,c):
        """save_table [-flag1 -flag2] 
           saves the table values in ascii format
-          FLAGS::: -header:        the first row is the column name
-                   -append:      appends the output, instead of rewriting the file        
+          FLAGS::: --noheader:    does not output column names in the output file
+                   --append:      appends the output, instead of rewriting the file
        """
        flags,c = self.parse_command_line(c)
 
@@ -118,49 +119,51 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
        #
 
        for i in self.current_param_db:
-         if self.split_columns:
-           for column in self.output_column:
-        #      print ":::", self.output_column
-              gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
-              if gen_d :  gen_d+= "/"
-              gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
-              output_fname = utils.fix_filename(  "%s%s-%s-%s.csv"%(gen_d, self.table, column, gen_s) )
-              d,f = os.path.split(output_fname)
-              if d != "" and not os.path.exists(d): os.makedirs(d)
 
-              writer = csv.writer(open(output_fname, open_type), delimiter=self.sep, lineterminator="\n")
-              if "header" in flags and "append" not in flags:
-                  writer.writerow(
-                      self.current_param_db.table_header(table=self.table, output_column=self.output_column) )
-              data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
-
-              writer.writerows(data)
-         else:
+         # if self.split_columns:
+         #   for column in self.output_column:
+         #      gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
+         #      if gen_d :  gen_d+= "/"
+         #      gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
+         #      output_fname = utils.fix_filename(  "%s%s-%s-%s.csv"%(gen_d, self.table, column, gen_s) )
+         #      d,f = os.path.split(output_fname)
+         #      if d != "" and not os.path.exists(d): os.makedirs(d)
+         #
+         #      writer = csv.writer(open(output_fname, open_type), delimiter=self.sep, lineterminator="\n")
+         #      if "append" not in flags:
+         #          writer.writerow(
+         #              self.current_param_db.table_header(table=self.table, output_column=self.output_column) )
+         #      data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
+         #
+         #      writer.writerows(data)
+         # else:
 
            
            gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
-           if gen_d:  gen_d+= "/"
+           if gen_d:
+               gen_d+= "/"
 
-           output_fname = utils.fix_filename( "%s%s_%s.csv"%(gen_d, self.current_param_db.base_name, self.table ) )
+           gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string="_")
+
+           output_fname = utils.fix_filename("%s%s_%s-%s.csv" % (gen_d, self.current_param_db.base_name, self.table, gen_s))
+
 
 
            d,f = os.path.split(output_fname)
            if d != "" and not os.path.exists(d): os.makedirs(d)
 
            if "only-id" in flags:
-
                header, data= self.current_param_db.result_id_table(table = self.table )
-
            else:
 
                data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
                header = self.current_param_db.table_header(table = self.table, output_column= self.output_column )
-           print "    table: %s"%output_fname
+           print "  -+ filename: %s"%(output_fname)
 
 #           print data, header
 
            writer = csv.writer(open(output_fname, open_type), delimiter=self.sep, lineterminator="\n")
-           if "header" in flags and "append" not in flags:
+           if  not( "noheader" in flags or "append"  in flags):
                writer.writerow( header )
            writer.writerows( data )
 #           np.savetxt( output_file, data )
@@ -282,7 +285,8 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
         
         print "  + table   = %s (tables found: %s) "%(self.table, ", ".join(self.current_param_db.output_column.keys())) 
         print "  + columns = %s "%( ", ".join( self.current_param_db.output_column[self.table]  ) )
-        print "  + split_columns = %s  / raw_data = %s / restrict_by_val = %s"%(self.split_columns, self.raw_data, self.restrict_by_val)
+        # print "  + split_columns = %s  / raw_data = %s / restrict_by_val = %s"%(self.split_columns, self.raw_data, self.restrict_by_val)
+        print "  + raw_data = %s / restrict_by_val = %s"%(self.raw_data, self.restrict_by_val)
         print "  + vars (separated-coalesced-in_table) = %s - %s - %s "%(self.current_param_db.separated_vars, self.current_param_db.coalesced_vars, self.current_param_db.in_table_vars)
 
 

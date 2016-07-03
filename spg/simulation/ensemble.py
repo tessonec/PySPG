@@ -265,9 +265,11 @@ class ParameterEnsemble:
             return self.current_run_id
 
     def init_db(self):
-
-        (self.command, ) = self.execute_query_fetchone( "SELECT value FROM information WHERE key = 'command'" )
-        
+        try:
+            (self.command, ) = self.execute_query_fetchone( "SELECT value FROM information WHERE key = 'command'" )
+        except:
+            utils.newline_msg("FATAL",  "Cannot retreive information from database '%s'..."%utils.shorten_name(self.db_name))
+            sys.exit(2)
         #:::~ get the names of the columns
         sel = self.execute_query("SELECT name FROM entities ORDER BY id")
         self.entities = [ i[0] for i in sel ]
@@ -697,7 +699,7 @@ class ResultsDBQuery(ParameterEnsemble):
             if len(orphaned) > 0:
                 utils.newline_msg("VAR", "orphaned variables '%s' added to separated variables"%orphaned, indent=4)
                 for i in orphaned: self.coalesced_vars.append(i)
-            print "    structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
+            print "  +- structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
         else:
         #    print in_table_vars, conf
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(in_table_vars)-set(self.variables) )
@@ -717,7 +719,7 @@ class ResultsDBQuery(ParameterEnsemble):
             if len(orphaned) > 0:
                 utils.newline_msg("VAR", "orphaned variables '%s' added to separated variables"%orphaned, indent=4)
                 for i in orphaned: self.coalesced_vars.append(i)
-            print "    structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
+            print "  +- structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
         else:
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(separated)-set(self.variables) )
 
@@ -735,7 +737,7 @@ class ResultsDBQuery(ParameterEnsemble):
             if len(orphaned) > 0:
                 utils.newline_msg("VAR", "orphaned variables '%s' added to separated variables"%orphaned, indent=4)
                 for i in orphaned: self.separated_vars.append(i)
-            print "    structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
+            print "  +- structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
         else:
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(coalesced)-set(self.variables) )
 
@@ -766,7 +768,7 @@ class ResultsDBQuery(ParameterEnsemble):
         return header, self.table_from_query(query)
 
     def result_table(self, table = "results", restrict_to_values = {}, raw_data = False, restrict_by_val = False, output_column = []):
-
+        print restrict_to_values
         self.clean_dict(restrict_to_values)
 
         if len(self.in_table_vars) == 0:

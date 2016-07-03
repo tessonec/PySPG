@@ -8,7 +8,7 @@ import sys, os.path
 import cmd
 
 import re, fnmatch
-
+from setuptools.command.saveopts import saveopts
 
 import spg.utils as utils
 from spg.simulation import ParameterEnsemble
@@ -49,8 +49,6 @@ class BaseSPGCommandLine(cmd.Cmd):
         return flags, cmd
 
 
-
-
     def get_db_from_cmdline(self, c):
         """it returns the db name (or None) of a database identified either from its id or """
 
@@ -79,7 +77,7 @@ class BaseSPGCommandLine(cmd.Cmd):
             full_name, path, base_name, extension = utils.translate_name(el)
             full_base = "%s/%s"%(path, base_name)
             if full_base not in ls_keys:
-                ls_res_db.add(os.path.relpath(full_name, "."))
+                ls_res_db.add(utils.shorten_name(full_name))
                 ls_keys.add( full_base )
         if c:
             ls_res_db = fnmatch.filter(ls_res_db, c )
@@ -87,7 +85,31 @@ class BaseSPGCommandLine(cmd.Cmd):
             print " --- cwd matches found"
             for i in sorted( ls_res_db  ):
                 print "     : %s "% i
-                
+
+
+    def complete_load(self, text, line, begidx, endidx):
+        fullnames = set(fnmatch.filter(os.listdir("."), ".spgql"))
+        basenames = set()
+        for f in fullnames:
+            b,e = os.path.splitext( f )
+            basenames.add( b )
+        for f in fnmatch.filter(os.listdir("."), "*.spg"):
+            b, e = os.path.splitext(f)
+            if b not in basenames:
+                basenames.add(b)
+                fullnames.add(f)
+
+
+        if text:
+            return [f
+                       for f in sorted(fullnames)
+                       if f.startswith(text)
+                       ]
+        else:
+            return sorted(fullnames)
+
+
+
     def do_load(self,c):
         """load DB_NAME|DB_ID 
         loads one of the registered databases from the master"""
@@ -232,10 +254,12 @@ class DBCommandLine(BaseSPGCommandLine):
             for i in sorted( ls_res_db  ):
                 # :::~FIXME workaround for non-existing dbs
                 curr_db = self.master_db.result_dbs[i]
+                short_name = utils.shorten_name(curr_db.full_name)
+
                 try:
-                    print "%5d: %s (%5.5f)"%(curr_db.id,  os.path.relpath(curr_db.full_name , ".") , curr_db.weight )
+                    print "%5d: %s (%5.5f)"%(curr_db.id, short_name  , curr_db.weight )
                 except:
-                    print "%5d: %s "%(curr_db.id,   os.path.relpath(curr_db.full_name , ".") )
+                    print "%5d: %s "%(curr_db.id,  short_name )
 
         BaseSPGCommandLine.do_ls(self, c )
 
@@ -253,7 +277,4 @@ class DBCommandLine(BaseSPGCommandLine):
         else:    
             utils.newline_msg("ERR", "db does not exist", 2)
 
-# :::~ FIXME!: Hast to be implemented
-#    def complete_load(self, text, line, begidx, endidx):
-#        return self.complete(text)
 

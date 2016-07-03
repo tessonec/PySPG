@@ -187,6 +187,15 @@ def translate_name(st):
     return full_name, path, base_name, ext
 
 
+def shorten_name(full_name):
+    short_name = full_name
+    foo = os.path.relpath(short_name, ".")
+    if len(foo) < len(short_name):
+        short_name = foo
+    foo = "~/" + os.path.relpath(full_name, os.path.expanduser("~"))
+    if len(foo) < len(short_name):
+        short_name = foo
+    return short_name
 
 #v = eevaluate_stringexp({x}+{y_3})",d)
 #print get_variables("exp({x}+{y_3})",d)
