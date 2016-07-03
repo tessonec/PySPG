@@ -235,13 +235,13 @@ class SPGDBCommandLine(DBCommandLine):
             if not self.current_param_db:
                 return
             else:
-                ls_res_db = [self.current_param_db.full_name]
+                ls_res_db = [self.current_param_db]
         else:
             ls_res_db = self.filter_db_list(filter=c)
         if not ls_res_db: return
 
-        for i in ls_res_db:
-            curr_db = self.master_db.result_dbs[i]
+        for curr_db in ls_res_db:
+            #curr_db = self.master_db.result_dbs[i]
 
             self.master_db.write_ensemble_to_master(curr_db)
 
