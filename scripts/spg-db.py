@@ -67,7 +67,7 @@ class SPGDBCommandLine(DBCommandLine):
         parser.init_db(  )
         parser.fill_status(repeat = repeat )
 
-        self.current_param_db = ParameterEnsemble( db_name )
+        self.current_param_db = ParameterEnsemble( db_name , init_db=True)
         self.current_param_db.repeat = repeat
 
 
@@ -102,7 +102,7 @@ class SPGDBCommandLine(DBCommandLine):
             utils.newline_msg("WRN", "database '%s' already registered"%utils.shorten_name( db_name ))
             return 
 
-        self.current_param_db = ParameterEnsemble( db_name ) 
+        self.current_param_db = ParameterEnsemble( db_name, init_db=True )
         if len(c) >1: 
             self.do_set( ":".join( c[1:] ) )
 
@@ -128,7 +128,7 @@ class SPGDBCommandLine(DBCommandLine):
                 # print "do_init::: ",self.translate_name(i_arg)
                 db_name = "%s/%s.spgql" % (path, base_name)
                 sim_name = "%s/%s.spg" % (path, base_name)
-                self.current_param_db = ParameterEnsemble(db_name)
+                self.current_param_db = ParameterEnsemble(db_name, init_db=True)
             except:
                 utils.newline_msg("ERR", "results db '%s' doesn't exist. Cannot load it")
                 return

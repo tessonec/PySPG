@@ -75,10 +75,9 @@ class SPGMasterDB:
             res = self.cursor.execute("SELECT id, full_name, weight, queue, status FROM dbs  WHERE status = ?",status)
         else:  
             res = self.cursor.execute("SELECT id, full_name, weight, queue, status FROM dbs ")
-        vec = [i for i in res]
+#        vec = [i for i in res]
 
-     #   print self.result_dbs.keys()
-        for (id, full_name, weight, queue, status) in vec:
+        for (id, full_name, weight, queue, status) in res:
             if full_name in self.result_dbs.keys():
                 self.result_dbs[full_name].id = id
                 self.result_dbs[full_name].queue = queue

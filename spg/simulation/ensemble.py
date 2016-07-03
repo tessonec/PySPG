@@ -202,8 +202,8 @@ class ParameterEnsemble:
 
 #        print self.full_name, self.db_name
 
-        self.__connect_db()
         if init_db  :
+            # self.__connect_db()
             self.init_db()
 
         # :::~ Before they were in __connect_db(self)
