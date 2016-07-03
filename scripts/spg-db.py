@@ -158,16 +158,14 @@ class SPGDBCommandLine(DBCommandLine):
             # print i
             self.master_db.query_master_db("DELETE FROM dbs WHERE full_name = ?", i)
             del self.master_db.result_dbs[i]
+        # :::~ FIXME
         self.master_db.synchronise_masted_db()
  
-  #  def complete_remove(self, text, line, begidx, endidx):
-         #:::~ FIXME: doesn't work. Why?
-  #      return self.complete(text)
-    
+
     def do_set(self, c):
         """set  VAR1=VALUE1[:VAR2=VALUE2]
         sets some values in the currently loaded database
-        FLAGS::: -help, the possible keys are printed """
+        FLAGS::: --help, the possible keys are printed """
         
         
         flags, c = self.parse_command_line(c)

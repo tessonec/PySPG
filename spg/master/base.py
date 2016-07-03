@@ -84,7 +84,7 @@ class SPGMasterDB:
             self.result_dbs[full_name]['queue'] = queue
             self.result_dbs[full_name]['status'] = status
             self.result_dbs[full_name]['weight'] = weight
-            if self.result_dbs[i].status == 'R':
+            if status == 'R':
                 self.normalising += weight
                 self.active_dbs.append(full_name)
 

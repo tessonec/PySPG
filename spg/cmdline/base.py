@@ -207,7 +207,7 @@ class DBCommandLine(BaseSPGCommandLine):
         if  re.match("^\d+?$", filter): #:::~ Is filter an integer???
             id = int(filter)
             rdb = self.master_db.result_dbs
-            filtered = [ x for x in ls if rdb.has_key(x) and rdb[x] is not None and rdb[x].id == id  ]
+            filtered = [ x for x in ls if rdb.has_key(x) and rdb[x] is not None and rdb[x]['id'] == id  ]
             return filtered
 
         if filter:
@@ -218,30 +218,30 @@ class DBCommandLine(BaseSPGCommandLine):
 
     def get_db_from_cmdline(self, c):
         """it returns the db name (or None) of a database identified either from its id or """
-        try:
-            id = int(c)
+        db_name = c.strip()
+        if db_name.isdigit():
+            id = int( db_name )
             rdb = self.master_db.result_dbs
-            filtered = [rdb[x] for x in rdb.keys() if rdb[x] is not None and rdb[x].id == id]
+            filtered = [x for x in rdb if rdb[x] is not None and rdb[x]['id'] == id]
             if filtered:
-                return filtered[0]
+                db_name = filtered[0]
             else:
+                utils.newline_msg("ERR", "database with id '%s' doesn't exist." % c)
                 return None
-        except:
-            try:
-                full_name, path, base_name, extension = utils.translate_name(c.strip())
-                db_name = "%s/%s.spgql" % (path, base_name)
-                sim_name = "%s/%s.spg" % (path, base_name)
-            except:
-                utils.newline_msg("ERR", "database '%s' doesn't exist." % c)
-                return
 
-            if self.master_db.result_dbs.has_key(db_name):
-                return self.master_db.result_dbs[db_name]
-            else:
-                return self.EnsembleConstructor(db_name, init_db=True)
-                utils.newline_msg("WRN",
-                                  "database '%s' is not registered, loading it anyhow" %  db_name )
-        return None
+        full_name, path, base_name, extension = utils.translate_name(db_name)
+        db_name = "%s/%s.spgql" % (path, base_name)
+        sim_name = "%s/%s.spg" % (path, base_name)
+        if not os.path.exists(db_name) and not os.path.exists(sim_name):
+            utils.newline_msg("ERR", "database with name '%s' doesn't exist." % c)
+            return None
+        return self.EnsembleConstructor(db_name, init_db=True)
+        #
+        #     # if self.master_db.result_dbs.has_key(db_name):
+        #     #     return self.master_db.result_dbs[db_name]
+        #     # else:
+        #     #     utils.newline_msg("WRN", "database '%s' is not registered, loading it anyhow" %  db_name )
+        # return None
 
     def do_ls(self, c):
         """ls REGEXP|DB_ID
@@ -254,12 +254,12 @@ class DBCommandLine(BaseSPGCommandLine):
             for i in sorted( ls_res_db  ):
                 # :::~FIXME workaround for non-existing dbs
                 curr_db = self.master_db.result_dbs[i]
-                short_name = utils.shorten_name(curr_db.full_name)
+                short_name = utils.shorten_name(i)
 
                 try:
-                    print "%5d: %s (%5.5f)"%(curr_db.id, short_name  , curr_db.weight )
+                    print "%5d: %s (%5.5f)"%(curr_db['id'], short_name  , curr_db['weight'] )
                 except:
-                    print "%5d: %s "%(curr_db.id,  short_name )
+                    print "%5d: %s "%(curr_db['id'],  short_name )
 
         BaseSPGCommandLine.do_ls(self, c )
 
@@ -272,7 +272,8 @@ class DBCommandLine(BaseSPGCommandLine):
             return
         ret = self.get_db_from_cmdline(c[0])
         if ret:
-            self.current_param_db = ret 
+            self.current_param_db = ret
+            print self.current_param_db
             print " --- loaded db '%s'"% self.current_param_db.full_name
         else:    
             utils.newline_msg("ERR", "db does not exist", 2)
