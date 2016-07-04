@@ -563,7 +563,7 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
         file_stdout = open(fname_stdout, "w")
         file_stderr = open(fname_stderr, "w")
 
-        cmd = "%s/%s -i %s" % (self.bin_dir, self.command, configuration_filename)
+        cmd = "%s/%s  %s" % (self.bin_dir, self.command, configuration_filename)
 
         proc = Popen(cmd, shell=True, stdin=PIPE, stdout=file_stdout, stderr=file_stderr, cwd=self.path)
         return_code = proc.wait()
@@ -595,7 +595,7 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
         #         flog = open(self.full_db_name.replace("spgql", "log"), "aw")
         #         flog_err = open(self.full_db_name.replace("spgql", "err"), "aw")
 
-#        print current_run_id, return_code
+
         if return_code == 0:
             for line in output:
                 table_name, output_column_names, output_columns = self.parse_output_line(line)
