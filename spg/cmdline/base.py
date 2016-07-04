@@ -15,7 +15,7 @@ from spg.simulation import ParameterEnsemble
 from spg.master import SPGMasterDB
 
 
-
+# TODO: Remove unnecessary current_param_db, turn it into a string
 
 
 
@@ -184,25 +184,25 @@ class DBCommandLine(BaseSPGCommandLine):
         self.master_db =  SPGMasterDB(EnsembleConstructor = EnsembleConstructor)
 
 
-
-    def update_active_result_db(self, c):
-        c = c.strip()
-        if not c: return 
-        try:
-            full_name, path, base_name, extension = utils.translate_name(c)
-            db_name = "%s/%s.spgql" % (path, base_name)
-            sim_name = "%s/%s.spg" % (path, base_name)
-
-        except: 
-            utils.newline_msg("ERR", "results db '%s' doesn't exist. Cannot load it" )
-            return
-
-        if os.path.exists( db_name ):
-            self.current_param_db = ParameterEnsemble( db_name )
-        elif os.path.exists( sim_name ) and not os.path.exists( db_name ):
-            self.current_param_db = ParameterEnsemble( db_name , db_init = False)
-        return   
-        
+    #
+    # def update_active_result_db(self, c):
+    #     c = c.strip()
+    #     if not c: return
+    #     try:
+    #         full_name, path, base_name, extension = utils.translate_name(c)
+    #         db_name = "%s/%s.spgql" % (path, base_name)
+    #         sim_name = "%s/%s.spg" % (path, base_name)
+    #
+    #     except:
+    #         utils.newline_msg("ERR", "results db '%s' doesn't exist. Cannot load it" )
+    #         return
+    #
+    #     if os.path.exists( db_name ):
+    #         self.current_param_db = ParameterEnsemble( db_name )
+    #     elif os.path.exists( sim_name ) and not os.path.exists( db_name ):
+    #         self.current_param_db = ParameterEnsemble( db_name , db_init = False)
+    #     return
+    #
     def filter_db_list(self, ls = None, filter = None):
         if ls == None:
             ls = self.master_db.result_dbs.keys()
