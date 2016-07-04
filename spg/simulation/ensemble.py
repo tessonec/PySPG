@@ -187,12 +187,12 @@ class ParameterEnsemble:
         self.directory_vars = None
 
         
-        self.stat_processes_done = 0
-        self.stat_processes_not_run = 0
-        self.stat_processes_running = 0
-        self.stat_processes_error = 0
-        self.stat_values_set_with_rep = 0
-        self.stat_values_set = 0
+        # self.stat_processes_done = 0
+        # self.stat_processes_not_run = 0
+        # self.stat_processes_running = 0
+        # self.stat_processes_error = 0
+        # self.stat_values_set_with_rep = 0
+        # self.stat_values_set = 0
 
         self.weight = weight
         self.current_run_id = 0
@@ -343,26 +343,32 @@ class ParameterEnsemble:
         return ret is not None
 
 
-    def update_status(self):
+    def get_updated_status(self):
         #:::~    'N': not run yet
         #:::~    'R': running
         #:::~    'D': successfully run (done)
         #:::~    'E': run but with non-zero error code
+        ret_dict = {}
+        ret_dict['value_set_with_rep'], = self.execute_query_fetchone("SELECT COUNT(*) FROM run_status ;")
+        ret_dict['value_set'],  = self.execute_query_fetchone("SELECT COUNT(*) FROM values_set ;")
+        ret_dict['process_done'] = 0
+        ret_dict['process_not_run'] = 0
+        ret_dict['process_running'] = 0
+        ret_dict['process_error'] = 0
 
-        (self.stat_values_set_with_rep , ) = self.execute_query_fetchone("SELECT COUNT(*) FROM run_status ;")
-        (self.stat_values_set, ) = self.execute_query_fetchone("SELECT COUNT(*) FROM values_set ;")
-        
         ret = self.execute_query("SELECT status, COUNT(*) FROM run_status GROUP BY status")
 #        self.stat_done, self.stat_not_run, self.stat_running,self.stat_error = 0,0,0,0
         for (k,v) in ret:
             if k == "D":
-                self.stat_processes_done = v
+                ret_dict['process_done']= v
             elif k == "N":
-                self.stat_processes_not_run = v
+                ret_dict['process_not_run'] = v
             elif k == "R":
-                self.stat_processes_running = v
+                ret_dict['process_running'] = v
             elif k == "E":
-                self.stat_processes_error = v
+                ret_dict['process_error'] = v
+
+        return ret_dict
 
 
 

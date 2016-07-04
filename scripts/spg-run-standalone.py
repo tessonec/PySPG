@@ -61,7 +61,7 @@ if __name__ == "__main__":
           # executor.launch_process()
           try:
              executor.launch_process()
-             executor.dump_result()
+#             executor.dump_result()
           except (KeyboardInterrupt,):
               print >> sys.stderr
               utils.newline_msg("SYS", "keyboard interrupted, exiting")

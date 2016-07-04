@@ -31,11 +31,13 @@ class BaseSPGCommandLine(cmd.Cmd):
 
     def parse_command_line(self, st):
         """returns command the flags set under a command and the arguments"""
+
+        st = st.strip().split()
         cmd = []
         flags = {}
         
         
-        for ic in st.strip().split():
+        for ic in st:
             if ic[:2] == "--":
                 st = ic[2:]
                 if "=" in st:
@@ -273,9 +275,8 @@ class DBCommandLine(BaseSPGCommandLine):
         ret = self.get_db_from_cmdline(c[0])
         if ret:
             self.current_param_db = ret
-            print self.current_param_db
-            print " --- loaded db '%s'"% self.current_param_db.full_name
-        else:    
-            utils.newline_msg("ERR", "db does not exist", 2)
+            print " --- loaded db '%s'"% utils.shorten_name(self.current_param_db.full_name)
+        # else:
+        #     utils.newline_msg("ERR", "db does not exist", 2)
 
 

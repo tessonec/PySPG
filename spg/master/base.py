@@ -91,21 +91,25 @@ class SPGMasterDB:
 
     def write_ensemble_to_master(self, param_db):
         
-        param_db.update_status()
+        db_status = param_db.get_updated_status()
         res = self.cursor.execute("SELECT * FROM dbs WHERE full_name = ?",(param_db.full_name,)).fetchone()
+        param_db.id = res[0]
 
         if res == None:
             self.cursor.execute(
                     "INSERT INTO dbs (full_name, path, base_name, total_values_set, total_combinations, done_combinations, running_combinations, error_combinations, status, weight , queue ) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                    (param_db.full_name,param_db.path, param_db.base_name, param_db.stat_values_set_with_rep, param_db.stat_values_set, param_db.stat_processes_done, param_db.stat_processes_running, param_db.stat_processes_error, param_db.status , param_db.weight , param_db.queue))
+                    (param_db.full_name,param_db.path, param_db.base_name, db_status['value_set_with_rep'], db_status['value_set'], db_status['process_done'], db_status['process_running'], db_status['process_error'], param_db.status , param_db.weight , param_db.queue))
         else:
             self.cursor.execute(
                     "UPDATE dbs SET total_values_set = ? , total_combinations = ?, done_combinations = ?, running_combinations = ?, error_combinations = ?, status = ? , weight = ?, queue = ? WHERE full_name = ? ",
-                    (param_db.stat_values_set_with_rep, param_db.stat_values_set, param_db.stat_processes_done, param_db.stat_processes_running, param_db.stat_processes_error , param_db.status, param_db.weight, param_db.queue, param_db.full_name))
-        if param_db.stat_processes_not_run == 1:
+                    (db_status['value_set_with_rep'], db_status['value_set'], db_status['process_done'], db_status['process_running'], db_status['process_error'], param_db.status, param_db.weight, param_db.queue, param_db.full_name))
+
+        if db_status['process_error'] == 1:
             self.cursor.execute("UPDATE dbs SET status = ? WHERE full_name = ? ",('D',param_db.full_name))
             
         self.connection.commit()
+
+        return db_status
 
 
     def synchronise_masted_db(self):
@@ -130,6 +134,6 @@ class SPGMasterDB:
             curr_id += 1
 
 
-        return curr_db
+        return self.EnsembleConstructor(curr_db, init_db=True)
 
 

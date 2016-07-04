@@ -146,7 +146,7 @@ def parse_to_dict(string, allowed_keys = None):
     The function attempts to guess the type, otherwise a string is assigned.
     allowed_keys gives the possible list of keys that will be accepted by the parsing. Otherwise None is returned """
     #:::~ FIXME: Convoluted code
-    
+    # print string
     string = ":".join( string.split() )
     
     ret = {}

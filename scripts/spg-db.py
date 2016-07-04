@@ -28,12 +28,14 @@ class SPGDBCommandLine(DBCommandLine):
 
 
     def do_init(self, c):
-        """init [-flag ...] PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
+        """init [--flag ...] PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
         Generates a new database out of a simulation.dat
-        FLAGS::: -skip-master: the new results.sqlite is created, but gets not registered in master
-                 -purge:       deletes the results.sqlite db, if it already existed 
+        FLAGS::: --purge:         deletes the spgql database, if it already exists
+                 --repeat=REPEAT  repeats the parameter generation REPEAT times
         """
-        
+        if len(c.strip()) == 0:
+            utils.newline_msg("WRN", "init called without arguments")
+            return
         flags,c = self.parse_command_line(c)
         i_arg = c[0]
         
@@ -69,12 +71,11 @@ class SPGDBCommandLine(DBCommandLine):
 
         self.current_param_db = ParameterEnsemble( db_name , init_db=True)
         self.current_param_db.repeat = repeat
+        self.current_param_db.id = self.master_db.cursor.lastrowid
 
+        self.master_db.write_ensemble_to_master(self.current_param_db)
 
-        if not "skip-master" in  flags:
-            self.master_db.write_ensemble_to_master(self.current_param_db)
-            self.current_param_db.id = self.master_db.cursor.lastrowid
-            self.master_db.update_list_ensemble_dbs()
+        self.master_db.update_list_ensemble_dbs()
 
 
 
@@ -91,26 +92,30 @@ class SPGDBCommandLine(DBCommandLine):
         
     def do_register(self,c):
         """registers a given results database into the master database"""
-        c = c.split()
-        i_arg = c[0]
-        try: 
-            full_name, path, base_name, extension = utils.translate_name(i_arg)
-            db_name = "%s/%s.spgql" % (path, base_name)
-            sim_name = "%s/%s.spg" % (path, base_name)
+        if len(c.strip()) == 0:
+            utils.newline_msg("WRN", "init register without arguments")
+            return
 
-        except:
-            utils.newline_msg("WRN", "database '%s' already registered"%utils.shorten_name( db_name ))
+        full_name, path, base_name, extension = utils.translate_name( c.strip().split()[0] )
+        db_name = "%s/%s.spgql" % (path, base_name)
+        sim_name = "%s/%s.spg" % (path, base_name)
+
+        if self.master_db.result_dbs.has_key( db_name ):
+            utils.newline_msg("WRN", "skipping... database '%s' already registered"%utils.shorten_name( db_name ), 2)
             return 
 
         self.current_param_db = ParameterEnsemble( db_name, init_db=True )
-        if len(c) >1: 
-            self.do_set( ":".join( c[1:] ) )
+        # if len(c) >1:
+        #     self.do_set( ":".join( c[1:] ) )
 
         self.master_db.write_ensemble_to_master(self.current_param_db)
         self.current_param_db.id = self.master_db.cursor.lastrowid
         self.master_db.update_list_ensemble_dbs()
         print " *--- registered '%s' with id=%d  "%(   self.current_param_db.full_name, self.current_param_db.id )
-        
+
+    def complete_register(self, text, line, begidx, endidx):
+
+        return self.complete_init(text, line, begidx, endidx)
 
     def do_clean(self, c):
         """clean [-flag ...] PARAMETERS_NAME|DB_NAME [VAR1=VALUE1[:VAR2=VALUE2]]
@@ -120,56 +125,72 @@ class SPGDBCommandLine(DBCommandLine):
 
         flags, c = self.parse_command_line(c)
 
-        if len(c) > 0:
-            i_arg = c[0]
-
-            try:
-                full_name, path, base_name, extension = utils.translate_name(i_arg)
-                # print "do_init::: ",self.translate_name(i_arg)
-                db_name = "%s/%s.spgql" % (path, base_name)
-                sim_name = "%s/%s.spg" % (path, base_name)
-                self.current_param_db = ParameterEnsemble(db_name, init_db=True)
-            except:
-                utils.newline_msg("ERR", "results db '%s' doesn't exist. Cannot load it")
-                return
-
         if not self.current_param_db:
-                utils.newline_msg("WRN", "current db not set... skipping")
-                return
+             utils.newline_msg("WRN", "current db not set... skipping")
+             return
                 
         if "all" in flags:
             self.current_param_db.execute_query('UPDATE run_status SET status = "N"  ')
         else :
             self.current_param_db.execute_query('UPDATE run_status SET status = "N" WHERE status ="R" OR status ="E" ')
-            
+
+
+    def complete_clean(self, text, line, begidx, endidx):
+
+        return self.complete_init(text, line, begidx, endidx)
+
+
+
 
     def do_remove(self, c):
-        """removes some results.sqlite databases (can be filtered through regular expressions, or by id) from the list of registered dbs"""
-        #:::~ OK, as of 13.10.11
-        if not c:
-            ls_res_db = [ self.current_param_db.full_name ]
+        """remove current_db|FILENAME|REGEXP
+           removes from disk databases (can be filtered through regular expressions, or by id) from the list of registered dbs"""
+
+        db_name = c.strip()
+        if len(db_name) == 0: return
+        if db_name.isdigit():
+            id = int( db_name )
+            rdb = self.master_db.result_dbs
+            filtered = [x for x in rdb if rdb[x]['id'] == id]
+            if filtered:
+                db_name =  filtered[0]
+            else:
+                utils.newline_msg("ERR", "database with id '%s' doesn't exist." % db_name)
+                return None
         else:
-            ls_res_db = self.filter_db_list( filter = c )
-        if not ls_res_db: return
+            if not db_name:
+                db_name = self.current_param_db.full_name
+            else:
+
+                full_name, path, base_name, extension = utils.translate_name(db_name)
+                # print "do_init::: ",self.translate_name(i_arg)
+                db_name = "%s/%s.spgql" % (path, base_name)
+                sim_name = "%s/%s.spg" % (path, base_name)
+                if not os.path.exists(db_name):
+                    utils.newline_msg("ERR", "database with name '%s' doesn't exist." % db_name )
+                    return
 
         self.current_param_db = None
         
-        for i in ls_res_db: 
-            # print i
-            self.master_db.query_master_db("DELETE FROM dbs WHERE full_name = ?", i)
-            del self.master_db.result_dbs[i]
+        self.master_db.query_master_db("DELETE FROM dbs WHERE full_name = ?", db_name )
+        del self.master_db.result_dbs[db_name]
         # :::~ FIXME
         self.master_db.synchronise_masted_db()
- 
+
+    def complete_remove(self, text, line, begidx, endidx):
+
+        return self.complete_init(text, line, begidx, endidx)
+
 
     def do_set(self, c):
         """set  VAR1=VALUE1[:VAR2=VALUE2]
         sets some values in the currently loaded database
         FLAGS::: --help, the possible keys are printed """
         
-        
+        # print c
         flags, c = self.parse_command_line(c)
-        c = c[0]
+
+        c = c[0].strip()
         
         if "help" in flags:
             print utils.newline_msg("HELP", " possible_keys = %s"%self.possible_keys )
@@ -229,29 +250,20 @@ class SPGDBCommandLine(DBCommandLine):
     def do_info(self, c):
         """info REGEXP
            prints the information of the results databases, filtered by a regular expression, or its id """
-        if not c:
-            if not self.current_param_db:
-                return
-            else:
-                ls_res_db = [self.current_param_db]
-        else:
-            ls_res_db = self.filter_db_list(filter=c)
-        if not ls_res_db: return
 
-        for curr_db in ls_res_db:
-            #curr_db = self.master_db.result_dbs[i]
+        db_status = self.master_db.write_ensemble_to_master(self.current_param_db)
 
-            self.master_db.write_ensemble_to_master(curr_db)
 
-            print " ---%5d: %s" % (curr_db.id, utils.shorten_name(curr_db.full_name))
-            frac_done = float(curr_db.stat_processes_done) / float(curr_db.stat_values_set)
 
-            n_repet = curr_db.stat_values_set_with_rep / curr_db.stat_values_set
+        print " ---%5d: %s" % (self.current_param_db.id, utils.shorten_name(self.current_param_db.full_name))
+        frac_done = float(db_status['process_done']) / float(db_status['value_set'])
 
-            print "   -+ status: %s /  weight: %5.5f "%(curr_db.status, curr_db.weight)
-            print "   -+ total = %d*%d / D: %d (%.5f) - R: %d - E: %d " % (
-            curr_db.stat_values_set, n_repet, curr_db.stat_processes_done, frac_done,
-            curr_db.stat_processes_running, curr_db.stat_processes_error)
+        n_repet = db_status['value_set_with_rep'] / db_status['value_set']
+
+        print "   -+ status: %s /  weight: %5.5f "%(self.current_param_db.status, self.current_param_db.weight)
+        print "   -+ total = %d*%d / D: %d (%.5f) - R: %d - E: %d " % (
+            db_status['value_set'], n_repet, db_status['process_done'], frac_done,
+            db_status['process_running'],db_status['process_error'])
 
 
 if __name__ == '__main__':
