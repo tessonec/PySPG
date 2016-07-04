@@ -11,13 +11,15 @@ from spg.simulation import ParameterEnsembleExecutor, ParameterEnsembleThreaded
 
 class SPGRunningAtom(threading.Thread):
     n_threads = 0
-    def __init__(self, ensemble, lock ):
+    def __init__(self, ensemble, lock, master_db ):
 
         SPGRunningAtom.n_threads += 1
         threading.Thread.__init__(self)
         self.thread_id = SPGRunningAtom.n_threads
         self.ensemble = ensemble
         self.lock = lock
+        self.master_db = master_db
+
 
     def run(self):
         self.lock.acquire()
@@ -26,8 +28,10 @@ class SPGRunningAtom(threading.Thread):
         print "-S- [%4d]- ----- %s / %d" % (self.thread_id, self.ensemble.full_name, current_run_id)
         self.lock.release()
 
-        current_run_id, output, stderr, run_time , return_code  = self.ensemble.launch_process(current_run_id, values )
-
+        try:
+            current_run_id, output, stderr, run_time , return_code  = self.ensemble.launch_process(current_run_id, values )
+        except:
+            self.master_db.query_master_db("")
 
         self.lock.acquire()
         self.ensemble.dump_result( current_run_id, output, stderr, run_time , return_code  )
@@ -51,7 +55,7 @@ class SPGRunningPool():
     def __init__(self):
         self.master_db = SPGMasterDB( EnsembleConstructor = ParameterEnsembleThreaded )
         self.lock = threading.Lock()
-        # self.db_locks = {}
+        self.db_locks = {}
 
     def get_lock(self, i_db):
         if not self.db_locks.has_key( i_db.full_name ):
@@ -74,7 +78,7 @@ class SPGRunningPool():
             pick = self.master_db.pick_ensemble()
             self.lock.release()
 
-            nt = SPGRunningAtom(pick, self.lock)
+            nt = SPGRunningAtom(pick, self.lock, self.master_db)
             # nt = SPGRunningAtom(pick, lock=self.get_lock( pick ) )
 
             nt.start()

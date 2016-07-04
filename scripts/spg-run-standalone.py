@@ -20,9 +20,9 @@ if __name__ == "__main__":
 
     parser.add_option("--purge", action='store_true', dest="purge",
                       help="removes any old database.  IMPLIES DATA LOSS")
-
-    parser.add_option("--dummy", action='store_true', dest="dummy",
-                      help="generates the input files, only")
+    #
+    # parser.add_option("--dummy", action='store_true', dest="dummy",
+    #                   help="generates the input files, only")
 
     parser.add_option("--verbose", action='store_true', dest="verbose",
                       help="more verbose output")
@@ -41,18 +41,18 @@ if __name__ == "__main__":
      # sim_name = "%s/%s.spg" % (path, base_name)
       if options.purge and os.path.exists( db_name ):
           os.remove( db_name )
-      if options.initialise:
+      if options.initialise or not os.path.exists( db_name ):
           utils.newline_msg("MSG", "initialising database")
           parser = EnsembleDBBuilder( db_name=db_name)
           parser.init_db()
           parser.fill_status(repeat=options.repeat)
           del parser
 
-      utils.newline_msg("MSG", "running simulations")
-      if options.dummy:
-          executor = ParameterEnsembleInputFilesGenerator( db_name )
-      else:
-          executor = ParameterEnsembleExecutor( db_name )
+      utils.newline_msg("MSG", "running simulation")
+ #     if options.dummy:
+ #         executor = ParameterEnsembleInputFilesGenerator( db_name )
+ #     else:
+      executor = ParameterEnsembleExecutor( db_name )
 
       executor.init_db()
       for values in executor:
@@ -71,7 +71,7 @@ if __name__ == "__main__":
  #     if options.tree:
  #         os.chdir(path)
       
-      if options.dummy:
-          executor.reset()
+#      if options.dummy:
+#          executor.reset()
 
 
