@@ -38,12 +38,12 @@ if __name__ == "__main__":
       full_name, path, base_name, extension = utils.translate_name(i_arg)
 
       db_name = "%s/%s.spgql" % (path, base_name)
-      sim_name = "%s/%s.spg" % (path, base_name)
+     # sim_name = "%s/%s.spg" % (path, base_name)
       if options.purge and os.path.exists( db_name ):
           os.remove( db_name )
       if options.initialise:
           utils.newline_msg("MSG", "initialising database")
-          parser = EnsembleDBBuilder(stream=open(sim_name), db_name=db_name)
+          parser = EnsembleDBBuilder( db_name=db_name)
           parser.init_db()
           parser.fill_status(repeat=options.repeat)
           del parser

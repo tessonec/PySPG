@@ -38,17 +38,23 @@ class SPGConflictingValue(Exception):
 
 class EnsembleDBBuilder(MultIteratorParser):
     """Generates a DB file with the representation of the parameters"""
-    def __init__(self, stream=None, db_name = "simulation.spgql", timeout = 5):
-        MultIteratorParser.__init__(self, stream)
-        self.path, foo = os.path.split( os.path.abspath(db_name) )
-        self.base_name, foo = os.path.splitext( foo )
+    def __init__(self, db_name , timeout = 5):
+        full_name, self.path, self.base_name, extension = utils.translate_name( db_name )
+
+        self.db_name = "%s/%s.spgql"%(self.path, self.base_name)
+        sim_name = "%s/%s.spg"%(self.path, self.base_name)
+
+        MultIteratorParser.__init__(self, open(sim_name) )
+        # self.path, foo = os.path.split( os.path.abspath(db_name) )
+        # self.base_name, foo = os.path.splitext( foo )
     #    print  check_params.consistency(self.command, self)
         if not check_params.consistency(self.command, self):
-            utils.newline_msg("ERR","simulation.spg file is not consistent.")
+            utils.newline_msg("ERR","simulation configuration is not consistent.")
             sys.exit(1)
+
         self.stdout_contents = check_params.contents_in_output(self.command)
                 
-        self.connection =  sql.connect(db_name, timeout = timeout, check_same_thread = False)
+        self.connection =  sql.connect(self.db_name, timeout = timeout, check_same_thread = False)
         self.cursor = self.connection.cursor()
         
     def check_and_insert_information(self, key, expected_value = None, do_not_compare = False):

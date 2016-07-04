@@ -1,5 +1,5 @@
 from spg import utils
-from spg import TIMEOUT, ROOT_DIR
+from spg import TIMEOUT #, ROOT_DIR
 
 #import os.path, os, sys
 import os, sys, os.path, time

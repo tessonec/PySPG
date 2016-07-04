@@ -65,7 +65,7 @@ class DBCommandLine(BaseSPGCommandLine):
                 os.remove(db_name)
             except:
                 utils.newline_msg("WRN", "db '%s' could not be removed... skipping"%db_name)  
-            self.do_remove(i_arg) 
+            self.do_deregister(i_arg)
 
          
         if len(c) >1: self.do_set( ":".join( c[1:] ) )
