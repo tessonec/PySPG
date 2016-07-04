@@ -75,7 +75,7 @@ class SPGDBCommandLine(DBCommandLine):
 
         self.master_db.update_list_ensemble_dbs()
 
-        print " *--- init       - %d: '%s'   " % (self.current_param_db.id, self.current_param_db.full_name)
+        print " **-- init       - %d: '%s'   " % (self.current_param_db.id, self.current_param_db.full_name)
 
 
     def complete_init(self, text, line, begidx, endidx):    
@@ -93,7 +93,7 @@ class SPGDBCommandLine(DBCommandLine):
         """registers a given results database into the master database"""
         flags, db_name = self.parse_cmd_line(c)
         if db_name is None :
-            utils.newline_msg("ERR", "no database supplied nor currently set... skipping")
+#            utils.newline_msg("ERR", "no database supplied nor currently set... skipping")
             return
 
         if self.master_db.result_dbs.has_key( db_name ):
@@ -118,7 +118,7 @@ class SPGDBCommandLine(DBCommandLine):
 
         flags, db_name = self.parse_cmd_line(c)
         if db_name is None :
-            utils.newline_msg("ERR", "no database supplied nor currently set... skipping")
+#            utils.newline_msg("ERR", "no database supplied nor currently set... skipping")
             return
 
         ensemble = self.get_db_from_cmdline(db_name)
@@ -222,15 +222,25 @@ class SPGDBCommandLine(DBCommandLine):
 
 
     def __set_status(self, c, st):
-        if not c:
-            ls_res_db = [ self.current_param_db.full_name ]
-        else:
-            ls_res_db = self.filter_db_list( filter = c )
-        if not ls_res_db: return
-        
-        for i in ls_res_db: 
-            self.current_param_db.status = st
-            self.master_db.query_master_db('UPDATE dbs SET status= ? WHERE id = ?', st, self.current_param_db.id)
+        # if not c:
+        #     ls_res_db = [ self.current_param_db.full_name ]
+        # else:
+        #     ls_res_db = self.filter_db_list( filter = c )
+        # if not ls_res_db: return
+        #
+        # for i in ls_res_db:
+
+        flags, db_name = self.parse_cmd_line(c)
+        if db_name is None :
+            utils.newline_msg("ERR", "no database supplied nor currently set... skipping")
+            return
+
+        ensemble = self.get_db_from_cmdline(db_name)
+        ensemble.status = st
+
+        print " +--- status -  '%s' : %s  " % (db_name, st)
+
+        self.master_db.query_master_db('UPDATE dbs SET status= ? WHERE full_name = ?', st, db_name)
 
     def do_stop(self, c):
         """stops the currently loaded registered database"""
@@ -253,7 +263,7 @@ class SPGDBCommandLine(DBCommandLine):
             self.master_db.query_master_db('UPDATE queues SET max_jobs= ? WHERE name = "default"', max_jobs)
 
     def do_get_jobs(self,c):
-
+        """returns the number of jobs that would concurrently run in a multi-threaded run"""
         nj, = self.master_db.query_master_fetchone('SELECT max_jobs FROM queues WHERE name = "default"')
         print " +--- no_jobs = %d "%nj
 
