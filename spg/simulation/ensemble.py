@@ -1,5 +1,5 @@
 from spg import utils
-from spg import TIMEOUT #, ROOT_DIR
+from spg import TIMEOUT, BINARY_PATH
 
 #import os.path, os, sys
 import os, sys, os.path, time
@@ -317,6 +317,7 @@ class ParameterEnsemble:
         if res == None:
             raise StopIteration
 
+        # print res, self.entities
         self.current_run_id  = res[0]
 
         self.current_valuesset_id = res[1]
@@ -401,8 +402,8 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 
         if os.path.exists("./%s" % self.command):
             self.bin_dir = "."
-        elif os.path.exists("%s%/bin/%s" % (ROOT_DIR, self.command)):
-            self.bin_dir = "%s%/bin" % (ROOT_DIR)
+        elif os.path.exists("%s%/bin/%s" % (BINARY_PATH, self.command)):
+            self.bin_dir = "%s%/bin" % (BINARY_PATH)
         else:
             utils.newline_msg("ERR", "Fatal, binary '%s' not found" % self.command)
             sys.exit(1)
@@ -411,7 +412,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
          os.chdir(self.path)
          started_time = time.time()
 
-         configuration_filename = "%s-%d.input" % (self.base_name, self.current_run_id)
+         configuration_filename = "%s_%d.tmp_input" % (self.base_name, self.current_run_id)
          fconf = open(configuration_filename, "w")
          for k in self.values.keys():
                 print >> fconf, k, utils.replace_values(self.values[k], self, skip_id=False)
@@ -539,8 +540,8 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
 
         if os.path.exists("./%s" % self.command):
             self.bin_dir = "."
-        elif os.path.exists("%s%/bin/%s" % (ROOT_DIR, self.command)):
-            self.bin_dir = "%s%/bin" % (ROOT_DIR)
+        elif os.path.exists("%s%/bin/%s" % (BINARY_PATH, self.command)):
+            self.bin_dir = "%s%/bin" % (BINARY_PATH)
         else:
             utils.newline_msg("ERR", "Fatal, binary '%s' not found" % self.command)
             sys.exit(1)
@@ -552,7 +553,7 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
         os.chdir(self.path)
         started_time = time.time()
 
-        configuration_filename = "%s-%d.input" % (self.base_name,current_run_id)
+        configuration_filename = "%s_%d.tmp_input" % (self.base_name,current_run_id)
         fconf = open(configuration_filename, "w")
         for k in self.values.keys():
             print >> fconf, k, utils.replace_values(values[k], self, skip_id=False)

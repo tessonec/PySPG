@@ -100,7 +100,7 @@ class EnsembleDBBuilder(MultIteratorParser):
                 self.cursor.execute( "INSERT INTO entities (name, varies) VALUES (?,?)",(i.name,  varies) )
         else:
             self.cursor.execute( "SELECT name FROM entities ")
-            entities = set([i[0] for i in self.cursor])
+            entities = [i[0] for i in self.cursor]
             s_names = set(self.names)
             if entities != set(self.names):
                 utils.newline_msg("ERR", "parameter (was %s, is %s)"%(entities, s_names))
@@ -109,11 +109,10 @@ class EnsembleDBBuilder(MultIteratorParser):
         self.connection.commit()
 
         elements = "CREATE TABLE IF NOT EXISTS values_set (id INTEGER PRIMARY KEY,  %s )"%( ", ".join([ "%s CHAR(64) "%i for i in self.names ] ) )
-        
+        # print elements
         self.cursor.execute(elements)
         
         elements = "INSERT INTO values_set ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i in self.names ] ), ", ".join( "?" for i in self.names ) )
-        
         self.possible_varying_ids = []
         
         # :::~ (CT) Index creation code
@@ -125,7 +124,8 @@ class EnsembleDBBuilder(MultIteratorParser):
         
       #  i_try = 0
         for i in self:
-            self.cursor.execute( elements, [ utils.replace_values(self[j], self)  for j in i] )
+            self.cursor.execute( elements, [ utils.replace_values(self[j], self)  for j in self.names] )
+            # print elements, [ utils.replace_values(self[j], self)  for j in self.names]
             self.possible_varying_ids.append(self.cursor.lastrowid)
         self.connection.commit()
               

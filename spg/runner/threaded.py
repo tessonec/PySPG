@@ -11,27 +11,25 @@ from spg.simulation import ParameterEnsembleExecutor, ParameterEnsembleThreaded
 
 class SPGRunningAtom(threading.Thread):
     n_threads = 0
-    def __init__(self, ensemble, lock, master_db ):
+    def __init__(self, ensemble, lock ):
 
         SPGRunningAtom.n_threads += 1
         threading.Thread.__init__(self)
         self.thread_id = SPGRunningAtom.n_threads
         self.ensemble = ensemble
         self.lock = lock
-        self.master_db = master_db
 
 
     def run(self):
         self.lock.acquire()
         self.ensemble.next()
+
         current_run_id, values = self.ensemble.get_current_information()
-        print "-S- [%4d]- ----- %s / %d" % (self.thread_id, self.ensemble.full_name, current_run_id)
+        print "-D- [%4d]- ----- %s / %d" % (self.thread_id, self.ensemble.full_name, current_run_id)
+        #print "-S- [%4d]- ----- %s / %d" % (self.thread_id, self.ensemble.full_name, current_run_id)
         self.lock.release()
 
-        try:
-            current_run_id, output, stderr, run_time , return_code  = self.ensemble.launch_process(current_run_id, values )
-        except:
-            self.master_db.query_master_db("")
+        current_run_id, output, stderr, run_time , return_code  = self.ensemble.launch_process(current_run_id, values )
 
         self.lock.acquire()
         self.ensemble.dump_result( current_run_id, output, stderr, run_time , return_code  )
@@ -65,20 +63,31 @@ class SPGRunningPool():
     def launch_workers(self):
         target_jobs, = self.master_db.query_master_fetchone('SELECT max_jobs FROM queues WHERE name = "default"')
 
+        self.master_db.update_list_ensemble_dbs()
+        if len(self.master_db.active_dbs) == 0:
+            utils.inline_msg("MSG", "No active dbs... sleeping ")
+            return
+
         current_count = self.active_threads()
         to_launch = target_jobs - current_count
         if to_launch >= 0:
-           utils.newline_msg( "STATUS", "[n_jobs=%d] run=%d ::: new=%d" % (target_jobs,current_count, to_launch ) )
+             utils.newline_msg( "STATUS", "[n_jobs=%d] run=%d ::: new=%d" % (target_jobs,current_count, to_launch ) )
         else:
-            utils.newline_msg("STATUS", "[n_jobs=%d] run=%d :!: exceed" % (target_jobs,current_count))
+             utils.newline_msg("STATUS", "[n_jobs=%d] run=%d :!: exceed" % (target_jobs,current_count))
 
-        self.master_db.update_list_ensemble_dbs()
+
         for i_t in range(to_launch):
             self.lock.acquire()
             pick = self.master_db.pick_ensemble()
+            status = pick.get_updated_status()
+            if status['process_not_run'] == 0:
+                print "+D+ ----- %s " % (pick.full_name)
+                self.master_db.query_master_db('UPDATE dbs SET status= ? WHERE full_name = ?', "D", pick.full_name)
+                return
+
             self.lock.release()
 
-            nt = SPGRunningAtom(pick, self.lock, self.master_db)
+            nt = SPGRunningAtom(pick, self.lock)
             # nt = SPGRunningAtom(pick, lock=self.get_lock( pick ) )
 
             nt.start()

@@ -128,7 +128,7 @@ class SPGMasterDB:
 
     def pick_ensemble(self):
         rnd = self.normalising * random.random()
-
+        curr_db = self.active_dbs[0]
         curr_id = 0
         ac = 0.
         while rnd > ac:
