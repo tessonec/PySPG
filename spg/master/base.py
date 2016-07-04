@@ -93,13 +93,16 @@ class SPGMasterDB:
         
         db_status = param_db.get_updated_status()
         res = self.cursor.execute("SELECT * FROM dbs WHERE full_name = ?",(param_db.full_name,)).fetchone()
-        param_db.id = res[0]
+
 
         if res == None:
             self.cursor.execute(
                     "INSERT INTO dbs (full_name, path, base_name, total_values_set, total_combinations, done_combinations, running_combinations, error_combinations, status, weight , queue ) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                     (param_db.full_name,param_db.path, param_db.base_name, db_status['value_set_with_rep'], db_status['value_set'], db_status['process_done'], db_status['process_running'], db_status['process_error'], param_db.status , param_db.weight , param_db.queue))
+            res = self.cursor.execute("SELECT * FROM dbs WHERE full_name = ?", (param_db.full_name,)).fetchone()
+            param_db.id = res[0]
         else:
+            param_db.id = res[0]
             self.cursor.execute(
                     "UPDATE dbs SET total_values_set = ? , total_combinations = ?, done_combinations = ?, running_combinations = ?, error_combinations = ?, status = ? , weight = ?, queue = ? WHERE full_name = ? ",
                     (db_status['value_set_with_rep'], db_status['value_set'], db_status['process_done'], db_status['process_running'], db_status['process_error'], param_db.status, param_db.weight, param_db.queue, param_db.full_name))
