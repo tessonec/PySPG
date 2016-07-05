@@ -258,10 +258,10 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 
          self.run_time = finish_time - started_time
 
-         try:
-             self.dump_result()
-         except:
-            self.query_set_run_status("E")
+         # try:
+         #     self.dump_result()
+         # except:
+         #    self.query_set_run_status("E")
 
 
     def dump_result(self):
@@ -517,12 +517,12 @@ class ResultsDBQuery(ParameterEnsemble):
         # print restrict_to_values
         self.clean_dict(restrict_to_values)
 
-        if len(self.in_table_vars) == 0:
-            var_cols = ""
-        elif len(self.in_table_vars) == 1:
-            var_cols = "v.%s, "%self.in_table_vars[0]
-        elif len(self.in_table_vars) > 1:
+        var_cols = ""
+        if len(self.in_table_vars) > 0:
             var_cols = "%s, "%",".join(["v.%s"%v for v in self.in_table_vars])
+
+
+
         output_columns = self.table_columns[table][2:] #:::~ skips the spg_runid and spg_vsid columns ...
 
         # if "spg_runid" in output_columns:
@@ -530,6 +530,7 @@ class ResultsDBQuery(ParameterEnsemble):
         # if "spg_vsid" in output_columns:
         #         output_columns.remove("spg_vsid")
         out_cols = ""
+
         if not raw_data :
             # if len(output_columns ) == 1:
             #     out_cols = "AVG(r.%s) "%output_columns[0]
@@ -542,7 +543,11 @@ class ResultsDBQuery(ParameterEnsemble):
             out_cols = " %s"%",".join(["r.%s"%v for v in output_columns])
           
         query = "SELECT %s %s FROM %s AS r, values_set AS v WHERE r.spg_vsid = v.id "%(var_cols, out_cols, table)
-        print query
+
+        if not raw_data :
+            query = "%s GROUP BY v.id" % (query)
+
+
         # :::~ This command was needed only because of a mistake in the id stores in the results table
         # restrict_cols = ""
         # if restrict_to_values:
@@ -551,28 +556,30 @@ class ResultsDBQuery(ParameterEnsemble):
         #         restrict_cols = "AND %s"%restrict_cols
         # query = "%s  %s "%(query, restrict_cols)
         # if not raw_data :
+        #     query = "%s GROUP BY v.id" % (query)
         #     if restrict_by_val:
         #         query = "%s  GROUP BY %s"%(query, var_cols.strip(", "))
         #     else:
-        #         query = "%s %s GROUP BY v.id"%(query, restrict_cols)
         query=query.replace("''", "'").replace("'\"", "'")
+        header = self.in_table_vars + output_columns
 
-        return [1,2,2], self.execute_query(query)
+#        print header, query
+        return header, self.execute_query(query)
 
     def result_id_table(self, table="results"):
         query = "SELECT %s FROM %s ORDER BY id " % (",".join(self.table_columns[table]), table)
 
         return self.table_columns[table], self.execute_query(query)
 
-    def table_header(self, table='results',output_column = []):
-   
-        var_cols = self.in_table_vars
-
-        if not output_column:
-            output_column = self.table_columns[table][:]
-        if "vsid" in output_column:
-            output_column.remove("vsid")
-        return var_cols+output_column
+    # def table_header(self, table='results',output_column = []):
+    #
+    #     var_cols = self.in_table_vars
+    #
+    #     if not output_column:
+    #         output_column = self.table_columns[table][:]
+    #     if "vsid" in output_column:
+    #         output_column.remove("vsid")
+    #     return var_cols+output_column
           
 
 

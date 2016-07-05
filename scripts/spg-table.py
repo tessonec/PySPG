@@ -159,7 +159,7 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
                if "only-id" in flags:
                    header, data= self.current_param_db.result_id_table(table = table )
                else:
-                   header, data = self.current_param_db.result_table(restrict_to_values = outer_params, table = table)
+                   header, data = self.current_param_db.result_table(restrict_to_values = outer_params, table = table, raw_data =raw_data)
 
 
                                                              # raw_data = self.raw_data, restrict_by_val = self.restrict_by_val)
