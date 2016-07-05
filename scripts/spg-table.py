@@ -126,13 +126,20 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
           saves the table values in ascii format
           FLAGS::: --noheader:    does not output column names in the output file
                    --append:      appends the output, instead of rewriting the file
+                   --raw:         raw data output
        """
+
        flags,c = self.parse_command_line(c)
 
        if "append" in flags:
           open_type = "aw"
        else:
           open_type = "w"
+
+       if "raw" in flags:
+            self.raw_data = True
+       else:
+            self.raw_data = False
 
        if not  self.current_param_db and  len(c) == 0  :
            utils.newline_msg("WRN", "database not loaded nor provided. skipping")
@@ -142,9 +149,7 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
            self.current_param_db = self.get_db_from_cmdline(c[0])
 
        for i in self.current_param_db:
-
-
-           
+           print i
            gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
            if gen_d:
                gen_d+= "/"
@@ -188,7 +193,7 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
         elif "restore" in flags:
             self.current_param_db.setup_vars_in_table(self.current_param_db.variables[-1])
         else:    
-            self.current_param_db.setup_vars_in_table(c)
+            self.current_param_db.setup_vars_in_table(c[0])
 
 
     def do_setup_vars_separated(self,c):

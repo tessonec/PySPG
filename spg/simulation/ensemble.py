@@ -24,16 +24,18 @@ class ParameterEnsemble:
         self.full_name = "%s/%s.spgql"%(self.path,self.base_name)
         self.id = id
         self.values = {}
-        self.directory_vars = None
+        # self.directory_vars = None
 
         self.weight = weight
-        self.current_run_id = 0
+        self.current_spg_runid = 0
         self.queue = queue
         self.status = status
         self.repeat = repeat
 
         if init_db  :
             self.init_db()
+#            print self.output_column
+          #  sys.exit(1)
 
     def __connect_db(self):
         try:
@@ -74,19 +76,19 @@ class ParameterEnsemble:
         if output_columns[0][0] == "@":
             table_name = output_columns[0][1:] 
             output_columns.pop(0)
-        try:
-            output_column_names = [ i[0] for i in self.execute_query("SELECT column FROM output_tables WHERE name = '%s'"%(table_name)) ]
-        except:
-            utils.newline_msg("ERR", "DB does not contain table named '%s'"%table_name)
-            sys.exit(1)
+        # try:
+        #     output_column_names = [ i[0] for i in self.execute_query("SELECT column FROM output_tables WHERE name = '%s'"%(table_name)) ]
+        # except:
+        #     utils.newline_msg("ERR", "DB does not contain table named '%s'"%table_name)
+        #     sys.exit(1)
         
-        return table_name, output_column_names, output_columns 
+        return table_name, output_columns
 
     def __getitem__(self, item):
         if item in self.values:
             return self.values[item]
         if item == 'id':
-            return self.current_run_id
+            return self.current_spg_runid
 
     def init_db(self):
         try:
@@ -109,15 +111,14 @@ class ParameterEnsemble:
         for table in table_names:
             fa = self.execute_query("SELECT column FROM output_tables WHERE name = '%s';"%table)
             
-            self.output_column[table] = [ i[0] for i in fa ]
+            self.output_column[table] = ["spg_runid","spg_vsid"] + [ i[0] for i in fa ]
 
-        self.directory_vars = self.variables[:-1]
+        # self.directory_vars = self.variables[:-1]
 
 
     def query_set_run_status(self, status, id = None):
-        if id is None:
-            id = self.current_run_id
-
+        if id == None:
+            id = self.current_spg_runid
         self.execute_query( 'UPDATE run_status SET status ="%s" WHERE id = %d'% (status,id)  )
 
     def __iter__(self):
@@ -126,20 +127,22 @@ class ParameterEnsemble:
 
     def next(self):
 
-        query = "SELECT r.id, r.vsid, %s FROM run_status AS r, values_set AS v "% ", ".join( ["v.%s"%i for i in self.entities] )  +"WHERE r.status = 'N' AND v.id = r.vsid ORDER BY r.id LIMIT 1"
+        query = "SELECT r.id, r.spg_vsid, r.spg_rep, %s FROM run_status AS r, values_set AS v "% ", ".join( ["v.%s"%i for i in self.entities] )  + \
+                "WHERE r.status = 'N' AND v.id = r.spg_vsid ORDER BY r.id LIMIT 1"
         res = self.execute_query_fetchone(query)
         if res == None:
             raise StopIteration
 
         # print res, self.entities
-        self.current_run_id  = res[0]
+        self.current_spg_runid  = res[0]
+        self.current_spg_vsid   = res[1]
+        self.current_spg_rep    = res[2]
 
-        self.current_valuesset_id = res[1]
-        self.query_set_run_status("R")
+        self.query_set_run_status("R",self.current_spg_runid)
 
 
-        for i in range( len(self.entities) ):
-            self.values[ self.entities[i] ] = res[i+2]
+        for (pos, ent)  in enumerate(self.entities):
+            self.values[ ent ] = res[pos+3] # There are three parameters we get from the table, the others are the entities
 
         return self.values
 
@@ -151,12 +154,12 @@ class ParameterEnsemble:
 
         return ret
 
-    def create_trees(self):
-        if not self.directory_vars: return False
-        ret = self.execute_query_fetchone("SELECT * FROM entities WHERE name LIKE 'store_%'")
-
-        return ret is not None
-
+    # def create_trees(self):
+    #     if not self.directory_vars: return False
+    #     ret = self.execute_query_fetchone("SELECT * FROM entities WHERE name LIKE 'store_%'")
+    #
+    #     return ret is not None
+    #
 
     def get_updated_status(self):
         #:::~    'N': not run yet
@@ -226,14 +229,14 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
          os.chdir(self.path)
          started_time = time.time()
 
-         configuration_filename = "%s_%d.tmp_input" % (self.base_name, self.current_run_id)
+         configuration_filename = "%s_%d.tmp_input" % (self.base_name, self.current_spg_runid)
          fconf = open(configuration_filename, "w")
          for k in self.values.keys():
                 print >> fconf, k, utils.replace_values(self.values[k], self, skip_id=False)
          fconf.close()
 
-         fname_stdout = "%s_%s.tmp_stdout"% (self.base_name, self.current_run_id)
-         fname_stderr = "%s_%s.tmp_stderr"% (self.base_name, self.current_run_id)
+         fname_stdout = "%s_%s.tmp_stdout"% (self.base_name, self.current_spg_runid)
+         fname_stderr = "%s_%s.tmp_stderr"% (self.base_name, self.current_spg_runid)
          file_stdout = open(fname_stdout, "w")
          file_stderr = open(fname_stderr, "w")
 
@@ -254,8 +257,9 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
          os.remove( fname_stderr )
 
          self.run_time = finish_time - started_time
+
          try:
-            self.dump_result()
+             self.dump_result()
          except:
             self.query_set_run_status("E")
 
@@ -275,17 +279,17 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
              return
 
          for line in self.output:
-             table_name, output_column_names, output_columns = self.parse_output_line(line)
+             table_name, output_columns = self.parse_output_line(line)
+             output_columns = [self.current_spg_runid, self.current_spg_vsid] + output_columns
 
-             output_columns.insert(0, self.current_run_id)  # WARNING: MZ FOUND THAT BEFORE WE HAVE BEEN SETTING current_run_id
-             cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(output_column_names),
+             cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(self.output_column[table_name]),
                                                                    ", ".join(["'%s'" % str(i) for i in output_columns]))
-                 # print cc
-             try:
-                 self.execute_query(cc)
-                 self.query_set_run_status("D")
-             except:
-                 self.query_set_run_status("E")
+
+             # try:
+             self.execute_query(cc)
+             self.query_set_run_status("D")
+             # except:
+             #     self.query_set_run_status("E")
 
 ################################################################################
 ################################################################################
@@ -316,9 +320,9 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
             sys.exit(1)
 
     def get_current_information(self):
-        return self.current_run_id, self.values
+        return self.current_spg_runid, self.current_spg_vsid, self.values
 
-    def launch_process(self, current_run_id, values):
+    def launch_process(self, current_run_id, current_vsid, values):
         os.chdir(self.path)
         started_time = time.time()
 
@@ -351,33 +355,32 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
 
         run_time = finish_time - started_time
 
-        return current_run_id, output, stderr, run_time, return_code
+        return current_run_id, current_vsid, output, stderr, run_time, return_code
 
 
-    def dump_result(self, current_run_id, output, stderr, run_time, return_code ):
+    def dump_result(self, current_runid, current_vsid, output, stderr, run_time, return_code):
         """ loads the next parameter atom from a parameter ensemble"""
 
-        if return_code == 0:
-            for line in output:
-                table_name, output_column_names, output_columns = self.parse_output_line(line)
-
-                output_columns.insert(0,current_run_id)
-                cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(output_column_names),
-                                                           ", ".join(["'%s'" % str(i) for i in output_columns]))
-
-                self.execute_query(cc)
-                self.query_set_run_status("D",current_run_id)
-
-        else:
+        if return_code != 0:
             #:::~ status can be either
             #:::~    'N': not run
             #:::~    'R': running
             #:::~    'D': successfully run (done)
             #:::~    'E': run but with non-zero error code
-            self.query_set_run_status("E", current_run_id)
+            self.query_set_run_status("E", current_runid)
+            return
 
-#
-#
+        for line in output:
+            table_name, output_columns = self.parse_output_line(line)
+
+            output_columns = [current_runid, current_vsid] + output_columns
+            cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(self.output_column[table_name]),
+                                                           ", ".join(["'%s'" % str(i) for i in output_columns]))
+
+            self.execute_query(cc)
+            self.query_set_run_status("D", current_runid)
+
+
 # class ParameterEnsembleInputFilesGenerator(ParameterEnsemble):
 #     def __init__(self, full_name="", id=-1, weight=1., queue='*', status='R', repeat=1, init_db=False):
 #         ParameterEnsemble.__init__(self, full_name, id, weight, queue, status, repeat, init_db)
@@ -510,7 +513,7 @@ class ResultsDBQuery(ParameterEnsemble):
 
     def values_set_table(self):
         query = "SELECT * FROM values_set"
-        header = ["run_id"] + self.entities
+        header = ["spg_runid","spg_vsid"] + self.entities
         return header, self.table_from_query(query)
 
     def result_table(self, table = "results", restrict_to_values = {}, raw_data = False, restrict_by_val = False, output_column = []):
@@ -524,10 +527,12 @@ class ResultsDBQuery(ParameterEnsemble):
         elif len(self.in_table_vars) > 1:
             var_cols = "%s, "%",".join(["v.%s"%v for v in self.in_table_vars])
         if not output_column:
-            output_column = self.output_column[table][:]
-        if "vsid" in output_column:
-                output_column.remove("vsid")
+            output_column = self.output_column[table][2:] #:::~ skips the spg_runid and spg_vsid columns ...
 
+        # if "spg_runid" in output_column:
+        #         output_column.remove("spg_runid")
+        # if "spg_vsid" in output_column:
+        #         output_column.remove("spg_vsid")
         out_cols = ""
         if not raw_data :
             if len(output_column ) == 1:
@@ -540,9 +545,8 @@ class ResultsDBQuery(ParameterEnsemble):
             elif len(output_column) > 1:
                 out_cols = " %s"%",".join(["r.%s"%v for v in output_column])
           
-        query = "SELECT %s %s FROM %s AS r, values_set AS v WHERE r.run_id = v.id "%(var_cols, out_cols, table)
-        # :::~ IMPORTANT
-        print query
+        query = "SELECT %s %s FROM %s AS r, values_set AS v WHERE r.spg_vsid = v.id "%(var_cols, out_cols, table)
+
         #:::~ This command was needed only because of a mistake in the id stores in the results table
         restrict_cols = ""
         if restrict_to_values:

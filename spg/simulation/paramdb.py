@@ -63,7 +63,7 @@ class MultIteratorDBBuilder(MultIteratorParser):
         
         self.cursor.execute( "SELECT value FROM information WHERE key = ?", (key,) )
         prev_val = self.cursor.fetchone()
-     #   print "MultIteratorDBBuilder::check_and_insert_information", key, expected_value, prev_val
+
         if prev_val and expected_value is not None:
             if prev_val[0] != expected_value:
                 
@@ -140,20 +140,20 @@ class MultIteratorDBBuilder(MultIteratorParser):
                 if iv["type"] == "xydy":
                     self.number_of_columns += 2
 
-            results = "CREATE TABLE IF NOT EXISTS %s (id INTEGER PRIMARY KEY, vsid INTEGER, %s, FOREIGN KEY(vsid) REFERENCES values_set(id))"%(results_table, ", ".join([ "%s %s"%(ic,iv["datatype"]) for ic, iv in table_contents ]) )
+            results = "CREATE TABLE IF NOT EXISTS %s (id INTEGER PRIMARY KEY, spg_runid INTEGER, spg_vsid INTEGER, %s, FOREIGN KEY(spg_runid) REFERENCES run_status(id), FOREIGN KEY(spg_vsid) REFERENCES values_set(id))"%(results_table, ", ".join([ "%s %s"%(ic,iv["datatype"]) for ic, iv in table_contents ]) )
             self.cursor.execute(results)
         self.connection.commit()
             
         for results_table in   self.stdout_contents.keys():
-            self.cursor.execute("INSERT INTO output_tables ( name, column ) VALUES (?, ?)",( results_table, 'run_id' ) )
+ #           self.cursor.execute("INSERT INTO output_tables ( name, column ) VALUES (?, ?)",( results_table, 'spg_runid' ) )
             table_contents =  self.stdout_contents[ results_table ]
             for ic, iv in table_contents:
                 self.cursor.execute("INSERT INTO output_tables ( name, column ) VALUES (?, ?)",( results_table,ic ) )
         
         self.connection.commit()
 
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS run_status (id INTEGER PRIMARY KEY, vsid INTEGER, vsrep INTEGER, status CHAR(1), "
-                            "FOREIGN KEY (vsid) REFERENCES values_set(id) )")
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS run_status (id INTEGER PRIMARY KEY, spg_vsid INTEGER, spg_rep INTEGER, status CHAR(1), "
+                            "FOREIGN KEY (spg_vsid) REFERENCES values_set(id) )")
         self.connection.commit()
 
 
@@ -167,7 +167,7 @@ class MultIteratorDBBuilder(MultIteratorParser):
                 #:::~    'R': running
                 #:::~    'D': successfully run (done)
                 #:::~    'E': run but with non-zero error code
-                self.cursor.execute( "INSERT INTO run_status ( vsid, vsrep, status ) VALUES (?,?,?)", (i_id, i_repeat ,'N') )
+                self.cursor.execute( "INSERT INTO run_status ( spg_vsid, spg_rep, status ) VALUES (?,?,?)", (i_id, i_repeat ,'N') )
 
         self.connection.commit()
 

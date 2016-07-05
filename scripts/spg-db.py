@@ -9,7 +9,7 @@ from spg.cmdline import DBCommandLine
 import spg.utils as utils
 
 #import sqlite3 as sql
-import sys #, optparse
+import sys, optparse
 import os, os.path
 
 
@@ -242,11 +242,11 @@ class SPGDBCommandLine(DBCommandLine):
         print " +--- status -  '%s' : %s  " % (db_name, st)
 
         self.master_db.query_master_db('UPDATE dbs SET status= ? WHERE full_name = ?', st, db_name)
-
-    def do_stop(self, c):
-        """stops the currently loaded registered database"""
-        self.__set_status(c, 'S')
-                
+    #
+    # def do_stop(self, c):
+    #     """stops the currently loaded registered database"""
+    #     self.__set_status(c, 'S')
+    #
     def do_start(self, c):
         """starts the currently loaded registered database"""
         self.__set_status(c, 'R')
