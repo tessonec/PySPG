@@ -38,7 +38,7 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
         self.table  = "results" # default value
         self.sep = ","
 
-        self.autoscale = None
+        self.current_param_db = None
 
 
     def do_load(self,c):
@@ -49,9 +49,18 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
         os.chdir( self.current_param_db.path )
 
 
-    def do_import_output_csv(self, c):
+    def do_import_output_table(self, c):
 
         flags, cs = self.parse_command_line(c)
+
+
+        if not self.current_param_db:
+            if len(cs) < 2:
+                utils.newline_msg("WRN", "database not loaded nor provided. skipping")
+                return
+
+            self.current_param_db = self.get_db_from_cmdline(cs[1])
+
         if "sep" in flags:
             if flags["sep"] == "blank":
                 self.sep = " "
@@ -59,31 +68,39 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
                 self.sep = flags["sep"]
 
         self.current_param_db.update_results_from_data( cs[0], sep = self.sep )
+    #
+    # def do_export_output_csv(self, c):
+    #     """save_csv [-flag1 -flag2] f1 f2 g3
+    #        saves the table values in ascii format
+    #        FLAGS::: -raw:        do not average values for same parameter set
+    #     """
+    #     flags, cs = self.parse_command_line(c)
+    #     if "sep" in flags:
+    #         if flags["sep"] == "blank":
+    #             self.sep = " "
+    #         else:
+    #             self.sep = flags["sep"]
+    #
+    #     for c in cs:
+    #         self.do_load(c)
+    #         if "raw_data" in flags:
+    #             self.do_set("raw_data=True")
+    #         self.do_setup_vars_in_table("--all")
+    #         if "only-id" in flags:
+    #             self.do_save_table("--header --only-id %s"  % c)
+    #         else:
+    #             self.do_save_table("--header %s" % c)
 
-    def do_export_output_csv(self, c):
-        """save_csv [-flag1 -flag2] f1 f2 g3
-           saves the table values in ascii format
-           FLAGS::: -raw:        do not average values for same parameter set
-        """
+    def do_save_input_table(self,c):
         flags, cs = self.parse_command_line(c)
-        if "sep" in flags:
-            if flags["sep"] == "blank":
-                self.sep = " "
-            else:
-                self.sep = flags["sep"]
 
-        for c in cs:
-            self.do_load(c)
-            if "raw_data" in flags:
-                self.do_set("raw_data=True")
-            self.do_setup_vars_in_table("--all")
-            if "only-id" in flags:
-                self.do_save_table("--header --only-id %s"  % c)
-            else:
-                self.do_save_table("--header %s" % c)
+        if not self.current_param_db and len(c) == 0:
+            utils.newline_msg("WRN", "database not loaded nor provided. skipping")
+            return
 
-    def do_export_input_csv(self,c):
-        flags, cs = self.parse_command_line(c)
+        if not self.current_param_db:
+            self.current_param_db = self.get_db_from_cmdline(cs[0])
+
         if "sep" in flags:
             if flags["sep"] == "blank":
                 self.sep = " "
@@ -97,7 +114,7 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
             header, data = self.current_param_db.values_set_table()
 
             output_fname = utils.fix_filename("%s/%s_valueset.csv" % (self.current_param_db.path, self.current_param_db.base_name))
-            print "  +- table: %s" % output_fname
+            print "  +- table:  '%s'" % output_fname
             writer = csv.writer(open(output_fname, "w"), delimiter=self.sep, lineterminator="\n")
 
             writer.writerow(header)
@@ -116,27 +133,16 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
           open_type = "aw"
        else:
           open_type = "w"
-       #
+
+       if not  self.current_param_db and  len(c) == 0  :
+           utils.newline_msg("WRN", "database not loaded nor provided. skipping")
+           return
+
+       if not self.current_param_db:
+           self.current_param_db = self.get_db_from_cmdline(c[0])
 
        for i in self.current_param_db:
 
-         # if self.split_columns:
-         #   for column in self.output_column:
-         #      gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
-         #      if gen_d :  gen_d+= "/"
-         #      gen_s = utils.generate_string(i, self.current_param_db.coalesced_vars, joining_string = "_" )
-         #      output_fname = utils.fix_filename(  "%s%s-%s-%s.csv"%(gen_d, self.table, column, gen_s) )
-         #      d,f = os.path.split(output_fname)
-         #      if d != "" and not os.path.exists(d): os.makedirs(d)
-         #
-         #      writer = csv.writer(open(output_fname, open_type), delimiter=self.sep, lineterminator="\n")
-         #      if "append" not in flags:
-         #          writer.writerow(
-         #              self.current_param_db.table_header(table=self.table, output_column=self.output_column) )
-         #      data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = [column] )
-         #
-         #      writer.writerows(data)
-         # else:
 
            
            gen_d = utils.generate_string(i, self.current_param_db.separated_vars, joining_string = "/" )
@@ -158,9 +164,8 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
 
                data = self.current_param_db.result_table(restrict_to_values = i, table = self.table, raw_data = self.raw_data, restrict_by_val = self.restrict_by_val, output_column = self.output_column )
                header = self.current_param_db.table_header(table = self.table, output_column= self.output_column )
-           print "  -+ filename: %s"%(output_fname)
+           print "  +- table:  '%s'" % (output_fname)
 
-#           print data, header
 
            writer = csv.writer(open(output_fname, open_type), delimiter=self.sep, lineterminator="\n")
            if  not( "noheader" in flags or "append"  in flags):

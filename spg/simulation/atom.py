@@ -62,8 +62,8 @@ class ParameterAtom:
         self.variables = [ i[0] for i in sel ]
 
         res = param_ens.query_master_fetchone(
-                    "SELECT r.id, r.values_set_id, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
-                    "WHERE r.status = 'N' AND v.id = r.values_set_id ORDER BY r.id LIMIT 1" 
+                    "SELECT r.id, r.vsid, %s FROM run_status AS r, values_set AS v "% ", ".join(["v.%s"%i for i in self.entities]) +
+                    "WHERE r.status = 'N' AND v.id = r.vsid ORDER BY r.id LIMIT 1"
                    )
         #     print res
         if res == None:

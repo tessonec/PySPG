@@ -2,7 +2,7 @@
 
 
 import spg.utils as utils
-from spg.simulation import EnsembleDBBuilder, ParameterEnsemble
+from spg.simulation import MultIteratorDBBuilder, ParameterEnsemble
 # from spg.master import SPGMasterDB
 from spg.cmdline import DBCommandLine
 # from spg import VAR_PATH, RUN_DIR
@@ -63,7 +63,7 @@ class SPGDBCommandLine(DBCommandLine):
         else:
             repeat = 1
 
-        parser = EnsembleDBBuilder(db_name=db_name)
+        parser = MultIteratorDBBuilder(db_name=db_name)
         parser.init_db(  )
         parser.fill_status(repeat = repeat )
 
@@ -134,6 +134,7 @@ class SPGDBCommandLine(DBCommandLine):
         return self.complete_init(text, line, begidx, endidx)
 
     def parse_cmd_line(self, c):
+        # :::~ FIXME! name confusing with parse_command_line
         try:
             flags, [db_name] = self.parse_command_line(c)
         except:
