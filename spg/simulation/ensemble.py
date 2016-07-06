@@ -111,7 +111,7 @@ class ParameterEnsemble:
         for table in table_names:
             fa = self.execute_query("SELECT column FROM output_tables WHERE name = '%s';"%table)
             
-            self.table_columns[table] = ["spg_runid", "spg_vsid"] + [i[0] for i in fa]
+            self.table_columns[table] = ["spg_runid", "spg_vsid", "spg_rep"] + [i[0] for i in fa]
 
         # self.directory_vars = self.variables[:-1]
 
@@ -280,7 +280,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 
          for line in self.output:
              table_name, output_columns = self.parse_output_line(line)
-             output_columns = [self.current_spg_runid, self.current_spg_vsid] + output_columns
+             output_columns = [self.current_spg_runid, self.current_spg_vsid, self.current_spg_rep] + output_columns
 
              cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(self.table_columns[table_name]),
                                                                    ", ".join(["'%s'" % str(i) for i in output_columns]))
@@ -320,9 +320,9 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
             sys.exit(1)
 
     def get_current_information(self):
-        return self.current_spg_runid, self.current_spg_vsid, self.values
+        return self.current_spg_runid, self.current_spg_vsid, self.current_spg_rep, self.values
 
-    def launch_process(self, current_run_id, current_vsid, values):
+    def launch_process(self, current_run_id, current_vsid, current_rep, values):
         os.chdir(self.path)
         started_time = time.time()
 
@@ -355,10 +355,10 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
 
         run_time = finish_time - started_time
 
-        return current_run_id, current_vsid, output, stderr, run_time, return_code
+        return current_run_id, current_vsid, current_rep, output, stderr, run_time, return_code
 
 
-    def dump_result(self, current_runid, current_vsid, output, stderr, run_time, return_code):
+    def dump_result(self, current_runid, current_vsid, current_rep, output, stderr, run_time, return_code):
         """ loads the next parameter atom from a parameter ensemble"""
 
         if return_code != 0:
@@ -373,7 +373,7 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
         for line in output:
             table_name, output_columns = self.parse_output_line(line)
 
-            output_columns = [current_runid, current_vsid] + output_columns
+            output_columns = [current_runid, current_vsid, current_rep] + output_columns
             cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(self.table_columns[table_name]),
                                                            ", ".join(["'%s'" % str(i) for i in output_columns]))
 
@@ -434,7 +434,7 @@ class ResultsDBQuery(ParameterEnsemble):
 
         self.separated_vars = []
         self.coalesced_vars = []
-        self.in_table_vars = self.variables[:]
+        self.vars_in_table = self.variables[:]
 
     def setup_vars_in_table(self, conf):
         """which are the variables that are inside of the output file, orphaned variables are sent into the coalesced ones"""
@@ -443,15 +443,15 @@ class ResultsDBQuery(ParameterEnsemble):
         else:
             in_table_vars = []
         if set(in_table_vars).issubset( set(self.variables) ):
-            self.in_table_vars = in_table_vars
-            self.coalesced_vars = [ i for i in self.coalesced_vars if ( i not in self.in_table_vars ) ]
-            self.separated_vars = [ i for i in self.separated_vars if ( i not in self.in_table_vars ) ]
+            self.vars_in_table = in_table_vars
+            self.coalesced_vars = [i for i in self.coalesced_vars if (i not in self.vars_in_table)]
+            self.separated_vars = [i for i in self.separated_vars if (i not in self.vars_in_table)]
             
-            orphaned = set(self.variables) - set(self.separated_vars) - set( self.in_table_vars ) - set( self.coalesced_vars )
+            orphaned = set(self.variables) - set(self.separated_vars) - set(self.vars_in_table) - set(self.coalesced_vars)
             if len(orphaned) > 0:
                 utils.newline_msg("VAR", "orphaned variables '%s' added to separated variables"%orphaned, indent=4)
                 for i in orphaned: self.coalesced_vars.append(i)
-            print "  +- structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
+            print "  +- structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.vars_in_table)
         else:
         #    print in_table_vars, conf
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(in_table_vars)-set(self.variables) )
@@ -466,12 +466,12 @@ class ResultsDBQuery(ParameterEnsemble):
         if set(separated).issubset( set(self.variables) ):
             self.separated_vars = separated
             self.coalesced_vars = [ i for i in self.coalesced_vars if ( i not in self.separated_vars )  ]
-            self.in_table_vars = [ i for i in self.in_table_vars if ( i not in self.separated_vars )  ]
-            orphaned = set(self.variables) - set(self.separated_vars) - set( self.in_table_vars ) - set( self.coalesced_vars )
+            self.vars_in_table = [i for i in self.vars_in_table if (i not in self.separated_vars)]
+            orphaned = set(self.variables) - set(self.separated_vars) - set(self.vars_in_table) - set(self.coalesced_vars)
             if len(orphaned) > 0:
                 utils.newline_msg("VAR", "orphaned variables '%s' added to separated variables"%orphaned, indent=4)
                 for i in orphaned: self.coalesced_vars.append(i)
-            print "  +- structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
+            print "  +- structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.vars_in_table)
         else:
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(separated)-set(self.variables) )
 
@@ -484,12 +484,12 @@ class ResultsDBQuery(ParameterEnsemble):
         if set(coalesced).issubset( set(self.variables) ):
             self.coalesced_vars = coalesced
             self.separated_vars = [ i for i in self.separated_vars if ( i not in self.coalesced_vars ) ]
-            self.in_table_vars = [ i for i in self.in_table_vars if ( i not in self.coalesced_vars ) ]
-            orphaned = set(self.variables) - set(self.separated_vars) - set( self.in_table_vars ) - set( self.coalesced_vars )
+            self.vars_in_table = [i for i in self.vars_in_table if (i not in self.coalesced_vars)]
+            orphaned = set(self.variables) - set(self.separated_vars) - set(self.vars_in_table) - set(self.coalesced_vars)
             if len(orphaned) > 0:
                 utils.newline_msg("VAR", "orphaned variables '%s' added to separated variables"%orphaned, indent=4)
                 for i in orphaned: self.separated_vars.append(i)
-            print "  +- structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.in_table_vars)
+            print "  +- structure = %s - %s - %s "%(self.separated_vars, self.coalesced_vars, self.vars_in_table)
         else:
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(coalesced)-set(self.variables) )
 
@@ -506,70 +506,149 @@ class ResultsDBQuery(ParameterEnsemble):
 
 
     def values_set_table(self):
-        query = "SELECT * FROM values_set"
-        header = ["spg_runid","spg_vsid"] + self.entities
+        table = "results"
+        id_cols = self.table_columns[table][:1]
+        local_vars_in_table = self.entities
+
+        id_cols_query = ""
+        if len(id_cols) > 0:
+            id_cols_query = "%s, " % ",".join(["r.%s" % v for v in id_cols])
+
+        local_var_query = ""
+        if len(local_vars_in_table) > 0:
+            local_var_query = "%s " % ",".join(["v.%s" % v for v in local_vars_in_table])
+
+        query = "SELECT %s %s FROM %s AS r, values_set AS v WHERE r.spg_vsid = v.id " % (id_cols_query, local_var_query, table)
+
+        query = query.replace("''", "'").replace("'\"", "'")
+       # print query
+        header = id_cols + local_vars_in_table
+
         return header, self.execute_query(query)
 
-    def result_table(self, table = "results", restrict_to_values = {}, raw_data = False):
-        # def result_table(self, table="results", restrict_to_values={}, raw_data=False, restrict_by_val=False,
-        #                  output_columns=[]):
+    def result_table(self, table="results", table_selector = "grouped_vars", restrict_to_values={}):
+        """
+        Args:
+            table: the table in the database
+            column_selector: possible values ... "grouped_vars" only the variables (grouped by value) are put in the output table
+                                                 "raw_vars"    only the variables are put in the output table
+                                                 "only_runid"   only the run_id is output
+                                                 "full"         all ids and variables are output in table
 
-        # print restrict_to_values
-        self.clean_dict(restrict_to_values)
+            restrict_to_values: a dictionary of variable values which act as filter
 
-        var_cols = ""
-        if len(self.in_table_vars) > 0:
-            var_cols = "%s, "%",".join(["v.%s"%v for v in self.in_table_vars])
+        Returns: a 2-tuple... the header and the actual table
 
+        """
 
 
-        output_columns = self.table_columns[table][2:] #:::~ skips the spg_runid and spg_vsid columns ...
 
-        # if "spg_runid" in output_columns:
-        #         output_columns.remove("spg_runid")
-        # if "spg_vsid" in output_columns:
-        #         output_columns.remove("spg_vsid")
-        out_cols = ""
-
-        if not raw_data :
-            # if len(output_columns ) == 1:
-            #     out_cols = "AVG(r.%s) "%output_columns[0]
-            # elif len(output_columns) > 1:
-            out_cols = " %s"%",".join(["AVG(r.%s)"%v for v in output_columns])
+        if table_selector == "grouped_vars" or table_selector == "raw_vars":
+            id_cols = []
+            local_vars_in_table = self.vars_in_table
+            output_columns = self.table_columns[table][3:]  #:::~ skips the spg_runid, spg_vsid and spg_rep columns ...
+        elif table_selector == "only_runid":
+            id_cols = self.table_columns[table][:1]
+            local_vars_in_table = []
+            output_columns =  self.table_columns[table][3:]
+        elif table_selector == "full":
+            id_cols = self.table_columns[table][:3]
+            local_vars_in_table = self.vars_in_table
+            output_columns = self.table_columns[table][3:]
         else:
-            # if len(output_columns ) == 1:
-            #     out_cols = "r.%s "%output_columns[0]
-            # elif len(output_columns) > 1:
-            out_cols = " %s"%",".join(["r.%s"%v for v in output_columns])
-          
-        query = "SELECT %s %s FROM %s AS r, values_set AS v WHERE r.spg_vsid = v.id "%(var_cols, out_cols, table)
+            utils.newline_msg("ERR", "table selector ''")
 
-        if not raw_data :
+
+        # print table_selector, id_cols, local_vars_in_table,output_columns
+
+        id_cols_query = ""
+        if len(id_cols) > 0:
+            id_cols_query = "%s, " % ",".join(["r.%s" % v for v in id_cols])
+
+        local_var_query = ""
+        if len(local_vars_in_table) > 0:
+            local_var_query = "%s, " % ",".join(["v.%s" % v for v in local_vars_in_table])
+
+        if table_selector == "grouped_vars":
+            output_columns_query = " %s" % ",".join(["AVG(r.%s)" % v for v in output_columns])
+        else:
+            output_columns_query = " %s" % ",".join(["r.%s" % v for v in output_columns])
+
+        query = "SELECT %s %s %s FROM %s AS r, values_set AS v WHERE r.spg_vsid = v.id " % (id_cols_query, local_var_query, output_columns_query, table)
+
+        if restrict_to_values:
+            self.clean_dict(restrict_to_values)
+            restrict_to_values_query = " AND ".join(["v.%s = '%s'"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
+            query = "%s AND %s "%(query, restrict_to_values_query)
+
+        if table_selector == "grouped_vars":
             query = "%s GROUP BY v.id" % (query)
+        if table_selector == "full" or table_selector == "only_runid":
+            query = "%s ORDER BY r.spg_runid" % (query)
 
+        query = query.replace("''", "'").replace("'\"", "'")
+        header =  id_cols + local_vars_in_table + output_columns
 
+#        print query
+        return header, self.execute_query(query)
+
+        # def result_table(self, table="results", restrict_to_values={}, raw_data=False):
+        #     # def result_table(self, table="results", restrict_to_values={}, raw_data=False, restrict_by_val=False,
+        #     #                  output_columns=[]):
+        #
+        #     # print restrict_to_values
+        #     self.clean_dict(restrict_to_values)
+        #
+        #     local_var_query = ""
+        #     if len(self.in_table_vars) > 0:
+        #         local_var_query = "%s, " % ",".join(["v.%s" % v for v in self.in_table_vars])
+        #
+        #     output_columns = self.table_columns[table][2:]  #:::~ skips the spg_runid and spg_vsid columns ...
+        #
+        #     # if "spg_runid" in output_columns:
+        #     #         output_columns.remove("spg_runid")
+        #     # if "spg_vsid" in output_columns:
+        #     #         output_columns.remove("spg_vsid")
+        #     output_columns_query = ""
+        #
+        #     if not raw_data:
+        #         # if len(output_columns ) == 1:
+        #         #     output_columns_query = "AVG(r.%s) "%output_columns[0]
+        #         # elif len(output_columns) > 1:
+        #         output_columns_query = " %s" % ",".join(["AVG(r.%s)" % v for v in output_columns])
+        #     else:
+        #         # if len(output_columns ) == 1:
+        #         #     output_columns_query = "r.%s "%output_columns[0]
+        #         # elif len(output_columns) > 1:
+        #         output_columns_query = " %s" % ",".join(["r.%s" % v for v in output_columns])
+        #
+        #     query = "SELECT %s %s FROM %s AS r, values_set AS v WHERE r.spg_vsid = v.id " % (local_var_query, output_columns_query, table)
+        #
+        #     if not raw_data:
+        #         query = "%s GROUP BY v.id" % (query)
+        #
         # :::~ This command was needed only because of a mistake in the id stores in the results table
-        # restrict_cols = ""
+        # restrict_to_values_query = ""
         # if restrict_to_values:
-        #     restrict_cols = " AND ".join(["v.%s = '%s'"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
-        #     if restrict_cols :
-        #         restrict_cols = "AND %s"%restrict_cols
-        # query = "%s  %s "%(query, restrict_cols)
+        #     restrict_to_values_query = " AND ".join(["v.%s = '%s'"%(v, restrict_to_values[v]) for v in restrict_to_values.keys()])
+        #     if restrict_to_values_query :
+        #         restrict_to_values_query = "AND %s"%restrict_to_values_query
+        # query = "%s  %s "%(query, restrict_to_values_query)
         # if not raw_data :
         #     query = "%s GROUP BY v.id" % (query)
         #     if restrict_by_val:
-        #         query = "%s  GROUP BY %s"%(query, var_cols.strip(", "))
-        #     else:
-        query=query.replace("''", "'").replace("'\"", "'")
-        header = self.in_table_vars + output_columns
+        #         query = "%s  GROUP BY %s"%(query, local_var_query.strip(", "))
+#         #     else:
+#         query=query.replace("''", "'").replace("'\"", "'")
+#         header = self.in_table_vars + output_columns
+#
+# #        print header, query
+#         return header, self.execute_query(query)
 
-#        print header, query
-        return header, self.execute_query(query)
-
-    def result_id_table(self, table="results"):
-        query = "SELECT %s FROM %s ORDER BY id " % (",".join(self.table_columns[table]), table)
-
-        return self.table_columns[table], self.execute_query(query)
+    # def result_id_table(self, table="results"):
+    #     query = "SELECT %s FROM %s ORDER BY id " % (",".join(self.table_columns[table]), table)
+    #
+    #     return self.table_columns[table], self.execute_query(query)
 
     # def table_header(self, table='results',output_column = []):
     #
@@ -608,12 +687,17 @@ class ResultsDBQuery(ParameterEnsemble):
         table = csv.reader(open(table_file), delimiter=sep, lineterminator="\n")
 
         header = table.next()
+        header = header[:1] + ['spg_vsid', 'spg_rep'] + header[1:]
         for row in table:
+            runid = int(row[0])
+            (vsid, rep) =self.execute_query_fetchone("SELECT spg_vsid, spg_rep FROM run_status WHERE id = %s"%runid)
+            vals = row[1:]
+            full_row = [runid,vsid, rep] + row[1:]
             cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(header),
-                                                   ", ".join(["'%s'" % str(i) for i in row]))
+                                                   ", ".join(["'%s'" % str(i) for i in full_row]))
 
             self.execute_query(cc)
 
-            self.query_set_run_status( "D", int(row[0]))
+            self.query_set_run_status( "D", runid)
 
 

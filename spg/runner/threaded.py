@@ -24,15 +24,15 @@ class SPGRunningAtom(threading.Thread):
         self.lock.acquire()
         self.ensemble.next()
 
-        current_runid, current_vsid, values = self.ensemble.get_current_information()
+        current_runid, current_vsid, current_rep, values = self.ensemble.get_current_information()
         print "-D- [%4d]- ----- %s / %d" % (self.thread_id, self.ensemble.full_name, current_runid)
         #print "-S- [%4d]- ----- %s / %d" % (self.thread_id, self.ensemble.full_name, current_run_id)
         self.lock.release()
 
-        current_runid, current_vsid, output, stderr, run_time , return_code  = self.ensemble.launch_process(current_runid, current_vsid, values)
+        current_runid, current_vsid, current_rep, output, stderr, run_time , return_code  = self.ensemble.launch_process(current_runid, current_vsid,current_rep, values)
 
         self.lock.acquire()
-        self.ensemble.dump_result(current_runid, current_vsid, output, stderr, run_time, return_code)
+        self.ensemble.dump_result(current_runid, current_vsid, current_rep, output, stderr, run_time, return_code)
         if return_code == 0:
             self.ensemble.query_set_run_status("D")
         elif return_code == -2:

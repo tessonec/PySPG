@@ -39,12 +39,18 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
     def do_load(self,c):
         """loads a results_database"""
         BaseSPGCommandLine.do_load(self, c)
-        self.output_column = self.current_param_db.output_column['results'][1:]
-        
+#        self.table_columns = self.current_param_db.output_column['results'] #[1:]
+
         os.chdir( self.current_param_db.path )
 
 
-    def do_import_output_table(self, c):
+    def do_load_output_table(self, c):
+        """
+        Usage:
+            do_load_output_table table_name.csv database.spqql
+        Loads the results output in table_name.csv into database.spgql
+
+        """
 
         flags, cs = self.parse_command_line(c)
 
@@ -118,19 +124,40 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
 
     def do_save_table(self,c):
        """save_table [-flag1 -flag2] 
-          saves the table values in ascii format
+          saves the table values in ascii format. default is averaging column values by variable values
           FLAGS::: --noheader:    does not output column names in the output file
-                   --raw:         raw data output
+                   --raw:         raw  values without average
+                   --full:        all simulation ids and variables are output in table (implies raw)
+                   --id:          only the id is output
+                   --sep:         column separator ('blank' for space)
        """
 
        flags,c = self.parse_command_line(c)
 
-       # if "append" in flags:
+       if len( set([ 'raw', "full", "id" ]).intersection( flags ) ) > 1:
+           utils.newline_msg("ERR", "only one flag [raw, full, id] can be active at a time" )
+           return
+       table_selector = "grouped_vars"
+       if "raw" in flags:
+           table_selector = "raw_vars"
+       elif "id" in flags:
+           table_selector = "only_runid"
+       elif "full" in flags:
+           table_selector = "full"
+
+       if "sep" in flags:
+           if flags["sep"] == "blank":
+               self.sep = " "
+           else:
+               self.sep = flags["sep"]
+
+
+
+                   # if "append" in flags:
        #    open_type = "aw"
        # else:
        #    open_type = "w"
 
-       raw_data = "raw" in flags
             # self.raw_data = True
        # else:
        #      self.raw_data = False
@@ -156,15 +183,7 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
                d,f = os.path.split(output_fname)
                if d != "" and not os.path.exists(d): os.makedirs(d)
 
-               if "only-id" in flags:
-                   header, data= self.current_param_db.result_id_table(table = table )
-               else:
-                   header, data = self.current_param_db.result_table(restrict_to_values = outer_params, table = table, raw_data =raw_data)
-
-
-                                                             # raw_data = self.raw_data, restrict_by_val = self.restrict_by_val)
-                                                             # output_column = self.output_column )
-                   # header = self.current_param_db.table_header(table = self.table, output_column= self.output_column )
+               header, data= self.current_param_db.result_table(table = table , table_selector = table_selector)
 
                print "  +- table:  '%s'" % (output_fname)
 
@@ -233,9 +252,9 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
             utils.newline_msg("WRN", "current db not set... skipping")
             return
         c = c.split(",")
-        if not set(c).issubset(  self.current_param_db.output_column[self.table] ):
-            utils.newline_msg("ERR", "the column(s) is (are) not in the output: %s"%( set(c) - set(  self.current_param_db.output_column[self.table] )) )
-        self.output_column = c
+        if not set(c).issubset(  self.current_param_db.table_columns[self.table] ):
+            utils.newline_msg("ERR", "the column(s) is (are) not in the output: %s"%( set(c) - set(  self.current_param_db.table_columns[self.table] )) )
+        self.table_columns = c
 
     def do_set_as_var(self,c):
         """ Sets a (set of) non-variables as variable """
@@ -268,10 +287,10 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
             return
         for k,v in ret:
             if k == "table":
-                 if ret[k] not in self.current_param_db.output_column.keys():
-                     utils.newline_msg("ERR", "table '%s' not among the ones found in the DB: (%s)"%(ret[k], ", ".join(self.current_param_db.output_column.keys())) )
+                 if ret[k] not in self.current_param_db.table_columns.keys():
+                     utils.newline_msg("ERR", "table '%s' not among the ones found in the DB: (%s)"%(ret[k], ", ".join(self.current_param_db.table_columns.keys())) )
                      return
-                 self.output_column = self.current_param_db.output_column[ ret[k] ][1:]
+                 self.table_columns = self.current_param_db.table_columns[ ret[k] ][1:]
             if k == "sep":
                 if v == "blank":
                     self.sep = " "
@@ -289,8 +308,8 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
         print "  + variables = %s "%( ", ".join(self.current_param_db.variables ) )
         print "  + entities = %s "%( ", ".join(self.current_param_db.entities ) )
         
-        print "  + table   = %s (tables found: %s) "%(self.table, ", ".join(self.current_param_db.output_column.keys())) 
-        print "  + vars (separated-coalesced-in_table) = %s - %s - %s "%(self.current_param_db.separated_vars, self.current_param_db.coalesced_vars, self.current_param_db.in_table_vars)
+        print "  + tables found: %s "%(", ".join(self.current_param_db.table_columns.keys()))
+        print "  + vars (separated-coalesced-in_table) = %s - %s - %s "%(self.current_param_db.separated_vars, self.current_param_db.coalesced_vars, self.current_param_db.vars_in_table)
 
 
 if __name__ == '__main__':

@@ -37,6 +37,10 @@ class SPGDBCommandLine(DBCommandLine):
             utils.newline_msg("WRN", "init called without arguments")
             return
         flags,c = self.parse_command_line(c)
+        if len(c) == 0:
+            utils.newline_msg("WRN", "init called without database")
+            return
+
         i_arg = c[0]
 
         full_name, path, base_name, extension = utils.translate_name(i_arg)
@@ -174,7 +178,7 @@ class SPGDBCommandLine(DBCommandLine):
             utils.newline_msg("ERR", "no database supplied nor currently set... skipping")
             return
 
-        ensemble = self.get_db_from_cmdline(db_name)
+#        ensemble = self.get_db_from_cmdline(db_name)
 
         if not self.current_param_db is None and self.current_param_db.full_name == db_name:
             self.current_param_db = None

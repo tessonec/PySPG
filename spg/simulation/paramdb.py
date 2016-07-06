@@ -140,7 +140,7 @@ class MultIteratorDBBuilder(MultIteratorParser):
                 if iv["type"] == "xydy":
                     self.number_of_columns += 2
 
-            results = "CREATE TABLE IF NOT EXISTS %s (id INTEGER PRIMARY KEY, spg_runid INTEGER, spg_vsid INTEGER, %s, FOREIGN KEY(spg_runid) REFERENCES run_status(id), FOREIGN KEY(spg_vsid) REFERENCES values_set(id))"%(results_table, ", ".join([ "%s %s"%(ic,iv["datatype"]) for ic, iv in table_contents ]) )
+            results = "CREATE TABLE IF NOT EXISTS %s (id INTEGER PRIMARY KEY, spg_runid INTEGER, spg_vsid INTEGER, spg_rep INTEGER, %s, FOREIGN KEY(spg_runid) REFERENCES run_status(id), FOREIGN KEY(spg_vsid) REFERENCES values_set(id))"%(results_table, ", ".join([ "%s %s"%(ic,iv["datatype"]) for ic, iv in table_contents ]) )
             self.cursor.execute(results)
         self.connection.commit()
             
