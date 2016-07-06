@@ -1,5 +1,7 @@
 choice:str:model:"UNBIASED","BIASED","MODEL2":model type
 val:float:D:1.0:diffusion coefficient
 val:float:drift:0.0:drift coefficient
+val:float:Q:0.0:multiplicative diffusion coefficient
 val:int:filter_timesteps:0:filtering time equalts this times ts
-val:int:simulation_timesteps:100:fnumber of timesteps in the simulation
+val:int:simulation_timesteps:200:number of timesteps in the simulation
+val:str:output_file:"output.dat":a file name

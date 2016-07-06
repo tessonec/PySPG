@@ -24,22 +24,22 @@ class SPGRunningAtom(threading.Thread):
         self.lock.acquire()
         self.ensemble.next()
 
-        current_runid, current_vsid, current_rep, values = self.ensemble.get_current_information()
-        print "-D- [%4d]- ----- %s / %d" % (self.thread_id, self.ensemble.full_name, current_runid)
+        current_uid, current_vsid, current_rep, values = self.ensemble.get_current_information()
+        print "-D- [%4d]- ----- %s / %d" % (self.thread_id, self.ensemble.full_name, current_uid)
         #print "-S- [%4d]- ----- %s / %d" % (self.thread_id, self.ensemble.full_name, current_run_id)
         self.lock.release()
 
-        current_runid, current_vsid, current_rep, output, stderr, run_time , return_code  = self.ensemble.launch_process(current_runid, current_vsid,current_rep, values)
+        current_uid, current_vsid, current_rep, output, stderr, run_time , return_code  = self.ensemble.launch_process(current_uid, current_vsid,current_rep, values)
 
         self.lock.acquire()
-        self.ensemble.dump_result(current_runid, current_vsid, current_rep, output, stderr, run_time, return_code)
+        self.ensemble.dump_result(current_uid, current_vsid, current_rep, output, stderr, run_time, return_code)
         if return_code == 0:
-            self.ensemble.query_set_run_status("D")
+            self.ensemble.query_set_run_status("D", current_uid, run_time)
         elif return_code == -2:
-            self.ensemble.query_set_run_status("N")
+            self.ensemble.query_set_run_status("N", current_uid, run_time)
         else:
-            self.ensemble.query_set_run_status("E")
-        print "-X- [%4d]- ----- %s / %d -> %d" % (self.thread_id, self.ensemble.full_name, current_runid, return_code)
+            self.ensemble.query_set_run_status("E", current_uid, run_time)
+        print "-X- [%4d]- ----- %s / %d -> %d" % (self.thread_id, self.ensemble.full_name, current_uid, return_code)
         self.lock.release()
 
 

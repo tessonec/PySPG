@@ -274,8 +274,8 @@ class MultIterator:
 #      if name == "id":
 #          return self.current_iteration_id
 
-      assert name in self.names, "the requested variable '%s' was not found in the multiterator"%name
-      
+
+      assert name in self.names , "the requested variable '%s' was not found in the multiterator"%name
       return self.__dict[name]
 
   def get_dict(self):

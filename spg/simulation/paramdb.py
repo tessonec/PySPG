@@ -72,7 +72,7 @@ class MultIteratorDBBuilder(MultIteratorParser):
             self.cursor.execute("INSERT INTO information (key,value) VALUES (?,?)",(key,expected_value))
         self.connection.commit()
         
-        
+
 
     def init_db(self):
         #:::~ Table with the information related to the database
@@ -124,7 +124,7 @@ class MultIteratorDBBuilder(MultIteratorParser):
 
         self.possible_varying_ids = []
         for i in self:
-            self.cursor.execute( elements, [ utils.replace_values(self[j], self)  for j in self.names] )
+            self.cursor.execute( elements, [ utils.replace_values(self[j], self, vars_to_skip = set(['spg_uid','spg_vsid','spg_rep'] ) )  for j in self.names] )
             self.possible_varying_ids.append(self.cursor.lastrowid)
         self.connection.commit()
 
@@ -133,14 +133,14 @@ class MultIteratorDBBuilder(MultIteratorParser):
         
         for results_table in   self.stdout_contents.keys():
             table_contents =  self.stdout_contents[ results_table ]
-            self.number_of_columns = 0
-            for ic, iv in table_contents:
-                if iv["type"] == "xy":
-                    self.number_of_columns += 1
-                if iv["type"] == "xydy":
-                    self.number_of_columns += 2
+            # self.number_of_columns = 0
+            # for ic, iv in table_contents:
+            #     if iv["type"] == "xy":
+            #         self.number_of_columns += 1
+            #     if iv["type"] == "xydy":
+            #         self.number_of_columns += 2
 
-            results = "CREATE TABLE IF NOT EXISTS %s (id INTEGER PRIMARY KEY, spg_runid INTEGER, spg_vsid INTEGER, spg_rep INTEGER, %s, FOREIGN KEY(spg_runid) REFERENCES run_status(id), FOREIGN KEY(spg_vsid) REFERENCES values_set(id))"%(results_table, ", ".join([ "%s %s"%(ic,iv["datatype"]) for ic, iv in table_contents ]) )
+            results = "CREATE TABLE IF NOT EXISTS %s (id INTEGER PRIMARY KEY, spg_uid INTEGER, spg_vsid INTEGER, spg_rep INTEGER, %s, FOREIGN KEY(spg_uid) REFERENCES run_status(id), FOREIGN KEY(spg_vsid) REFERENCES values_set(id))"%(results_table, ", ".join([ "%s %s"%(ic,iv["datatype"]) for ic, iv in table_contents ]) )
             self.cursor.execute(results)
         self.connection.commit()
             
@@ -152,7 +152,7 @@ class MultIteratorDBBuilder(MultIteratorParser):
         
         self.connection.commit()
 
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS run_status (id INTEGER PRIMARY KEY, spg_vsid INTEGER, spg_rep INTEGER, status CHAR(1), "
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS run_status (id INTEGER PRIMARY KEY, spg_vsid INTEGER, spg_rep INTEGER, status CHAR(1), run_time FLOAT, "
                             "FOREIGN KEY (spg_vsid) REFERENCES values_set(id) )")
         self.connection.commit()
 

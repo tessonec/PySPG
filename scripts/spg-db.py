@@ -299,10 +299,11 @@ class SPGDBCommandLine(DBCommandLine):
 
         n_repet = db_status['value_set_with_rep'] / db_status['value_set']
 
-        print "   -+ status: %s /  weight: %5.5f "%(ensemble.status, ensemble.weight)
-        print "   -+ total = %d*%d / D: %d (%.5f) - R: %d - E: %d " % (
+        print "   -+ status = %s /  weight: %5.5f "%(ensemble.status, ensemble.weight)
+        print "   -+ total  = %d*%d / done: %d (%.5f) - running: %d - error: %d " % (
             db_status['value_set'], n_repet, db_status['process_done'], frac_done,
             db_status['process_running'],db_status['process_error'])
+        print "   -+ time   = %f / mean: %f - min: %f - max: %f"%(db_status['total_run_time'],db_status['avg_run_time'],db_status['min_run_time'],db_status['max_run_time'])
 
 
 if __name__ == '__main__':

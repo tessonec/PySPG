@@ -90,7 +90,7 @@ def evaluate_string(string,val_dict, skip_id = True):
             return str(string) 
 
 
-def replace_values(string,val_dict, skip_id = True):
+def replace_values(string,val_dict, vars_to_skip = set()):
     """replaces a set of values (given in val_dict) into a string.
     Square-bracketed keys are changed into its value
     Curly-bracketed keys are changed into its key-value. 
@@ -110,15 +110,15 @@ def replace_values(string,val_dict, skip_id = True):
 #    print val_dict
     rx_s = re.compile(r'\[([a-zA-Z]\w*)\]')
     for i_var in rx_s.findall(string):
-        if i_var == 'id' and skip_id:
-            continue
+        if i_var in vars_to_skip:
+             continue
         st_out = re.sub( r'\[%s\]'%i_var, str( val_dict[i_var] ), st_out )
-            
+
     rx_c = re.compile(r'\{([a-zA-Z]\w*)\}')
     for i_var in rx_c.findall(string):
-            if i_var == 'id' and skip_id:
-                continue
-            st_out = re.sub( r'\{%s\}'%i_var, "%s-%s"%(i_var, str( val_dict[i_var] ) ), st_out )
+        if i_var in vars_to_skip:
+            continue
+        st_out = re.sub( r'\{%s\}'%i_var, "%s-%s"%(i_var, str( val_dict[i_var] ) ), st_out )
         
     try:
         ret = eval( st_out) 

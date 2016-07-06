@@ -57,7 +57,7 @@ if __name__ == "__main__":
       executor.init_db()
       for values in executor:
           if options.verbose:
-              utils.inline_msg("RUN", "[%s] %s" % (executor.current_spg_runid, executor.variable_values()))
+              utils.inline_msg("RUN", "[%s] %s" % (executor.current_spg_uid, executor.variable_values()))
           # executor.launch_process()
           try:
              executor.launch_process()

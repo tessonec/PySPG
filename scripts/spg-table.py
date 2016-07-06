@@ -141,7 +141,7 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
        if "raw" in flags:
            table_selector = "raw_vars"
        elif "id" in flags:
-           table_selector = "only_runid"
+           table_selector = "only_uid"
        elif "full" in flags:
            table_selector = "full"
 
