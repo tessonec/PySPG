@@ -18,7 +18,7 @@ output_columns = [ i[1] for i in res ]
 output_columns = output_columns[2:]
 
 cursor.execute( "BEGIN;" )
-sql_command = "CREATE TEMP TABLE temp_results AS SELECT r.id, rs.values_set_id, %s FROM results AS r, run_status AS rs WHERE rs.id = r.values_set_id ;"%( ", ".join([ "r.%s"%i for i in output_columns]) )
+sql_command = "CREATE TEMP TABLE temp_results AS SELECT r.id, rs.vsid, %s FROM results AS r, run_status AS rs WHERE rs.id = r.vsid ;"%( ", ".join([ "r.%s"%i for i in output_columns]) )
 print sql_command
 cursor.execute( sql_command )
 sql_command = "DROP TABLE results;"

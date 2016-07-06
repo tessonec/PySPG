@@ -2,14 +2,14 @@
 
 
 import spg.utils as utils
-from spg.simulation import EnsembleDBBuilder, ParameterEnsemble
+from spg.simulation import MultIteratorDBBuilder, ParameterEnsemble
 # from spg.master import SPGMasterDB
 from spg.cmdline import DBCommandLine
 # from spg import VAR_PATH, RUN_DIR
 import spg.utils as utils
 
 #import sqlite3 as sql
-import sys #, optparse
+import sys, optparse
 import os, os.path
 
 
@@ -37,6 +37,10 @@ class SPGDBCommandLine(DBCommandLine):
             utils.newline_msg("WRN", "init called without arguments")
             return
         flags,c = self.parse_command_line(c)
+        if len(c) == 0:
+            utils.newline_msg("WRN", "init called without database")
+            return
+
         i_arg = c[0]
 
         full_name, path, base_name, extension = utils.translate_name(i_arg)
@@ -63,7 +67,7 @@ class SPGDBCommandLine(DBCommandLine):
         else:
             repeat = 1
 
-        parser = EnsembleDBBuilder(db_name=db_name)
+        parser = MultIteratorDBBuilder(db_name=db_name)
         parser.init_db(  )
         parser.fill_status(repeat = repeat )
 
@@ -134,6 +138,7 @@ class SPGDBCommandLine(DBCommandLine):
         return self.complete_init(text, line, begidx, endidx)
 
     def parse_cmd_line(self, c):
+        # :::~ FIXME! name confusing with parse_command_line
         try:
             flags, [db_name] = self.parse_command_line(c)
         except:
@@ -173,7 +178,7 @@ class SPGDBCommandLine(DBCommandLine):
             utils.newline_msg("ERR", "no database supplied nor currently set... skipping")
             return
 
-        ensemble = self.get_db_from_cmdline(db_name)
+#        ensemble = self.get_db_from_cmdline(db_name)
 
         if not self.current_param_db is None and self.current_param_db.full_name == db_name:
             self.current_param_db = None
@@ -241,11 +246,11 @@ class SPGDBCommandLine(DBCommandLine):
         print " +--- status -  '%s' : %s  " % (db_name, st)
 
         self.master_db.query_master_db('UPDATE dbs SET status= ? WHERE full_name = ?', st, db_name)
-
-    def do_stop(self, c):
-        """stops the currently loaded registered database"""
-        self.__set_status(c, 'S')
-                
+    #
+    # def do_stop(self, c):
+    #     """stops the currently loaded registered database"""
+    #     self.__set_status(c, 'S')
+    #
     def do_start(self, c):
         """starts the currently loaded registered database"""
         self.__set_status(c, 'R')
@@ -294,12 +299,14 @@ class SPGDBCommandLine(DBCommandLine):
 
         n_repet = db_status['value_set_with_rep'] / db_status['value_set']
 
-        print "   -+ status: %s /  weight: %5.5f "%(ensemble.status, ensemble.weight)
+        print "   -+ status = %s /  weight: %5.5f "%(ensemble.status, ensemble.weight)
+        print "   -+ total  = %d*%d / done: %d (%.5f) - running: %d - error: %d " % (
+            db_status['value_set'], n_repet, db_status['process_done'], frac_done,
+            db_status['process_running'],db_status['process_error'])
         try:
-	    print "   -+ total = %d*%d / D: %d (%.5f) - R: %d - E: %d " % (
-                db_status['value_set'], n_repet, db_status['process_done'], frac_done,
-                db_status['process_running'],db_status['process_error'])
-        except: pass
+            print "   -+ time   = %f / mean: %f - min: %f - max: %f"%(db_status['total_run_time'],db_status['avg_run_time'],db_status['min_run_time'],db_status['max_run_time'])
+        except:
+	    pass
 
 if __name__ == '__main__':
     cmd_line = SPGDBCommandLine()

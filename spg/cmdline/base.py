@@ -124,7 +124,7 @@ class BaseSPGCommandLine(cmd.Cmd):
 
         if ret:
             self.current_param_db = ret 
-            print " --- loaded '%s'"% self.current_param_db.full_name
+            print " --- loaded: '%s'"% self.current_param_db.full_name
         else:    
             utils.newline_msg("ERR", "'%s' does not exist"%ret, 2)
 

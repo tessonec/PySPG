@@ -43,7 +43,7 @@ if __name__ == "__main__":
           os.remove( db_name )
       if options.initialise or not os.path.exists( db_name ):
           utils.newline_msg("MSG", "initialising database")
-          parser = EnsembleDBBuilder( db_name=db_name)
+          parser = MultIteratorDBBuilder(db_name=db_name)
           parser.init_db()
           parser.fill_status(repeat=options.repeat)
           del parser
@@ -57,11 +57,11 @@ if __name__ == "__main__":
       executor.init_db()
       for values in executor:
           if options.verbose:
-              utils.inline_msg("RUN", "[%s] %s"%(executor.current_run_id,executor.variable_values()) )
+              utils.inline_msg("RUN", "[%s] %s" % (executor.current_spg_uid, executor.variable_values()))
           # executor.launch_process()
           try:
              executor.launch_process()
-#             executor.dump_result()
+             executor.dump_result()
           except (KeyboardInterrupt,):
               print >> sys.stderr
               utils.newline_msg("SYS", "keyboard interrupted, exiting")

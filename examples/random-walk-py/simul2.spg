@@ -1,0 +1,6 @@
+@execute cts-random-walk.py
+:simulation_timesteps 100
+:model BIASED
+:output_file {drift}_{D}.[spg_rep].net
+.drift 0 1
++D 0 10 0.5

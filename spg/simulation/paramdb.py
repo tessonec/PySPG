@@ -36,7 +36,7 @@ class SPGConflictingValue(Exception):
         utils.newline_msg("ERR","conflict in %s name (in db '%s', in param '%s')"%(key, previous, value ))
 
 
-class EnsembleDBBuilder(MultIteratorParser):
+class MultIteratorDBBuilder(MultIteratorParser):
     """Generates a DB file with the representation of the parameters"""
     def __init__(self, db_name , timeout = 5):
         full_name, self.path, self.base_name, extension = utils.translate_name( db_name )
@@ -63,7 +63,7 @@ class EnsembleDBBuilder(MultIteratorParser):
         
         self.cursor.execute( "SELECT value FROM information WHERE key = ?", (key,) )
         prev_val = self.cursor.fetchone()
-     #   print "EnsembleDBBuilder::check_and_insert_information", key, expected_value, prev_val
+
         if prev_val and expected_value is not None:
             if prev_val[0] != expected_value:
                 
@@ -72,7 +72,7 @@ class EnsembleDBBuilder(MultIteratorParser):
             self.cursor.execute("INSERT INTO information (key,value) VALUES (?,?)",(key,expected_value))
         self.connection.commit()
         
-        
+
 
     def init_db(self):
         #:::~ Table with the information related to the database
@@ -113,55 +113,51 @@ class EnsembleDBBuilder(MultIteratorParser):
         self.cursor.execute(elements)
         
         elements = "INSERT INTO values_set ( %s ) VALUES (%s)"%(   ", ".join([ "%s "%i for i in self.names ] ), ", ".join( "?" for i in self.names ) )
-        self.possible_varying_ids = []
+
         
         # :::~ (CT) Index creation code
         for i in self.data:
 
             if i.__class__ == IterConstant: continue
             
-            self.cursor.execute( "CREATE INDEX idxvs_%s_id ON values_set (%s) "%(i.name,i.name) )
-        
-      #  i_try = 0
+            self.cursor.execute( "CREATE INDEX IF NOT EXISTS idxvs_%s_id ON values_set (%s) "%(i.name,i.name) )
+
+        self.possible_varying_ids = []
         for i in self:
-            self.cursor.execute( elements, [ utils.replace_values(self[j], self)  for j in self.names] )
-            # print elements, [ utils.replace_values(self[j], self)  for j in self.names]
+            self.cursor.execute( elements, [ utils.replace_values(self[j], self, vars_to_skip = set(['spg_uid','spg_vsid','spg_rep'] ) )  for j in self.names] )
             self.possible_varying_ids.append(self.cursor.lastrowid)
         self.connection.commit()
-              
-        #if not commited:
-        #    utils.newline_msg("ERR", "database didn't unlock, exiting")
+
         self.cursor.execute("CREATE TABLE IF NOT EXISTS output_tables (id INTEGER PRIMARY KEY, name CHAR(128) , column CHAR(128) )")  
         
         
         for results_table in   self.stdout_contents.keys():
             table_contents =  self.stdout_contents[ results_table ]
-            self.number_of_columns = 0
-            for ic, iv in table_contents:
-                if iv["type"] == "xy":
-                    self.number_of_columns += 1
-                if iv["type"] == "xydy":
-                    self.number_of_columns += 2
+            # self.number_of_columns = 0
+            # for ic, iv in table_contents:
+            #     if iv["type"] == "xy":
+            #         self.number_of_columns += 1
+            #     if iv["type"] == "xydy":
+            #         self.number_of_columns += 2
 
-            results = "CREATE TABLE IF NOT EXISTS %s (id INTEGER PRIMARY KEY, values_set_id INTEGER,  %s , FOREIGN KEY(values_set_id) REFERENCES values_set(id))"%(results_table, ", ".join([ "%s %s"%(ic,iv["datatype"]) for ic, iv in table_contents ]) )
+            results = "CREATE TABLE IF NOT EXISTS %s (id INTEGER PRIMARY KEY, spg_uid INTEGER, spg_vsid INTEGER, spg_rep INTEGER, %s, FOREIGN KEY(spg_uid) REFERENCES run_status(id), FOREIGN KEY(spg_vsid) REFERENCES values_set(id))"%(results_table, ", ".join([ "%s %s"%(ic,iv["datatype"]) for ic, iv in table_contents ]) )
             self.cursor.execute(results)
         self.connection.commit()
             
         for results_table in   self.stdout_contents.keys():
-            self.cursor.execute("INSERT INTO output_tables ( name, column ) VALUES (?, ?)",( results_table, 'values_set_id' ) )
+ #           self.cursor.execute("INSERT INTO output_tables ( name, column ) VALUES (?, ?)",( results_table, 'spg_runid' ) )
             table_contents =  self.stdout_contents[ results_table ]
             for ic, iv in table_contents:
                 self.cursor.execute("INSERT INTO output_tables ( name, column ) VALUES (?, ?)",( results_table,ic ) )
         
         self.connection.commit()
 
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS run_status (id INTEGER PRIMARY KEY, values_set_id INTEGER, status CHAR(1), "
-                            "FOREIGN KEY (values_set_id ) REFERENCES values_set(id) )")
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS run_status (id INTEGER PRIMARY KEY, spg_vsid INTEGER, spg_rep INTEGER, status CHAR(1), run_time FLOAT, "
+                            "FOREIGN KEY (spg_vsid) REFERENCES values_set(id) )")
         self.connection.commit()
 
 
     def fill_status(self, repeat = 1):
-
 
         for i_repeat in range(repeat):
 
@@ -171,7 +167,7 @@ class EnsembleDBBuilder(MultIteratorParser):
                 #:::~    'R': running
                 #:::~    'D': successfully run (done)
                 #:::~    'E': run but with non-zero error code
-                self.cursor.execute( "INSERT INTO run_status ( values_set_id, status ) VALUES (%s,'N')"%(i_id) )
+                self.cursor.execute( "INSERT INTO run_status ( spg_vsid, spg_rep, status ) VALUES (?,?,?)", (i_id, i_repeat ,'N') )
 
         self.connection.commit()
 
@@ -201,33 +197,3 @@ class EnsembleDBBuilder(MultIteratorParser):
 #     cursor.execute("CREATE TABLE IF NOT EXISTS modified_files "
 #                "( id INTEGER PRIMARY KEY, revision INTEGER, file_name CHAR(256))"
 #                )
-# 
-# 
-#===============================================================================
-#
-# class EnsembleCSVBuilder(MultIteratorParser):
-#     """Generates a DB file with the representation of the parameters"""
-#     def __init__(self, stream=None, db_name = "results.csv", timeout = 5):
-#         MultIteratorParser.__init__(self, stream)
-#
-#         if not check_params.consistency(self.command, self):
-#             utils.newline_msg("ERR","simulation's spg file is not consistent.")
-#             sys.exit(1)
-#         self.stdout_contents = check_params.contents_in_output(self.command)
-#
-#         self.csv_filename
-#
-#     def init_db(self):
-#
-#         csv_file = open(self.csv_filename,"w")
-#         fieldnames = [i.name for i in self.data]
-#         fieldnames.append("id")
-#         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-#         writer.writeheader()
-#
-#         for counter,i in enumerate(self):
-#                 d = self.get_dict()
-#                 d["id"]  = counter
-#                 writer.writerow(d)
-#
-#         csv_file.close()

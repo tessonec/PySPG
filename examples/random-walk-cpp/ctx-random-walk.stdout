@@ -1,5 +1,5 @@
-final_position:help = final position:texlabel = $X$
-squared_displacement:help = squared displacement:texlabel = $S$
+final_position
+squared_displacement
 @random:random1
 @random:random2
 @random:random3
