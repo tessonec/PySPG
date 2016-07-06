@@ -295,10 +295,11 @@ class SPGDBCommandLine(DBCommandLine):
         n_repet = db_status['value_set_with_rep'] / db_status['value_set']
 
         print "   -+ status: %s /  weight: %5.5f "%(ensemble.status, ensemble.weight)
-        print "   -+ total = %d*%d / D: %d (%.5f) - R: %d - E: %d " % (
-            db_status['value_set'], n_repet, db_status['process_done'], frac_done,
-            db_status['process_running'],db_status['process_error'])
-
+        try:
+	    print "   -+ total = %d*%d / D: %d (%.5f) - R: %d - E: %d " % (
+                db_status['value_set'], n_repet, db_status['process_done'], frac_done,
+                db_status['process_running'],db_status['process_error'])
+        except: pass
 
 if __name__ == '__main__':
     cmd_line = SPGDBCommandLine()
