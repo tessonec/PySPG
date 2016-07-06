@@ -27,6 +27,9 @@ if __name__ == "__main__":
     parser.add_option("--verbose", action='store_true', dest="verbose",
                       help="more verbose output")
 
+    parser.add_option("--test-run", action='store_true', dest="test_run",
+                      help="runs once and preserves the temporary files")
+
 #    parser.add_option("-d","--directory-var", action='store', type = "string", dest="directory_vars",
 #                       default = False, help = "which variables to store as directories, only if tree" )
 
@@ -55,6 +58,11 @@ if __name__ == "__main__":
       executor = ParameterEnsembleExecutor( db_name )
 
       executor.init_db()
+      if options.test_run:
+          executor.next()
+          executor.launch_process( remove_files=False)
+          continue
+
       for values in executor:
           if options.verbose:
               utils.inline_msg("RUN", "[%s] %s" % (executor.current_spg_uid, executor.variable_values()))

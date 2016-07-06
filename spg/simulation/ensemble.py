@@ -240,7 +240,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
             utils.newline_msg("ERR", "Fatal, binary '%s' not found" % self.command)
             sys.exit(1)
 
-    def launch_process(self):
+    def launch_process(self, remove_files = True):
          os.chdir(self.path)
 
          configuration_filename = "%s_%d.tmp_input" % (self.base_name, self.current_spg_uid)
@@ -266,10 +266,10 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 
          self.output = [i.strip() for i in open(fname_stdout, "r")]
          self.stderr = [i.strip() for i in open(fname_stderr, "r")]
-
-         os.remove(configuration_filename)
-         os.remove( fname_stdout )
-         os.remove( fname_stderr )
+         if remove_files:
+             os.remove(configuration_filename)
+             os.remove( fname_stdout )
+             os.remove( fname_stderr )
 
          self.run_time = finish_time - started_time
          if self.run_time < 0: self.run_time = None
