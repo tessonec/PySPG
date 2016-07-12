@@ -6,8 +6,7 @@ Created on Sep 21, 2011
 '''
 
 
-import spg.utils as utils 
-
+import spg.utils
 
 import math as m
 import random as rnd
@@ -37,11 +36,10 @@ class ModelRandomWalk:
 
 
 if __name__ == "__main__":
-    
 
-    
-    parameters = utils.load_parameters(sys.argv)
-    utils.newline_msg("INF", "parameters: \n %s" % parameters )
+
+    parameters = spg.utils.load_parameters(sys.argv)
+    spg.utils.newline_msg("INF", "parameters: \n %s" % parameters )
 
     
     
