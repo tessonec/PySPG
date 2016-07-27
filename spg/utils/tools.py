@@ -70,7 +70,7 @@ def evaluate_string(string,val_dict, skip_id = True):
     """evaluates an expression with the values given in the dictionary.
     The variable names are to be enclosed in square-brackets.
     automatic type conversion is attemped"""
-    
+
     #fp = string # os.path.abspath(string)
     rx = re.compile(r'\[([a-zA-Z0-9_]\w*)\]')
     # regular expression explanation

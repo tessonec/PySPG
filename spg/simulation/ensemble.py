@@ -1,5 +1,5 @@
 from spg import utils
-from spg import TIMEOUT, BINARY_PATH
+from spg import TIMEOUT, BINARY_PATH, ROOT_DIR
 
 import os, sys, os.path, time
 from subprocess import Popen, PIPE
@@ -257,7 +257,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
          cmd = "%s/%s %s" % (self.bin_dir, self.command, configuration_filename)
 
          started_time = time.time()
-         proc = Popen(cmd, shell=True, stdin=PIPE, stdout=file_stdout, stderr=file_stderr, cwd=self.path)
+         proc = Popen(cmd, shell=True, stdin=PIPE, stdout=file_stdout, stderr=file_stderr, cwd=self.path) #, env = {'PYTHONPATH':"${PYTHONPATH}:%s"%ROOT_DIR})
          self.return_code = proc.wait()
          finish_time = time.time()
 
