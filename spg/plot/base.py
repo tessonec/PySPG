@@ -14,11 +14,13 @@ Created on 12 Apr 2014
 import pandas as pd
 import numpy as np
 
+
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pylab as plt
 import matplotlib.lines as mlines
 
 
-import matplotlib as mpl
 import matplotlib.backends.backend_pdf as mpl_b_pdf
 import itertools
 
@@ -44,7 +46,7 @@ class SPGBasePlotter:
     
 
     def __init__(self, table_name):
-        
+
         
         mpl.rcParams['lines.linewidth'] = 2
         mpl.rcParams['font.family'] = 'serif'

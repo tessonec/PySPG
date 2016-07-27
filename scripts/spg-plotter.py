@@ -32,7 +32,7 @@ class SPGPlotter:
         try:
             self.settings, foo =  self.get_settings(self.mit.command, "input")
         except:
-            self.settings = None
+            self.settings = {}
             newline_msg( "INF", "no 'input' file found: %s")
 
 
