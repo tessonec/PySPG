@@ -4,7 +4,7 @@ from matplotlib import rc
 import matplotlib.pyplot as plt
 import matplotlib.pylab as plb
 
-from base import GraphicsUnit, PlotUnit
+from spg.plot import GraphicsUnit, PlotUnit
 
 
 class PyplotUnit(PlotUnit):
