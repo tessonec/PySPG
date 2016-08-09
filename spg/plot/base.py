@@ -68,41 +68,64 @@ class SPGBasePlotter:
         if type(var) == type((0,)):
             var, foo = var 
         if var in self.settings and self.settings[var].has_key("label"):
-       #     print self.settings[var]["label"].replace("$","").replace("\\\\",'\\')
+
             return self.settings[var]["label"].replace("$","").replace("\\\\",'\\')
         else:
             return var.replace("$","").replace("_","\_")
 
 
     def add_curves(self, local_df, curr_y_axis, subp, legend_prepend = ""):
-        
-        df_coalesced = local_df.groupby(self.coalesced_vars)
-        
-        color_it = itertools.cycle(self.colors) 
-        marker_it =  itertools.cycle(self.markers)
-        for minimal_gr in sorted( df_coalesced.groups ):
-            
-            minimal_idx = df_coalesced.groups[minimal_gr]
-            
-            minimal_df = self.df.ix[ minimal_idx ]
-             
-            if type(minimal_gr) != type( (0,) ):
-                minimal_gr = [minimal_gr]
-            minimal_legend = legend_prepend + ", ".join( [
-                                         "$%s = %s$"%(self.get_transformed_var(k),v) 
-                                         for (k,v) in zip(self.coalesced_vars, minimal_gr)
-                                         ] )
-#            print local_legend,  "------>",minimal_legend
-            if type(curr_y_axis) == type(""):
-                subp.scatter(  minimal_df[[self.x_axis]], minimal_df[[curr_y_axis]] , 
-                           label = minimal_legend, marker = marker_it.next(), color = color_it.next(), edgecolors = "black", s = 65)
-            elif type(curr_y_axis) == type((0,)) and len(curr_y_axis) == 2:
-                ## BROKEN
-                curr_y_axis, curr_yerr = curr_y_axis
-                 ####### B
-                #subp.errorbar( x=minimal_df[[self.x_axis]], y=minimal_df[[curr_y_axis]] ,yerr = minimal_df[[curr_yerr]],  
-                #           label = minimal_legend, fmt = marker_it.next(), color = color_it.next(), edgecolors = "black", s = 65 )
-                subp.errorbar( x=minimal_df[[self.x_axis]].apply(np.float32) , y=minimal_df[[curr_y_axis]].apply(np.float32)  ,yerr = minimal_df[[curr_yerr]].apply(np.float32) )
+        if len(self.coalesced_vars) > 0:
+            df_coalesced = local_df.groupby(self.coalesced_vars)
+            color_it = itertools.cycle(self.colors)
+            marker_it = itertools.cycle(self.markers)
+            for minimal_gr in sorted(df_coalesced.groups):
+
+                minimal_idx = df_coalesced.groups[minimal_gr]
+
+                minimal_df = self.df.ix[minimal_idx]
+
+                if type(minimal_gr) != type((0,)):
+                    minimal_gr = [minimal_gr]
+                minimal_legend = legend_prepend + ", ".join([
+                                                                "$%s = %s$" % (self.get_transformed_var(k), v)
+                                                                for (k, v) in zip(self.coalesced_vars, minimal_gr)
+                                                                ])
+                #            print local_legend,  "------>",minimal_legend
+                if type(curr_y_axis) == type(""):
+                    subp.scatter(minimal_df[[self.x_axis]], minimal_df[[curr_y_axis]],
+                                 label=minimal_legend, marker=marker_it.next(), color=color_it.next(),
+                                 edgecolors="black", s=65)
+                elif type(curr_y_axis) == type((0,)) and len(curr_y_axis) == 2:
+                    ## BROKEN
+                    curr_y_axis, curr_yerr = curr_y_axis
+                    ####### B
+                    # subp.errorbar( x=minimal_df[[self.x_axis]], y=minimal_df[[curr_y_axis]] ,yerr = minimal_df[[curr_yerr]],
+                    #           label = minimal_legend, fmt = marker_it.next(), color = color_it.next(), edgecolors = "black", s = 65 )
+                    subp.errorbar(x=minimal_df[[self.x_axis]].apply(np.float32),
+                                  y=minimal_df[[curr_y_axis]].apply(np.float32),
+                                  yerr=minimal_df[[curr_yerr]].apply(np.float32))
+
+
+        else:
+                color_it = itertools.cycle(self.colors)
+                marker_it = itertools.cycle(self.markers)
+
+                minimal_legend = legend_prepend
+
+                if type(curr_y_axis) == type(""):
+                    subp.scatter(local_df[[self.x_axis]], local_df[[curr_y_axis]],
+                                 label=minimal_legend, marker=marker_it.next(), color=color_it.next(),
+                                 edgecolors="black", s=65)
+                elif type(curr_y_axis) == type((0,)) and len(curr_y_axis) == 2:
+                    ## BROKEN
+                    curr_y_axis, curr_yerr = curr_y_axis
+                    ####### B
+                    # subp.errorbar( x=minimal_df[[self.x_axis]], y=minimal_df[[curr_y_axis]] ,yerr = minimal_df[[curr_yerr]],
+                    #           label = minimal_legend, fmt = marker_it.next(), color = color_it.next(), edgecolors = "black", s = 65 )
+                    subp.errorbar(x=local_df[[self.x_axis]].apply(np.float32),
+                                  y=local_df[[curr_y_axis]].apply(np.float32),
+                                  yerr=local_df[[curr_yerr]].apply(np.float32))
 
     def plot_all(self, output_name):
         pp = mpl_b_pdf.PdfPages(output_name)
@@ -111,7 +134,7 @@ class SPGBasePlotter:
             df_separated = self.df
 
             for curr_y_axis in self.y_axis:
-                print curr_y_axis,
+                # print curr_y_axis,
                 # creates figure
                 curr_fig = plt.figure()
                 # adds all curves
@@ -140,7 +163,7 @@ class SPGBasePlotter:
                         plt.xlim(self.settings[self.x_axis]['lim'])
                     if self.settings[self.x_axis].has_key('scale'):
                         curr_axes.set_xscale(self.settings[self.x_axis]['scale'])
-                plt.gca().tight_layout()
+                #curr_axes.tight_layout()
                 plt.savefig(pp, format='pdf')
 
 
@@ -161,9 +184,9 @@ class SPGBasePlotter:
                                             "$%s = %s$" % (self.get_transformed_var(k), v)
                                             for (k, v) in zip(self.separated_vars, local_gr)
                                             ])
-                print local_title,
+                # print local_title
                 for curr_y_axis in self.y_axis:
-                    print curr_y_axis,
+                    # print curr_y_axis,
                     # creates figure
                     curr_fig = plt.figure()
                     # adds all curves
@@ -193,7 +216,7 @@ class SPGBasePlotter:
                         if self.settings[self.x_axis].has_key('scale'):
                             curr_axes.set_xscale(self.settings[self.x_axis]['scale'])
                     plt.savefig(pp, format='pdf')
-                    print
+                    # print
                     plt.tight_layout()
 
         pp.close()
@@ -205,7 +228,7 @@ class SPGBasePlotter:
             df_separated = self.df
 
             for curr_y_axis in self.y_axis:
-                print curr_y_axis,
+                # print curr_y_axis,
                 # creates figure
                 curr_fig = plt.figure()
                 # adds all curves
@@ -255,9 +278,9 @@ class SPGBasePlotter:
                                             "$%s = %s$" % (self.get_transformed_var(k), v)
                                             for (k, v) in zip(self.separated_vars, local_gr)
                                             ])
-                print local_title,
+                # print local_title,
                 for curr_y_axis in self.y_axis:
-                    print curr_y_axis,
+                    # print curr_y_axis,
                     # creates figure
                     curr_fig = plt.figure()
                     # adds all curves
@@ -288,7 +311,7 @@ class SPGBasePlotter:
                             curr_axes.set_xscale(self.settings[self.x_axis]['scale'])
                 plt.tight_layout()
                 plt.savefig(pp, format='pdf')
-                print
+                # print
 
         pp.close()
 
@@ -308,9 +331,9 @@ class SPGBasePlotter:
                                    "$%s = %s$"%(self.get_transformed_var(k),v) 
                                    for (k,v) in zip(self.separated_vars, local_gr)
                                   ] )
-            print local_title, 
+            # print local_title,
             for curr_y_axis in self.y_axis:
-                print curr_y_axis, 
+                # print curr_y_axis,
                 # creates figure
                 curr_fig = plt.figure()
                 # adds all curves
@@ -344,7 +367,7 @@ class SPGBasePlotter:
                     if self.settings[self.x_axis].has_key('scale'):
                         curr_axes.set_xscale(self.settings[self.x_axis]['scale'])
                 plt.savefig(pp, format='pdf')
-            print         
+            # print
             
         pp.close()
 
