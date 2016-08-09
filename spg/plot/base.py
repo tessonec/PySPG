@@ -60,8 +60,7 @@ class SPGBasePlotter:
         self.column_names = open(table_name).readline().split() # column_names
         
         self.df = pd.read_csv(table_name)
-        self.color_wheel = 0
-        self.symbol_wheel = 0
+
 
 
 
@@ -75,7 +74,7 @@ class SPGBasePlotter:
             return var.replace("$","").replace("_","\_")
 
 
-    def add_curves(self, local_df, curr_y_axis, subp):
+    def add_curves(self, local_df, curr_y_axis, subp, legend_prepend = ""):
         
         df_coalesced = local_df.groupby(self.coalesced_vars)
         
@@ -89,7 +88,7 @@ class SPGBasePlotter:
              
             if type(minimal_gr) != type( (0,) ):
                 minimal_gr = [minimal_gr]
-            minimal_legend = ", ".join( [ 
+            minimal_legend = legend_prepend + ", ".join( [
                                          "$%s = %s$"%(self.get_transformed_var(k),v) 
                                          for (k,v) in zip(self.coalesced_vars, minimal_gr)
                                          ] )
@@ -103,12 +102,10 @@ class SPGBasePlotter:
                  ####### B
                 #subp.errorbar( x=minimal_df[[self.x_axis]], y=minimal_df[[curr_y_axis]] ,yerr = minimal_df[[curr_yerr]],  
                 #           label = minimal_legend, fmt = marker_it.next(), color = color_it.next(), edgecolors = "black", s = 65 )
-                subp.errorbar( x=minimal_df[[self.x_axis]].apply(np.float32) , y=minimal_df[[curr_y_axis]].apply(np.float32)  ,yerr = minimal_df[[curr_yerr]].apply(np.float32) ) 
-                 
-
+                subp.errorbar( x=minimal_df[[self.x_axis]].apply(np.float32) , y=minimal_df[[curr_y_axis]].apply(np.float32)  ,yerr = minimal_df[[curr_yerr]].apply(np.float32) )
 
     def plot_all(self, output_name):
-        pp = mpl_b_pdf.PdfPages( output_name )
+        pp = mpl_b_pdf.PdfPages(output_name)
 
         if len(self.separated_vars) == 0:
             df_separated = self.df
@@ -117,14 +114,14 @@ class SPGBasePlotter:
                 print curr_y_axis,
                 # creates figure
                 curr_fig = plt.figure()
-            # adds all curves
+                # adds all curves
                 self.add_curves(df_separated, curr_y_axis, plt.gca())
                 plt.legend()
 
-            # sets-up title
-        #        plt.title(local_title)
+                # sets-up title
+                #        plt.title(local_title)
 
-            # sets-up axes
+                # sets-up axes
                 plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
 
                 plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
@@ -133,7 +130,7 @@ class SPGBasePlotter:
                 curr_axes.tick_params(labelsize=18)
 
                 if self.settings.has_key(curr_y_axis):
-                # print self.settings[curr_y_axis],
+                    # print self.settings[curr_y_axis],
                     if self.settings[curr_y_axis].has_key('lim'):
                         plt.ylim(self.settings[curr_y_axis]['lim'])
                     if self.settings[curr_y_axis].has_key('scale'):
@@ -150,61 +147,150 @@ class SPGBasePlotter:
 
 
         else:
-            df_separated = self.df.groupby(self.separated_vars, sort = True)
+            df_separated = self.df.groupby(self.separated_vars, sort=True)
 
-
-            for local_gr in  sorted( df_separated.groups):
+            for local_gr in sorted(df_separated.groups):
                 local_idx = df_separated.groups[local_gr]
-            
-                local_df = self.df.ix[ local_idx ]
-            
+
+                local_df = self.df.ix[local_idx]
+
                 # sets-up title
                 if type(local_gr) != type((0,)):
                     local_gr = [local_gr]
-                local_title = ", ".join( [
-                                       "$%s = %s$"%(self.get_transformed_var(k),v)
-                                       for (k,v) in zip(self.separated_vars, local_gr)
-                                      ] )
+                local_title = ", ".join([
+                                            "$%s = %s$" % (self.get_transformed_var(k), v)
+                                            for (k, v) in zip(self.separated_vars, local_gr)
+                                            ])
                 print local_title,
                 for curr_y_axis in self.y_axis:
                     print curr_y_axis,
-                # creates figure
+                    # creates figure
                     curr_fig = plt.figure()
-                # adds all curves
-                    self.add_curves( local_df, curr_y_axis, plt.gca() )
+                    # adds all curves
+                    self.add_curves(local_df, curr_y_axis, plt.gca(), legend_prepend=self.get_transformed_var(curr_y_axis))
                     plt.legend()
-                
-                # sets-up title
+
+                    # sets-up title
                     plt.title(local_title)
-                
-                # sets-up axes
-                    plt.xlabel("$%s$"%self.get_transformed_var(self.x_axis), self.axis_font)
-                
-                    plt.ylabel("$%s$"%self.get_transformed_var(curr_y_axis), self.axis_font)
-                
-                
-                
-                    curr_axes =plt.gca()
-                    curr_axes.tick_params( labelsize = 18 )
-                
-                 
+
+                    # sets-up axes
+                    plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+
+                    plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+
+                    curr_axes = plt.gca()
+                    curr_axes.tick_params(labelsize=18)
+
                     if self.settings.has_key(curr_y_axis):
-                        #print self.settings[curr_y_axis],
+                        # print self.settings[curr_y_axis],
                         if self.settings[curr_y_axis].has_key('lim'):
                             plt.ylim(self.settings[curr_y_axis]['lim'])
                         if self.settings[curr_y_axis].has_key('scale'):
-                            curr_axes.set_yscale( self.settings[curr_y_axis]['scale'] )
+                            curr_axes.set_yscale(self.settings[curr_y_axis]['scale'])
                     if self.settings.has_key(self.x_axis):
                         if self.settings[self.x_axis].has_key('lim'):
-                            plt.xlim( self.settings[self.x_axis]['lim'] )
+                            plt.xlim(self.settings[self.x_axis]['lim'])
                         if self.settings[self.x_axis].has_key('scale'):
-                            curr_axes.set_xscale( self.settings[self.x_axis]['scale'])
+                            curr_axes.set_xscale(self.settings[self.x_axis]['scale'])
                     plt.savefig(pp, format='pdf')
                     print
                     plt.tight_layout()
 
         pp.close()
 
+    def plot_all_join_outputs(self, output_name):
+        pp = mpl_b_pdf.PdfPages(output_name)
+
+        if len(self.separated_vars) == 0:
+            df_separated = self.df
+
+            for curr_y_axis in self.y_axis:
+                print curr_y_axis,
+                # creates figure
+                curr_fig = plt.figure()
+                # adds all curves
+                self.add_curves(df_separated, curr_y_axis, plt.gca())
+                plt.legend()
+
+                # sets-up title
+                #        plt.title(local_title)
+
+                # sets-up axes
+                plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+
+                plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+
+            curr_axes = plt.gca()
+            curr_axes.tick_params(labelsize=18)
+
+            if self.settings.has_key(curr_y_axis):
+                    # print self.settings[curr_y_axis],
+                if self.settings[curr_y_axis].has_key('lim'):
+                    plt.ylim(self.settings[curr_y_axis]['lim'])
+                if self.settings[curr_y_axis].has_key('scale'):
+                    curr_axes.set_yscale(self.settings[curr_y_axis]['scale'])
+            if self.settings.has_key(self.x_axis):
+                if self.settings[self.x_axis].has_key('lim'):
+                    plt.xlim(self.settings[self.x_axis]['lim'])
+                if self.settings[self.x_axis].has_key('scale'):
+                    curr_axes.set_xscale(self.settings[self.x_axis]['scale'])
+            plt.gca().tight_layout()
+            plt.savefig(pp, format='pdf')
+
+
+
+
+        else:
+            df_separated = self.df.groupby(self.separated_vars, sort=True)
+
+            for local_gr in sorted(df_separated.groups):
+                local_idx = df_separated.groups[local_gr]
+
+                local_df = self.df.ix[local_idx]
+
+                # sets-up title
+                if type(local_gr) != type((0,)):
+                    local_gr = [local_gr]
+                local_title = ", ".join([
+                                            "$%s = %s$" % (self.get_transformed_var(k), v)
+                                            for (k, v) in zip(self.separated_vars, local_gr)
+                                            ])
+                print local_title,
+                for curr_y_axis in self.y_axis:
+                    print curr_y_axis,
+                    # creates figure
+                    curr_fig = plt.figure()
+                    # adds all curves
+                    self.add_curves(local_df, curr_y_axis, plt.gca())
+                    plt.legend()
+
+                    # sets-up title
+                    plt.title(local_title)
+
+                    # sets-up axes
+                    plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+
+                    plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+
+                    curr_axes = plt.gca()
+                    curr_axes.tick_params(labelsize=18)
+
+                    if self.settings.has_key(curr_y_axis):
+                        # print self.settings[curr_y_axis],
+                        if self.settings[curr_y_axis].has_key('lim'):
+                            plt.ylim(self.settings[curr_y_axis]['lim'])
+                        if self.settings[curr_y_axis].has_key('scale'):
+                            curr_axes.set_yscale(self.settings[curr_y_axis]['scale'])
+                    if self.settings.has_key(self.x_axis):
+                        if self.settings[self.x_axis].has_key('lim'):
+                            plt.xlim(self.settings[self.x_axis]['lim'])
+                        if self.settings[self.x_axis].has_key('scale'):
+                            curr_axes.set_xscale(self.settings[self.x_axis]['scale'])
+                plt.tight_layout()
+                plt.savefig(pp, format='pdf')
+                print
+
+        pp.close()
 
     def plot_errorbar_all(self, output_name):
         df_separated = self.df.groupby(self.separated_vars, sort = True)
@@ -336,5 +422,336 @@ class SPGBaseSubPlotter(SPGBasePlotter):
                          
             
         pp.close()
+
+
+class SPGAbstractPlotter:
+    colors = ['black', 'blue', 'green', 'red', 'yellow', 'brown', 'grey', 'violet']
+    markers = mlines.Line2D.filled_markers
+    # markers = [r'$\bigcirc$',r'$\bigtriangleup$',r'$\bigtriangledown$',r'$\diamondsuit$',r'$\maltese$',r'$\star$']
+
+    mpl_params = {
+
+        'lines.linewidth' : 2,
+        'font.family' : 'serif',
+        'font.serif' : 'Computer Modern Roman, Times, Palatino, New Century Schoolbook, Bookman',
+        'font.sans-serif' : 'Computer Modern Sans serif, Helvetica, Avant Garde',
+        'font.color' : 'black',
+        'font.weight' : 'normal',
+        'font.cursive' : 'Zapf Chancery',
+        'font.monospace' : 'Computer Modern Typewriter, Courier',
+        'text.usetex' : True,
+        'axes.titlesize': 32,   # fontsize of the axes title
+        'axes.labelsize': 26    # fontsize of the x any y labels# axes.titlesize      : large   # fontsize of the axes title
+
+    }
+
+    # font = {'family': 'serif',
+    #         'color': 'black',
+    #         'weight': 'normal',
+    #         'size': 32,
+    #         }
+    #
+    # axis_font = {'family': 'serif',
+    #              'color': 'black',
+    #              'weight': 'normal',
+    #              'size': 26,
+    #              }
+    #
+    def __init__(self, table_name):
+
+        mpl.rcParams.update( self.mpl_params )
+
+
+        self.df = pd.read_csv(table_name)
+
+        self.column_names = self.df.columns  # column_names
+
+
+    def get_transformed_var(self, var):
+        if type(var) == type((0,)):
+            var, foo = var
+        if var in self.settings and self.settings[var].has_key("label"):
+            #     print self.settings[var]["label"].replace("$","").replace("\\\\",'\\')
+            return self.settings[var]["label"].replace("$", "").replace("\\\\", '\\')
+        else:
+            return var.replace("$", "").replace("_", "\_")
+
+    def add_curves(self, local_df, curr_y_axis, subp, legend_prepend=""):
+
+        df_coalesced = local_df.groupby(self.coalesced_vars)
+
+        color_it = itertools.cycle(self.colors)
+        marker_it = itertools.cycle(self.markers)
+        for minimal_gr in sorted(df_coalesced.groups):
+
+            minimal_idx = df_coalesced.groups[minimal_gr]
+
+            minimal_df = self.df.ix[minimal_idx]
+
+            if type(minimal_gr) != type((0,)):
+                minimal_gr = [minimal_gr]
+            minimal_legend = legend_prepend + ", ".join([
+                                                            "$%s = %s$" % (self.get_transformed_var(k), v)
+                                                            for (k, v) in zip(self.coalesced_vars, minimal_gr)
+                                                            ])
+            #            print local_legend,  "------>",minimal_legend
+            if type(curr_y_axis) == type(""):
+                subp.scatter(minimal_df[[self.x_axis]], minimal_df[[curr_y_axis]],
+                             label=minimal_legend, marker=marker_it.next(), color=color_it.next(), edgecolors="black",
+                             s=65)
+            elif type(curr_y_axis) == type((0,)) and len(curr_y_axis) == 2:
+                ## BROKEN
+                curr_y_axis, curr_yerr = curr_y_axis
+                ####### B
+                # subp.errorbar( x=minimal_df[[self.x_axis]], y=minimal_df[[curr_y_axis]] ,yerr = minimal_df[[curr_yerr]],
+                #           label = minimal_legend, fmt = marker_it.next(), color = color_it.next(), edgecolors = "black", s = 65 )
+                subp.errorbar(x=minimal_df[[self.x_axis]].apply(np.float32),
+                              y=minimal_df[[curr_y_axis]].apply(np.float32),
+                              yerr=minimal_df[[curr_yerr]].apply(np.float32))
+
+    def plot_all(self, output_name):
+        pp = mpl_b_pdf.PdfPages(output_name)
+
+        if len(self.separated_vars) == 0:
+            df_separated = self.df
+
+            for curr_y_axis in self.y_axis:
+                print curr_y_axis,
+                # creates figure
+                curr_fig = plt.figure()
+                # adds all curves
+                self.add_curves(df_separated, curr_y_axis, plt.gca())
+                plt.legend()
+
+                # sets-up title
+                #        plt.title(local_title)
+
+                # sets-up axes
+                plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+
+                plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+
+                curr_axes = plt.gca()
+                curr_axes.tick_params(labelsize=18)
+
+                if self.settings.has_key(curr_y_axis):
+                    # print self.settings[curr_y_axis],
+                    if self.settings[curr_y_axis].has_key('lim'):
+                        plt.ylim(self.settings[curr_y_axis]['lim'])
+                    if self.settings[curr_y_axis].has_key('scale'):
+                        curr_axes.set_yscale(self.settings[curr_y_axis]['scale'])
+                if self.settings.has_key(self.x_axis):
+                    if self.settings[self.x_axis].has_key('lim'):
+                        plt.xlim(self.settings[self.x_axis]['lim'])
+                    if self.settings[self.x_axis].has_key('scale'):
+                        curr_axes.set_xscale(self.settings[self.x_axis]['scale'])
+                plt.gca().tight_layout()
+                plt.savefig(pp, format='pdf')
+
+
+
+
+        else:
+            df_separated = self.df.groupby(self.separated_vars, sort=True)
+
+            for local_gr in sorted(df_separated.groups):
+                local_idx = df_separated.groups[local_gr]
+
+                local_df = self.df.ix[local_idx]
+
+                # sets-up title
+                if type(local_gr) != type((0,)):
+                    local_gr = [local_gr]
+                local_title = ", ".join([
+                                            "$%s = %s$" % (self.get_transformed_var(k), v)
+                                            for (k, v) in zip(self.separated_vars, local_gr)
+                                            ])
+                print local_title,
+                for curr_y_axis in self.y_axis:
+                    print curr_y_axis,
+                    # creates figure
+                    curr_fig = plt.figure()
+                    # adds all curves
+                    self.add_curves(local_df, curr_y_axis, plt.gca(),
+                                    legend_prepend=self.get_transformed_var(curr_y_axis))
+                    plt.legend()
+
+                    # sets-up title
+                    plt.title(local_title)
+
+                    # sets-up axes
+                    plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+
+                    plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+
+                    curr_axes = plt.gca()
+                    curr_axes.tick_params(labelsize=18)
+
+                    if self.settings.has_key(curr_y_axis):
+                        # print self.settings[curr_y_axis],
+                        if self.settings[curr_y_axis].has_key('lim'):
+                            plt.ylim(self.settings[curr_y_axis]['lim'])
+                        if self.settings[curr_y_axis].has_key('scale'):
+                            curr_axes.set_yscale(self.settings[curr_y_axis]['scale'])
+                    if self.settings.has_key(self.x_axis):
+                        if self.settings[self.x_axis].has_key('lim'):
+                            plt.xlim(self.settings[self.x_axis]['lim'])
+                        if self.settings[self.x_axis].has_key('scale'):
+                            curr_axes.set_xscale(self.settings[self.x_axis]['scale'])
+                    plt.savefig(pp, format='pdf')
+                    print
+                    plt.tight_layout()
+
+        pp.close()
+
+    def plot_all_join_outputs(self, output_name):
+        pp = mpl_b_pdf.PdfPages(output_name)
+
+        if len(self.separated_vars) == 0:
+            df_separated = self.df
+
+            for curr_y_axis in self.y_axis:
+                print curr_y_axis,
+                # creates figure
+                curr_fig = plt.figure()
+                # adds all curves
+                self.add_curves(df_separated, curr_y_axis, plt.gca())
+                plt.legend()
+
+                # sets-up title
+                #        plt.title(local_title)
+
+                # sets-up axes
+                plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+
+                plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+
+            curr_axes = plt.gca()
+            curr_axes.tick_params(labelsize=18)
+
+            if self.settings.has_key(curr_y_axis):
+                # print self.settings[curr_y_axis],
+                if self.settings[curr_y_axis].has_key('lim'):
+                    plt.ylim(self.settings[curr_y_axis]['lim'])
+                if self.settings[curr_y_axis].has_key('scale'):
+                    curr_axes.set_yscale(self.settings[curr_y_axis]['scale'])
+            if self.settings.has_key(self.x_axis):
+                if self.settings[self.x_axis].has_key('lim'):
+                    plt.xlim(self.settings[self.x_axis]['lim'])
+                if self.settings[self.x_axis].has_key('scale'):
+                    curr_axes.set_xscale(self.settings[self.x_axis]['scale'])
+            plt.gca().tight_layout()
+            plt.savefig(pp, format='pdf')
+
+
+
+
+        else:
+            df_separated = self.df.groupby(self.separated_vars, sort=True)
+
+            for local_gr in sorted(df_separated.groups):
+                local_idx = df_separated.groups[local_gr]
+
+                local_df = self.df.ix[local_idx]
+
+                # sets-up title
+                if type(local_gr) != type((0,)):
+                    local_gr = [local_gr]
+                local_title = ", ".join([
+                                            "$%s = %s$" % (self.get_transformed_var(k), v)
+                                            for (k, v) in zip(self.separated_vars, local_gr)
+                                            ])
+                print local_title,
+                for curr_y_axis in self.y_axis:
+                    print curr_y_axis,
+                    # creates figure
+                    curr_fig = plt.figure()
+                    # adds all curves
+                    self.add_curves(local_df, curr_y_axis, plt.gca())
+                    plt.legend()
+
+                    # sets-up title
+                    plt.title(local_title)
+
+                    # sets-up axes
+                    plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+
+                    plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+
+                    curr_axes = plt.gca()
+                    curr_axes.tick_params(labelsize=18)
+
+                    if self.settings.has_key(curr_y_axis):
+                        # print self.settings[curr_y_axis],
+                        if self.settings[curr_y_axis].has_key('lim'):
+                            plt.ylim(self.settings[curr_y_axis]['lim'])
+                        if self.settings[curr_y_axis].has_key('scale'):
+                            curr_axes.set_yscale(self.settings[curr_y_axis]['scale'])
+                    if self.settings.has_key(self.x_axis):
+                        if self.settings[self.x_axis].has_key('lim'):
+                            plt.xlim(self.settings[self.x_axis]['lim'])
+                        if self.settings[self.x_axis].has_key('scale'):
+                            curr_axes.set_xscale(self.settings[self.x_axis]['scale'])
+                plt.tight_layout()
+                plt.savefig(pp, format='pdf')
+                print
+
+        pp.close()
+
+    def plot_errorbar_all(self, output_name):
+        df_separated = self.df.groupby(self.separated_vars, sort=True)
+        pp = mpl_b_pdf.PdfPages(output_name)
+
+        for local_gr in sorted(df_separated.groups):
+            local_idx = df_separated.groups[local_gr]
+
+            local_df = self.df.ix[local_idx]
+
+            # sets-up title
+            if type(local_gr) != type((0,)):
+                local_gr = [local_gr]
+            local_title = ", ".join([
+                                        "$%s = %s$" % (self.get_transformed_var(k), v)
+                                        for (k, v) in zip(self.separated_vars, local_gr)
+                                        ])
+            print local_title,
+            for curr_y_axis in self.y_axis:
+                print curr_y_axis,
+                # creates figure
+                curr_fig = plt.figure()
+                # adds all curves
+                self.add_curves(local_df, local_gr, curr_y_axis, curr_fig)
+                plt.legend()
+
+                # sets-up title
+                plt.title(local_title)
+
+                # sets-up axes
+                plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+
+                plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+
+                curr_axes = plt.gca()
+                curr_axes.tick_params(labelsize=18)
+
+                if self.settings.has_key(curr_y_axis):
+                    print self.settings
+                    if self.settings[curr_y_axis].has_key('lim'):
+                        plt.ylim(self.settings[curr_y_axis]['lim'])
+                    if self.settings[curr_y_axis].has_key('scale'):
+                        curr_axes.set_yscale(self.settings[self.y_axis]['scale'])
+                if self.settings.has_key(self.x_axis):
+                    print self.settings[self.x_axis]
+                    if self.settings[self.x_axis].has_key('lim'):
+                        plt.xlim(self.settings[self.x_axis]['lim'])
+                    if self.settings[self.x_axis].has_key('scale'):
+                        curr_axes.set_xscale(self.settings[self.x_axis]['scale'])
+                plt.savefig(pp, format='pdf')
+            print
+
+        pp.close()
+
+
+
 
 

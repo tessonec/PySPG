@@ -154,11 +154,11 @@ class SPGPlotter:
         self.separated_vars = sv
 
     def plot_all(self, Plotter):
-        newline_msg( "INF", "%s - %s - %s"%(self.separated_vars, self.coalesced_vars, self.x_axis ) ) 
+        newline_msg("INF", "%s - %s - %s" % (self.separated_vars, self.coalesced_vars, self.x_axis))
 
-        table_name = self.base_name+"_results.csv"
-        ctp = Plotter(table_name )
-        
+        table_name = self.base_name + "_results.csv"
+        ctp = Plotter(table_name)
+
         ctp.x_axis = self.x_axis
 
         ctp.y_axis = self.output_columns
@@ -169,16 +169,42 @@ class SPGPlotter:
         ctp.settings = self.settings
 
         plot_fname = self.base_name + "_plot"
-        if len( ctp.separated_vars ) > 1:          
-           plot_fname += "_"+"_".join( ctp.separated_vars )
-        if len( ctp.separated_vars ) == 1:          
-           plot_fname += "_"+ ctp.separated_vars[0]
-        
+        if len(ctp.separated_vars) > 1:
+            plot_fname += "_" + "_".join(ctp.separated_vars)
+        if len(ctp.separated_vars) == 1:
+            plot_fname += "_" + ctp.separated_vars[0]
+
         plot_fname += ".pdf"
 
-        newline_msg( "OUT", plot_fname ) 
-        ctp.plot_all(output_name = plot_fname)
+        newline_msg("OUT", plot_fname)
+        ctp.plot_all(output_name=plot_fname)
 
+
+    def plot_all_join_outputs(self, Plotter):
+        newline_msg("INF", "%s - %s - %s" % (self.separated_vars, self.coalesced_vars, self.x_axis))
+
+        table_name = self.base_name + "_results.csv"
+        ctp = Plotter(table_name)
+
+        ctp.x_axis = self.x_axis
+
+        ctp.y_axis = self.output_columns
+
+        ctp.separated_vars = self.separated_vars
+        ctp.coalesced_vars = self.coalesced_vars
+
+        ctp.settings = self.settings
+
+        plot_fname = self.base_name + "_plot"
+        if len(ctp.separated_vars) > 1:
+            plot_fname += "_" + "_".join(ctp.separated_vars)
+        if len(ctp.separated_vars) == 1:
+            plot_fname += "_" + ctp.separated_vars[0]
+
+        plot_fname += ".pdf"
+
+        newline_msg("OUT", plot_fname)
+        ctp.plot_all_join_outputs(output_name=plot_fname)
 
 
 #########################################################################################
@@ -207,11 +233,14 @@ def parse_command_line():
      parser.add_option("--separated", type="string", action='store', dest="separated", 
 		        default = [],
                         help = "comma separated list of separated variables")
-     parser.add_option("--output", type="string", action='store', dest="output", 
-		        default = [],
-                        help = "output structure")
 
+     parser.add_option("--output", type="string", action='store', dest="output",
+                       default=[],
+                       help="output structure")
 
+     parser.add_option("--join", action='store_true', dest="join",
+                       default=[],
+                       help="join all y columns")
 
      opts, args = parser.parse_args()
      if len( opts.coalesced ) >0:
@@ -238,6 +267,8 @@ for iarg in args:
         plotter.setup_separated_vars( opts.separated )
     if len(opts.output) > 0:
         plotter.setup_output_columns( opts.output )
-    
-    plotter.plot_all(spgp.SPGBasePlotter)
 
+    if not opts.join:
+        plotter.plot_all(spgp.SPGBasePlotter)
+    else:
+        plotter.plot_all_join_outputs(spgp.SPGBasePlotter)
