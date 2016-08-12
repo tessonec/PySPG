@@ -282,13 +282,12 @@ class SPGDBCommandLine(BaseSPGCommandLine):
         FLAGS::: --purge:         deletes the spgql database, if it already exists
                  --repeat=REPEAT  repeats the parameter generation REPEAT times
         """
-        if len(c.strip()) == 0:
-            utils.newline_msg("WRN", "init called without arguments", 2)
+
+        flags, db_arg = self.parse_command_line(c)
+        if len(db_arg) != 1:
+            utils.newline_msg("WRN", "init must be called with a database", 2)
             return
-        flags, cmd, db_arg = self.parse_command_line(c)
-        if db_arg == None:
-            utils.newline_msg("WRN", "init called without database", 2)
-            return
+        db_arg = db_arg[0]
         # i_arg = c[0]
 
         full_name, path, base_name, extension = utils.translate_name(db_arg)
@@ -321,7 +320,7 @@ class SPGDBCommandLine(BaseSPGCommandLine):
         current_param_db = ParameterEnsemble(full_db_name, init_db=True)
         current_param_db.repeat = repeat
 
-        if len(c) > 1: self.do_set(":".join(c[1:]))
+        # if len(c) > 1: self.do_set(":".join(c[1:]))
         self.master_db.write_ensemble_to_master(current_param_db)
 
         self.master_db.update_list_ensemble_dbs()

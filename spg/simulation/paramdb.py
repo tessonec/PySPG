@@ -159,6 +159,7 @@ class MultIteratorDBBuilder(MultIteratorParser):
 
     def fill_status(self, repeat = 1):
 
+        self.check_and_insert_information('repeat', repeat)
         for i_repeat in range(repeat):
 
             for i_id in self.possible_varying_ids:
