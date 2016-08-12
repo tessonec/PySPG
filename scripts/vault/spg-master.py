@@ -108,7 +108,7 @@ if __name__ == "__main__":
              harvests_without_results = 0
             
         if not options.skip_sync:
-            pex.synchronise_masted_db()
+            pex.synchronise_master_db()
       
         newline_msg("INF", "[%d] sleep %s"%(harvests_without_results, options.sleep),indent = 2)
 

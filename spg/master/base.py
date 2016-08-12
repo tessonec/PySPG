@@ -115,7 +115,7 @@ class SPGMasterDB:
         return db_status
 
 
-    def synchronise_masted_db(self):
+    def synchronise_master_db(self):
         for i in self.result_dbs:
             try:
                 self.write_ensemble_to_master(self.result_dbs[i])

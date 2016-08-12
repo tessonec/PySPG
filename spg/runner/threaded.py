@@ -25,7 +25,7 @@ class SPGRunningAtom(threading.Thread):
         self.ensemble.next()
 
         current_uid, current_vsid, current_rep, values = self.ensemble.get_current_information()
-        print "-D- [%4d]- ----- %s / %d" % (self.thread_id, self.ensemble.full_name, current_uid)
+        print "-S- [%4d]- ----- %s / %d" % (self.thread_id, self.ensemble.full_name, current_uid)
         #print "-S- [%4d]- ----- %s / %d" % (self.thread_id, self.ensemble.full_name, current_run_id)
         self.lock.release()
 
@@ -71,7 +71,7 @@ class SPGRunningPool():
         current_count = self.active_threads()
         to_launch = target_jobs - current_count
         if to_launch >= 0:
-             utils.newline_msg( "STATUS", "[n_jobs=%d] run=%d ::: new=%d" % (target_jobs,current_count, to_launch ) )
+             utils.newline_msg("STATUS", "[n_jobs=%d] run=%d ::: new=%d" % (target_jobs,current_count,to_launch ) )
         else:
              utils.newline_msg("STATUS", "[n_jobs=%d] run=%d :!: exceed" % (target_jobs,current_count))
 
