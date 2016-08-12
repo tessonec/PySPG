@@ -29,7 +29,7 @@ class BaseSPGCommandLine(cmd.Cmd):
         self.EnsembleConstructor = EnsembleConstructor 
 
 
-    def parse_command_line(self, st, db = True):
+    def parse_command_line(self, st):
         """returns command, the flags set under a command and the arguments"""
 
         st = st.strip().split()
@@ -47,14 +47,7 @@ class BaseSPGCommandLine(cmd.Cmd):
                     flags[st] = None
             else:
                 cmd.append( ic )
-        if db:
-            try:
-                db = cmd.pop()
-            except:
-                db = None
-            return flags, cmd, db
-        else:
-            return flags, cmd
+        return flags, cmd
 
 
     def get_db(self, c):
@@ -170,7 +163,7 @@ class SPGDBCommandLine(BaseSPGCommandLine):
  
     def __init__(self, EnsembleConstructor = ParameterEnsemble):
         BaseSPGCommandLine.__init__(self, EnsembleConstructor)
-
+        self.prompt = "| spg-db :::~ "
         # self.current_param_db = None
         self.master_db =  SPGMasterDB(EnsembleConstructor = EnsembleConstructor)
 
@@ -220,11 +213,14 @@ class SPGDBCommandLine(BaseSPGCommandLine):
 
     def get_flags_and_db(self, c):
 
-        flags, cmd, db_name =  self.parse_command_line(c)
+        flags, args =  self.parse_command_line(c)
+        # if len(args)== 1:
+        #     utils.newline_msg("ERR", "a single file was expected or could not parse flags")
+        #     return flags, args, None
 
-        if db_name == None:
-            utils.newline_msg("ERR", "a single file was expected or could not parse flags")
-            return flags, None
+        db_name = args[-1]
+        args = args[:-1]
+
 
         if db_name.isdigit():
             id = int(db_name)
@@ -234,16 +230,16 @@ class SPGDBCommandLine(BaseSPGCommandLine):
                 db_name = filtered[0]
             else:
                 utils.newline_msg("ERR", "database with id '%s' doesn't exist." % db_name)
-                return flags, None
+                return flags, args.append(db_name), None
         else:
                 full_name, path, base_name, extension = utils.translate_name(db_name)
                 # print "do_init::: ",self.translate_name(i_arg)
                 db_name = "%s/%s.spgql" % (path, base_name)
                 # sim_name = "%s/%s.spg" % (path, base_name)
                 if not os.path.exists(db_name):
-                    utils.newline_msg("ERR", "database with name '%s' doesn't exist." % db_name)
-                    return flags, None
-        return flags, cmd, self.EnsembleConstructor(db_name, init_db=True)
+                    utils.newline_msg("ERR", "database with name '%s' doesn't exist." % utils.shorten_name(db_name))
+                    return flags, args.append(db_name), None
+        return flags, args, self.EnsembleConstructor(db_name, init_db=True)
 
 
     def do_ls(self, c):
@@ -287,11 +283,11 @@ class SPGDBCommandLine(BaseSPGCommandLine):
                  --repeat=REPEAT  repeats the parameter generation REPEAT times
         """
         if len(c.strip()) == 0:
-            utils.newline_msg("WRN", "init called without arguments")
+            utils.newline_msg("WRN", "init called without arguments", 2)
             return
         flags, cmd, db_arg = self.parse_command_line(c)
         if db_arg == None:
-            utils.newline_msg("WRN", "init called without database")
+            utils.newline_msg("WRN", "init called without database", 2)
             return
         # i_arg = c[0]
 
@@ -300,10 +296,10 @@ class SPGDBCommandLine(BaseSPGCommandLine):
         full_db_name = "%s/%s.spgql" % (path, base_name)
         sim_name = "%s/%s.spg" % (path, base_name)
         if os.path.exists(full_db_name) and "purge" not in flags:
-            utils.newline_msg("ERR", "database '%s' already exists. Cannot init it twice" % utils.shorten_name(full_db_name))
+            utils.newline_msg("ERR", "database '%s' already exists. Cannot init it twice" % utils.shorten_name(full_db_name), 2)
             return
         if not os.path.exists(sim_name):
-            utils.newline_msg("ERR", "configuration '%s' doesn't exist. Cannot init it" % utils.shorten_name(sim_name))
+            utils.newline_msg("ERR", "configuration '%s' doesn't exist. Cannot init it" % utils.shorten_name(sim_name), 2)
             return
 
         if "purge" in flags:
@@ -347,10 +343,10 @@ class SPGDBCommandLine(BaseSPGCommandLine):
         """registers a given results database into the master database"""
         flags, cmds, ensemble = self.get_flags_and_db(c)
         if ensemble  is None:
-            utils.newline_msg("ERR", "no database supplied ... skipping")
+            # utils.newline_msg("ERR", "no database supplied ... skipping")
             return
 
-        if self.master_db.result_dbs.has_key(ensemble ):
+        if self.master_db.result_dbs.has_key(ensemble.full_name):
             utils.newline_msg("WRN", "skipping... database '%s' is already registered" % utils.shorten_name(ensemble.full_name), 2)
             return
 
@@ -416,10 +412,18 @@ class SPGDBCommandLine(BaseSPGCommandLine):
         return self.complete_init(text, line, begidx, endidx)
 
     def do_set_weight(self, c):
-        flags, cmds, ensemble = self.get_flags_and_db(c)
+        flags, args, ensemble = self.get_flags_and_db(c)
+        if ensemble == None:
+            return
+
+        try:
+            new_weight = float(args[0])
+        except:
+            utils.newline_msg("ERR", "cannot parse weight")
+            return
         # print "UPDATE dbs SET weight=%f WHERE full_name = '%s' " %  ( float(cmds[0]), ensemble.full_name )
         try:
-            self.master_db.query_master_db("UPDATE dbs SET weight=%f WHERE full_name = '%s' " %  ( float(cmds[0]), ensemble.full_name ) )
+            self.master_db.query_master_db("UPDATE dbs SET weight=%f WHERE full_name = '%s' " %  ( new_weight, ensemble.full_name ) )
         except:
             utils.newline_msg("ERR", "cannot parse command")
             return
@@ -473,7 +477,7 @@ class SPGDBCommandLine(BaseSPGCommandLine):
 
         ensemble.status = st
 
-        print " +---  '%s' [status : %s ]" % (ensemble.full_name, st)
+        print " +---  '%s' [status : %s ]" % (utils.shorten_name(ensemble.full_name), st)
         self.master_db.query_master_db('UPDATE dbs SET status= ? WHERE full_name = ?', st, ensemble.full_name)
 
     #

@@ -40,16 +40,16 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
     def do_load(self,c):
         """load DB_NAME|DB_ID
         loads one of the registered databases from the master"""
-        flags, commands, db = self.parse_command_line(c)
-        if len(commands) >0:
+        flags, args = self.parse_command_line(c)
+        if len(args) >1:
             utils.newline_msg("ERR", "only one db can be loaded at a time", 2)
             return
 
-        ret = self.get_db(db)
+        ret = self.get_db(args[0])
 
         if ret:
             self.current_param_db = ret
-            print " --- loaded: '%s'"% ret.full_name
+            print " --- loaded: '%s'"% utils.shorten_name(ret.full_name)
             os.chdir(self.current_param_db.path)
         else:
             utils.newline_msg("ERR", "'%s' does not exist"%ret, 2)
@@ -74,26 +74,26 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
     def do_import_output_table(self, c):
         """
         Usage:
-            do_load_output_table table_name.csv database.spqql
+            import_output_table table_name.csv database.spqql
         Loads the results output in table_name.csv into database.spgql
 
         """
 
-        flags, commands, db = self.parse_command_line(c)
+        flags, args = self.parse_command_line(c)
 
 
         if not self.current_param_db:
-            if len(commands) != 1:
+            if len(args) != 2:
                 utils.newline_msg("WRN", "database not loaded nor provided. skipping",2)
                 return
 
-            self.current_param_db = self.get_db(db)
-        elif len(commands) > 0:
+            self.current_param_db = self.get_db(args[1])
+        elif len(args) > 1:
             utils.newline_msg("ERR", "only one db can be loaded at a time", 2)
             return
 
 
-        self.current_param_db.update_results_from_data( commands[0], sep = self.sep )
+        self.current_param_db.update_results_from_data( args[0], sep = self.sep )
     #
     # def do_export_output_csv(self, c):
     #     """save_csv [-flag1 -flag2] f1 f2 g3
@@ -118,20 +118,23 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
     #             self.do_save_table("--header %s" % c)
 
     def do_save_input_table(self,c):
-        flags, commands, db = self.parse_command_line(c)
+        flags, args = self.parse_command_line(c)
 
-        if len(commands) > 0:
-            utils.newline_msg("ERR", "only one db can be loaded at a time", 2)
-            return
-        if not self.current_param_db and db is None:
-            utils.newline_msg("WRN", "database not loaded nor provided. skipping",2)
-            return
 
-        if db:
-            self.do_load(db)
+        if not  self.current_param_db:
+            if len(args) == 0:
+                utils.newline_msg("WRN", "database not loaded nor provided. skipping", 2)
+                return
+            elif len(args) > 1:
+                utils.newline_msg("ERR", "only one db can be loaded at a time", 2)
+                return
+            else:
+                self.do_load(args[0])
+        else:
+            if len(args) > 0:
+                utils.newline_msg("ERR", "only one db can be loaded at a time", 2)
+                return
 
-        if not self.current_param_db:
-            return
 
         if "sep" in flags:
             self.do_set_separator( flags["sep"] )
@@ -156,20 +159,21 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
                    --id:          only the id is output
                    --sep:         column separator ('blank' for space)
        """
-       flags, commands, db = self.parse_command_line(c)
-
-       if not self.current_param_db and db is None:
-           utils.newline_msg("WRN", "database not loaded nor provided. skipping",2)
-           return
-       if len(commands) > 0:
-           utils.newline_msg("ERR", "only one db can be loaded at a time", 2)
-           return
-
-       if db:
-           self.do_load(db)
+       flags, args = self.parse_command_line(c)
 
        if not self.current_param_db:
-           return
+           if len(args) == 0:
+               utils.newline_msg("WRN", "database not loaded nor provided. skipping", 2)
+               return
+           elif len(args) > 1:
+               utils.newline_msg("ERR", "only one db can be loaded at a time", 2)
+               return
+           else:
+               self.do_load(args[0])
+       else:
+           if len(args) > 0:
+               utils.newline_msg("ERR", "only one db can be loaded at a time", 2)
+               return
 
        if len( set([ 'raw', "full", "id" ]).intersection( flags ) ) > 1:
            utils.newline_msg("ERR", "only one flag [raw, full, id] can be active at a time" )
@@ -218,13 +222,13 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... it must be loaded first",2)
             return
-        flags,foo,cols = self.parse_command_line(c)
+        flags, args = self.parse_command_line(c)
         if "all" in flags:
             self.current_param_db.setup_vars_in_table(",".join(self.current_param_db.variables) )
         elif "restore" in flags:
             self.current_param_db.setup_vars_in_table(self.current_param_db.variables[-1])
         else:    
-            self.current_param_db.setup_vars_in_table( cols )
+            self.current_param_db.setup_vars_in_table( args[0] )
 
 
     def do_setup_vars_separated(self,c):
@@ -235,13 +239,13 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... it must be loaded first",2)
             return
-        flags,foo,cols = self.parse_command_line(c)
+        flags, args = self.parse_command_line(c)
         if "restore" in flags:
             self.current_param_db.setup_vars_separated(",".join(self.current_param_db.variables[:-1]))
         elif "empty" in flags:
             self.current_param_db.setup_vars_separated("")
         else:    
-            self.current_param_db.setup_vars_separated(cols)
+            self.current_param_db.setup_vars_separated(args[0])
 
 
     def do_setup_vars_coalesced(self,c):
@@ -252,14 +256,14 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... it must be loaded first",2)
             return
-        flags,foo,cols = self.parse_command_line(c)
+        flags, args = self.parse_command_line(c)
 
-        if "restore" or "empty" in flags:
+        if ("restore" in flags) or ("empty" in flags):
             self.current_param_db.setup_vars_coalesced("")
-        elif "empty" in flags:
-            self.current_param_db.setup_vars_coalesced("")
+        # elif "empty" in flags:
+        #     self.current_param_db.setup_vars_coalesced("")
         else:    
-            self.current_param_db.setup_vars_coalesced(cols)
+            self.current_param_db.setup_vars_coalesced(args[0])
         
 
     def do_setup_output_column(self,c):
@@ -267,8 +271,8 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... it must be loaded first",2)
             return
-        flags,foo,cols = self.parse_command_line(c)
-        cols = cols.split(",")
+        flags, args = self.parse_command_line(c)
+        cols = args[0].split(",")
         if not set(cols).issubset(  self.current_param_db.table_columns[self.table] ):
             utils.newline_msg("ERR", "the column(s) is (are) not in the output: %s"%( set(cols) - set(  self.current_param_db.table_columns[self.table] )) )
         self.table_columns = cols
@@ -278,8 +282,8 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
         if not self.current_param_db:
             utils.newline_msg("WRN", "current db not set... it must be loaded first",2)
             return
-        flags,foo,cols = self.parse_command_line(c)
-        ls_vars = cols.split(",")
+        flags, args = self.parse_command_line(c)
+        ls_vars = args[0].split(",")
         if not set(ls_vars).issubset( set(self.current_param_db.entities) ):
             utils.newline_msg("VAR", "the variables '%s' are not recognised"%set(ls_vars)-set(self.current_param_db.entities) )
             return
@@ -308,9 +312,23 @@ class SPGResultsCommandLine(BaseSPGCommandLine):
 
     def do_conf(self,c):
         """prints the current configuration"""
+
+        flags, args = self.parse_command_line(c)
+
         if not self.current_param_db:
-            utils.newline_msg("WRN", "current db not set... skipping",2)
-            return
+            if len(args) == 0:
+                utils.newline_msg("WRN", "database not loaded nor provided. skipping", 2)
+                return
+            elif len(args) > 1:
+                utils.newline_msg("ERR", "only one db can be loaded at a time", 2)
+                return
+            else:
+                self.do_load(args[0])
+        else:
+            if len(args) > 0:
+                utils.newline_msg("ERR", "only one db can be loaded at a time", 2)
+                return
+
         print " -- db: %s"%( os.path.relpath( self.current_param_db.full_name , ".") )
         print "  + variables = %s "%( ", ".join(self.current_param_db.variables ) )
         print "  + entities = %s "%( ", ".join(self.current_param_db.entities ) )

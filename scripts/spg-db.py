@@ -310,7 +310,7 @@ import fnmatch
 
 if __name__ == '__main__':
     cmd_line = SPGDBCommandLine()
-    cmd_line.prompt = "| spg-db :::~ "
+
     if len(sys.argv) == 1:
         cmd_line.cmdloop()
     else:
