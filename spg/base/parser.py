@@ -73,6 +73,8 @@ class MultIteratorParser(iterator.MultIterator):
     def fetch(self, stream):
         for l in stream:
             linea = l.strip()
+            if len(linea) == 0:
+                continue
 
             symbol_end = self.regexp.search(linea).start()
             symbol = linea[:symbol_end].strip()
