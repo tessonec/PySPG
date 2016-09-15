@@ -15,7 +15,7 @@ def load_config(config_name, key):
     ret  = {}
     for l in open(config_name):
         l = l.strip()
-        if not l: continue
+        if len(l) == 0: continue
         if l[0] == "#": continue
         v = l.split(":")
         for kp in v[1:]:
