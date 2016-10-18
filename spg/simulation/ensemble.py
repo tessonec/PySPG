@@ -5,6 +5,7 @@ import os, sys, os.path, time
 from subprocess import Popen, PIPE
 import sqlite3 as sql
 import spg.utils as utils
+import signal
 # import numpy as n
 
 
@@ -257,7 +258,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
          cmd = "%s/%s %s" % (self.bin_dir, self.command, configuration_filename)
 
          started_time = time.time()
-         proc = Popen(cmd, shell=True, stdin=PIPE, stdout=file_stdout, stderr=file_stderr, cwd=self.path) #, env = {'PYTHONPATH':"${PYTHONPATH}:%s"%ROOT_DIR})
+         proc = Popen(cmd, shell=True, stdin=PIPE, stdout=file_stdout, stderr=file_stderr, cwd=self.path, preexec_fn = preexec_function) #, env = {'PYTHONPATH':"${PYTHONPATH}:%s"%ROOT_DIR})
          self.return_code = proc.wait()
          finish_time = time.time()
 
@@ -313,6 +314,12 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 
 
 
+def preexec_function():
+    # Ignore the SIGINT signal by setting the handler to the standard
+    # signal handler SIG_IGN.
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+
 
 
 
@@ -326,6 +333,8 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
         ParameterEnsemble.__init__(self, full_name, id, weight, queue, status, repeat, init_db)
         #        self.init_db()
         os.chdir(self.path)
+
+        self.test_run = False
 
         if os.path.exists("./%s" % self.command):
             self.bin_dir = "."
@@ -355,7 +364,7 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
         started_time = time.time()
         cmd = "%s/%s  %s" % (self.bin_dir, self.command, configuration_filename)
 
-        proc = Popen(cmd, shell=True, stdin=PIPE, stdout=file_stdout, stderr=file_stderr, cwd=self.path)
+        proc = Popen(cmd, shell=True, stdin=PIPE, stdout=file_stdout, stderr=file_stderr, cwd=self.path,  preexec_fn = preexec_function)
         return_code = proc.wait()
         finish_time = time.time()
 
@@ -365,9 +374,17 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
         output = [i.strip() for i in open(fname_stdout, "r")]
         stderr = [i.strip() for i in open(fname_stderr, "r")]
 
-        os.remove(configuration_filename)
-        os.remove(fname_stdout)
-        os.remove(fname_stderr)
+        if self.test_run:
+            if not os.path.exists("configuration-%s"%self.base_name):
+                os.mkdir("configuration-%s"%self.base_name)
+            os.rename(configuration_filename, "configuration-%s/%s"%(self.base_name,configuration_filename))
+            os.rename(fname_stdout, "configuration-%s/%s" % (self.base_name, fname_stdout))
+            os.rename(fname_stderr, "configuration-%s/%s" % (self.base_name, fname_stderr))
+
+        else:
+            os.remove(configuration_filename)
+            os.remove(fname_stdout)
+            os.remove(fname_stderr)
 
         run_time = finish_time - started_time
         if run_time < 0: run_time = None

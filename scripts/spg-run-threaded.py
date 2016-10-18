@@ -28,15 +28,20 @@ if __name__ == "__main__":
     parser.add_option("--sleep", type="int", action='store', dest="sleep",
                             default = 1 , help = "waiting time before refresh" )
 
+    parser.add_option("--test-run", action='store_true', dest="test_run",
+                      help="runs once and preserves the temporary files")
+
     options, args = parser.parse_args()
 
     
     run_pool = SPGRunningPool(  )
 
+    run_pool.master_db.test_run = options.test_run
+
 
     while True:
         try:
-            run_pool.launch_workers( )
+            run_pool.launch_workers(  )
             time.sleep(options.sleep)
         except (KeyboardInterrupt,):
             print
