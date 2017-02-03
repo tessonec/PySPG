@@ -302,10 +302,16 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
              cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(self.table_columns[table_name]),
                                                                    ", ".join(["'%s'" % str(i) for i in output_columns]))
 
-             # try:
-             self.execute_query(cc)
-             self.query_set_run_status("D", self.current_spg_uid, self.run_time)
-             # except:
+#             print cc
+#
+             try:
+                 self.execute_query(cc)
+                 self.query_set_run_status("D", self.current_spg_uid, self.run_time)
+             except sql.OperationalError as e:
+                 v = str(e).split()
+                 nv, nc = int(v[0]), int(v[3])
+                 utils.newline_msg("DB", "Fatal, '%d' values for the '%d' output columns %s expected " % (nv-3,nc-3, self.table_columns[table_name][3:]))
+                 sys.exit(1)
              #     self.query_set_run_status("E")
 
 ################################################################################

@@ -61,6 +61,8 @@ if __name__ == "__main__":
       if options.test_run:
           executor.next()
           executor.launch_process( remove_files=False)
+
+          executor.dump_result()
           continue
 
       for values in executor:
