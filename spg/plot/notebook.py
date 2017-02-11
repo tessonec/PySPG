@@ -260,59 +260,59 @@ class SPGDataLoader:
 
         return ouv, iuv
 
-
-    def plot_all(self, Plotter):
-        spgu.newline_msg("INF", "%s - %s - %s" % (self.separated_vars, self.coalesced_vars, self.independent_var))
-
-        table_name = self.base_name + "_results.csv"
-        ctp = Plotter(table_name)
-
-        ctp.x_axis = self.independent_var
-
-        ctp.y_axis = self.output_columns
-
-        ctp.separated_vars = self.separated_vars
-        ctp.coalesced_vars = self.coalesced_vars
-
-        ctp.settings = self.settings
-
-        plot_fname = self.base_name + "_plot"
-        if len(ctp.separated_vars) > 1:
-            plot_fname += "_" + "_".join(ctp.separated_vars)
-        if len(ctp.separated_vars) == 1:
-            plot_fname += "_" + ctp.separated_vars[0]
-
-        plot_fname += ".pdf"
-
-        spgu.newline_msg("OUT", plot_fname)
-        ctp.plot_all(output_name=plot_fname)
-
-
-    def plot_all_join_outputs(self, Plotter):
-        spgu.newline_msg("INF", "%s - %s - %s" % (self.separated_vars, self.coalesced_vars, self.independent_var))
-
-        table_name = self.base_name + "_results.csv"
-        ctp = Plotter(table_name)
-
-        ctp.x_axis = self.independent_var
-
-        ctp.y_axis = self.output_columns
-
-        ctp.separated_vars = self.separated_vars
-        ctp.coalesced_vars = self.coalesced_vars
-
-        ctp.settings = self.settings
-
-        plot_fname = self.base_name + "_plot"
-        if len(ctp.separated_vars) > 1:
-            plot_fname += "_" + "_".join(ctp.separated_vars)
-        if len(ctp.separated_vars) == 1:
-            plot_fname += "_" + ctp.separated_vars[0]
-
-        plot_fname += ".pdf"
-
-        spgu.newline_msg("OUT", plot_fname)
-        ctp.plot_all_join_outputs(output_name=plot_fname)
+    #
+    # def plot_all(self, Plotter):
+    #     spgu.newline_msg("INF", "%s - %s - %s" % (self.separated_vars, self.coalesced_vars, self.independent_var))
+    #
+    #     table_name = self.base_name + "_results.csv"
+    #     ctp = Plotter(table_name)
+    #
+    #     ctp.x_axis = self.independent_var
+    #
+    #     ctp.y_axis = self.output_columns
+    #
+    #     ctp.separated_vars = self.separated_vars
+    #     ctp.coalesced_vars = self.coalesced_vars
+    #
+    #     ctp.settings = self.settings
+    #
+    #     plot_fname = self.base_name + "_plot"
+    #     if len(ctp.separated_vars) > 1:
+    #         plot_fname += "_" + "_".join(ctp.separated_vars)
+    #     if len(ctp.separated_vars) == 1:
+    #         plot_fname += "_" + ctp.separated_vars[0]
+    #
+    #     plot_fname += ".pdf"
+    #
+    #     spgu.newline_msg("OUT", plot_fname)
+    #     ctp.plot_all(output_name=plot_fname)
+    #
+    #
+    # def plot_all_join_outputs(self, Plotter):
+    #     spgu.newline_msg("INF", "%s - %s - %s" % (self.separated_vars, self.coalesced_vars, self.independent_var))
+    #
+    #     table_name = self.base_name + "_results.csv"
+    #     ctp = Plotter(table_name)
+    #
+    #     ctp.x_axis = self.independent_var
+    #
+    #     ctp.y_axis = self.output_columns
+    #
+    #     ctp.separated_vars = self.separated_vars
+    #     ctp.coalesced_vars = self.coalesced_vars
+    #
+    #     ctp.settings = self.settings
+    #
+    #     plot_fname = self.base_name + "_plot"
+    #     if len(ctp.separated_vars) > 1:
+    #         plot_fname += "_" + "_".join(ctp.separated_vars)
+    #     if len(ctp.separated_vars) == 1:
+    #         plot_fname += "_" + ctp.separated_vars[0]
+    #
+    #     plot_fname += ".pdf"
+    #
+    #     spgu.newline_msg("OUT", plot_fname)
+    #     ctp.plot_all_join_outputs(output_name=plot_fname)
 
 
 class InteractivePlotter:

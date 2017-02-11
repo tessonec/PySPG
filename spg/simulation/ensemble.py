@@ -330,15 +330,21 @@ def preexec_function():
 
 
 
-
+from collections import defaultdict
 ################################################################################
 ################################################################################
 
 class ParameterEnsembleThreaded(ParameterEnsemble):
+
+    active_ensembles = defaultdict(lambda: 0)
+
     def __init__(self, full_name="", id=-1, weight=1., queue='*', status='R', repeat=1, init_db=True):
         ParameterEnsemble.__init__(self, full_name, id, weight, queue, status, repeat, init_db)
         #        self.init_db()
         os.chdir(self.path)
+
+        if not self.active_ensembles.has_key( full_name ):
+            self.active_ensembles[ full_name ] = 0
 
         self.test_run = False
 
@@ -355,6 +361,7 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
 
     def launch_process(self, current_run_id, current_vsid, current_rep, values):
         os.chdir(self.path)
+        self.active_ensembles[self.full_name] += 1
 
         configuration_filename = "%s_%d.tmp_input" % (self.base_name,current_run_id)
         fconf = open(configuration_filename, "w")
@@ -394,6 +401,9 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
 
         run_time = finish_time - started_time
         if run_time < 0: run_time = None
+
+        self.active_ensembles[self.full_name] -= 1
+
 
         return current_run_id, current_vsid, current_rep, output, stderr, run_time, return_code
 

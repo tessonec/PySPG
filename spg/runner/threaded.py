@@ -55,10 +55,10 @@ class SPGRunningPool():
         self.lock = threading.Lock()
         self.db_locks = {}
 
-    def get_lock(self, i_db):
-        if not self.db_locks.has_key( i_db.full_name ):
-            self.db_locks[ i_db.full_name  ] = threading.Lock()
-        return self.db_locks[ i_db.full_name  ]
+#    def get_lock(self, i_db):
+#        if not self.db_locks.has_key( i_db.full_name ):
+#            self.db_locks[ i_db.full_name  ] = threading.Lock()
+#        return self.db_locks[ i_db.full_name  ]
 
     def launch_workers(self):
         target_jobs, = self.master_db.query_master_fetchone('SELECT max_jobs FROM queues WHERE name = "default"')
@@ -76,9 +76,9 @@ class SPGRunningPool():
              utils.newline_msg("STATUS", "[n_jobs=%d] run=%d :!: exceed" % (target_jobs,current_count))
 
 
-        for i_t in range(to_launch):
+        for pick in self.pick_ensembles( target_jobs, to_launch ):
             self.lock.acquire()
-            pick = self.master_db.pick_ensemble()
+      #      pick = self.master_db.pick_ensemble()
             status = pick.get_updated_status()
             if status['process_not_run'] == 0:
                 print "+D+ ----- %s " % (pick.full_name)
@@ -91,10 +91,22 @@ class SPGRunningPool():
             # nt = SPGRunningAtom(pick, lock=self.get_lock( pick ) )
 
             nt.start()
+      #  print ParameterEnsembleThreaded.active_ensembles
 
     def active_threads(self):
         return threading.active_count() - 1
 
+    def pick_ensembles(self, target_jobs,  to_launch):
+        ret = []
+        for curr_db in self.master_db.active_dbs:
+            self.lock.acquire()
+            running_db = ParameterEnsembleThreaded.active_ensembles[ curr_db ]
+            target_db = int( target_jobs* self.master_db.result_dbs[curr_db]['weight']/self.master_db.normalising )
+            db_to_launch =  max( 0, target_db - running_db )
+            for i in range(db_to_launch):
+                ret.append( ParameterEnsembleThreaded(curr_db, init_db=True) )
+            self.lock.release()
+        return ret
 
 
 
@@ -105,5 +117,7 @@ class SPGRunningPool():
 
 
 
-#rp = SPGRunningPool(50, 2)
+
+
+            #rp = SPGRunningPool(50, 2)
 #rp.run()
