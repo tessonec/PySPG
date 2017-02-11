@@ -17,7 +17,7 @@ import os.path
 
 from spg import CONFIG_DIR
 
-from spg.utils import newline_msg, evaluate_string
+from spg.utils import newline_msg, evaluate_string, load_configuration
 
 
 class SPGPlotter:
@@ -61,53 +61,7 @@ class SPGPlotter:
         
 
     
-    def get_settings(self, exec_file, part = "stdout"):
-        """
-         keysColumns = ["type","label","help","scale","repeat", "lim"]
-         the structure of the columns in the files are as follows:
-         name of the variable, and a colon separated list of -optional- options
-         type:  of the plot if xy, one column is used, xydy two columns are used
-         label: to be used in the plotting script
-         scale: comma separated list of minimum and maximum values 
-         repeat: how many columns are to be taken by the parser
-         help: a string containing an explanation of the variable"""
-         
-        possible_keys = set(["type","label","help","scale","repeat","datatype", "lim"])
-        ret = {}
-        exec_file,ext=os.path.splitext(exec_file)
-        try:
-            cfgFile = "%s.%s"%(exec_file, part)
-        except:
-            cfgFile = "%s/%s.%s" % (CONFIG_DIR, exec_file, part)
-        sorted_cols = []
-        for line in open(cfgFile):
-            if len(line.strip()) == 0: continue
-            
-            l = [ i.strip() for i in line.split(":")]
-            name = l.pop(0)
-            
-            sorted_cols.append(name)
-            values = {} # {"type":"xy","datatype":"float"}
-            
-            for o in l:
-                # print o, l
-                k,v = o.split("=")
-                k=k.strip()
-                v=v.strip()
-               
-                if k not in possible_keys:
-                    newline_msg("SYN","in column '%s', unrecognised key '%s'"%(name,k))
-                    sys.exit(1)
-                if k == "lim":
-                    values[k] = eval(v)
-                else:
-                    values[k]=v
-    
-            ret[name] = values    
-           
-        return ret , sorted_cols
-       
-    
+
     
     def add_setting(self,  var, line):
         

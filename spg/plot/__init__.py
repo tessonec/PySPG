@@ -4,4 +4,7 @@
 
 #from spgpyplot import PyplotUnit, PyplotGraphicsUnit 
 
-from base import SPGBasePlotter, SPGBaseSubPlotter
+from base import DataFrameIterator
+from matplotlib import SPGBasePlotter, SPGBaseSubPlotter
+
+

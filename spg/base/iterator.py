@@ -57,6 +57,7 @@ class Iterator:
       self.value = ""
       self.__index = None
 
+
   
 
 
@@ -285,7 +286,7 @@ class MultIterator:
       return self.names
 
   def varying_items(self):
-      return [i.name for i in self.data if i.__class__ != IterConstant  ]
+      return [i.name for i in self.data if i.__class__ != IterConstant ]
 
   def constant_items(self):
       return [i.name for i in self.data if i.__class__ == IterConstant ]

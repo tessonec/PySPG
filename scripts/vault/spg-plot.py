@@ -68,10 +68,10 @@ class PlotCommandParser(DBCommandLine):
   
     def __plot(self):
         try:
-            self.dict_of_params = utils.load_config( "%s/spg-conf/%s.params"%(CONFIG_DIR, self.current_param_db.command[4:-3] ), "texlabel" )
+            self.dict_of_params, vec_of_outputs = utils.load_configuration("%s/spg-conf/%s.params" % (CONFIG_DIR, self.current_param_db.command[4:-3]))
         except: self.dict_of_params = {}
         try:
-            self.dict_of_stdout = utils.load_config( "%s/spg-conf/%s.stdout"%(CONFIG_DIR, self.current_param_db.command[4:-3] ), "texlabel" )
+            self.dict_of_stdout, vec_of_outputs = utils.load_configuration("%s/spg-conf/%s.stdout" % (CONFIG_DIR, self.current_param_db.command[4:-3]))
         except: self.dict_of_stdout = {}
 #        for oc in self.figures.keys():
 #             plt.close( self.figures[oc] )
