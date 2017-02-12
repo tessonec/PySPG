@@ -70,10 +70,12 @@ class SPGRunningPool():
 
         current_count = self.active_threads()
         to_launch = target_jobs - current_count
-        if to_launch >= 0:
+        if to_launch > 0:
              utils.newline_msg("STATUS", "[n_jobs=%d] run=%d ::: new=%d" % (target_jobs,current_count,to_launch ) )
         else:
              utils.newline_msg("STATUS", "[n_jobs=%d] run=%d :!: exceed" % (target_jobs,current_count))
+             return
+
 
 
         for pick in self.pick_ensembles( target_jobs, to_launch ):
@@ -102,7 +104,8 @@ class SPGRunningPool():
             self.lock.acquire()
             running_db = ParameterEnsembleThreaded.active_ensembles[ curr_db ]
             target_db = int( target_jobs* self.master_db.result_dbs[curr_db]['weight']/self.master_db.normalising )
-            db_to_launch =  max( 0, target_db - running_db )
+            db_to_launch =  target_db - running_db
+            if db_to_launch <= 0: continue
             for i in range(db_to_launch):
                 ret.append( ParameterEnsembleThreaded(curr_db, init_db=True) )
             self.lock.release()

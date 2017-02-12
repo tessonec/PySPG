@@ -1,8 +1,8 @@
 import numpy as np
 import math as m
-from matplotlib import rc
-import matplotlib.pyplot as plt
-import matplotlib.pylab as plb
+from mpl_backend import rc
+import mpl_backend.pyplot as plt
+import mpl_backend.pylab as plb
 
 from spg.plot import GraphicsUnit, PlotUnit
 
