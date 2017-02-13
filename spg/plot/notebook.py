@@ -31,7 +31,94 @@ from spg import CONFIG_DIR
 
 from spg.plot import DataFrameIterator
 
-class SPGDataLoader:
+class BaseDataLoader:
+
+
+
+
+    def describe_variables(self):
+        for v in self.variables:
+            red_d = self.data[ v ].unique()
+            print "%-16s: %4s values || %s -- %s"%(v, len(red_d), min(red_d), max(red_d) )
+
+
+    def describe_configuration(self):
+        print "variables      : %s"%( ", ".join(self.variables ) )
+        print "  + separated  : %s"%(self.separated_vars)
+        print "  + coalesced  : %s"%(self.coalesced_vars)
+        print "  + independent: %s"%(self.independent_var)
+        print "output columns : %s "%( ", ".join(self.output_columns) )
+
+
+
+
+    def setup_output_columns(self, oc):
+        self.output_columns = oc
+        self.data = self.full_dataframe[self.variables + self.output_columns]
+
+    #
+    # def setup_coalesced_vars(self, cv):
+    #     all_vars = self.separated_vars + self.coalesced_vars
+    #     for v in cv:
+    #         if v in all_vars or v == self.independent_var:
+    #             all_vars.remove(v)
+    #     self.coalesced_vars = cv
+    #     self.separated_vars = all_vars
+    #
+    #
+    # def setup_separated_vars(self, sv):
+    #     all_vars = self.separated_vars + self.coalesced_vars
+    #     for v in sv:
+    #         if v in all_vars or v == self.independent_var:
+    #             all_vars.remove(v)
+    #     self.coalesced_vars = all_vars
+    #     self.separated_vars = sv
+    #
+    # def setup_independent_var(self, v):
+    #     if v in self.coalesced_vars:
+    #         self.coalesced_vars.remove(v)
+    #         self.independent_var = v
+    #     if v in self.separated_vars:
+    #         self.separated_vars.remove(v)
+    #         self.independent_var = v
+
+
+    # def cycle_all(self, f_local):
+    #
+    #     ret = []
+    #     for outer_df in DataFrameIterator( self.data, self.separated_vars ):
+    #         for inner_df in DataFrameIterator( outer_df, self.coalesced_vars ):
+    #
+    #             r_loc = f_local(outer_df, inner_df )
+    #             ret.append(r_loc)
+    #     return ret
+
+    def get_separated_values(self):
+
+        ret = []
+        for outer_df in DataFrameIterator(self.data, self.separated_vars):
+            ret.append( [ outer_df[v].unique()[0] for v in self.separated_vars ] )
+        return ret
+
+    def get_coalesced_values(self):
+
+        ret = []
+        for inner_df in DataFrameIterator(self.data, self.coalesced_vars):
+            ret.append( [ inner_df[v].unique()[0] for v in self.coalesced_vars ] )
+
+        return ret
+
+
+    #
+    # def outer_inner(self, outer_df, inner_df):
+    #     ouv = [ outer_df[v].unique()[0] for v in self.separated_vars ]
+    #     iuv = [ inner_df[v].unique()[0] for v in self.coalesced_vars ]
+    #
+    #     return ouv, iuv
+
+
+
+class SPGDataLoader(BaseDataLoader):
     """
      A class that constructs the plots.
      It exposes
@@ -98,224 +185,32 @@ class SPGDataLoader:
 
         self.data = self.full_dataframe[self.variables + self.output_columns]
 
+    def configure_vars(self, separated_vars, coalesced_vars, independent_var):
+        all_vars = separated_vars + coalesced_vars + [independent_var]
 
-    def describe_variables(self):
-        for v in self.variables:
-            red_d = self.data[ v ].unique()
-            print "%-16s: %4s values || %s -- %s"%(v, len(red_d), min(red_d), max(red_d) )
+        # No unknown columns are present
+        assert len(set(all_vars) - set(self.data)) == 0
+        # All sets are disjoint
+        assert independent_var not in separated_vars
+        assert independent_var not in coalesced_vars
+        assert len(set(separated_vars).intersection(coalesced_vars)) == 0
+        # No output column is used
+        assert len(set(all_vars).intersection(self.output_columns)) == 0
 
+        self.separated_vars = separated_vars
+        self.coalesced_vars = coalesced_vars
+        self.independent_var = independent_var
 
-    def describe_configuration(self):
-        print "variables      : %s"%( ", ".join(self.variables ) )
-        print "  + separated  : %s"%(self.separated_vars)
-        print "  + coalesced  : %s"%(self.coalesced_vars)
-        print "  + independent: %s"%(self.independent_var)
-        print "output columns : %s "%( ", ".join(self.output_columns) )
+        self.variables = all_vars
 
+#        self.output_columns = [kn for kn in self.data.keys() if kn not in self.variables]
 
-
-
-    def setup_output_columns(self, oc):
-        self.output_columns = oc
-        self.data = self.full_dataframe[self.variables + self.output_columns]
-
-
-    def setup_coalesced_vars(self, cv):
-        all_vars = self.separated_vars + self.coalesced_vars
-        for v in cv:
-            if v in all_vars or v == self.independent_var:
-                all_vars.remove(v)
-        self.coalesced_vars = cv
-        self.separated_vars = all_vars
+        self.__initialise_independent_elements()
 
 
-    def setup_separated_vars(self, sv):
-        all_vars = self.separated_vars + self.coalesced_vars
-        for v in sv:
-            if v in all_vars or v == self.independent_var:
-                all_vars.remove(v)
-        self.coalesced_vars = all_vars
-        self.separated_vars = sv
-
-    def setup_independent_var(self, v):
-        if v in self.coalesced_vars:
-            self.coalesced_vars.remove(v)
-            self.independent_var = v
-        if v in self.separated_vars:
-            self.separated_vars.remove(v)
-            self.independent_var = v
-
-
-
-
-
-    #
-    # def get_settings(self, exec_file, part = "stdout"):
-    #     """
-    #      keysColumns = ["type","label","help","scale","repeat", "lim"]
-    #      the structure of the columns in the files are as follows:
-    #      name of the variable, and a colon separated list of -optional- options
-    #      type:  of the plot if xy, one column is used, xydy two columns are used
-    #      label: to be used in the plotting script
-    #      scale: comma separated list of minimum and maximum values
-    #      repeat: how many columns are to be taken by the parser
-    #      help: a string containing an explanation of the variable"""
-    #
-    #     possible_keys = set(["type","label","help","scale","repeat","datatype", "lim"])
-    #     ret = {}
-    #     exec_file,ext=os.path.splitext(exec_file)
-    #     try:
-    #         cfgFile = "%s.%s"%(exec_file, part)
-    #     except:
-    #         cfgFile = "%s/%s.%s" % (CONFIG_DIR, exec_file, part)
-    #     sorted_cols = []
-    #     for line in open(cfgFile):
-    #         if len(line.strip()) == 0: continue
-    #
-    #         l = [ i.strip() for i in line.split(":")]
-    #         name = l.pop(0)
-    #
-    #         sorted_cols.append(name)
-    #         values = {} # {"type":"xy","datatype":"float"}
-    #
-    #         for o in l:
-    #             # print o, l
-    #             k,v = o.split("=")
-    #             k=k.strip()
-    #             v=v.strip()
-    #
-    #             if k not in possible_keys:
-    #                 spgu.newline_msg("SYN","in column '%s', unrecognised key '%s'"%(name,k))
-    #                 sys.exit(1)
-    #             if k == "lim":
-    #                 values[k] = eval(v)
-    #             else:
-    #                 values[k]=v
-    #
-    #         ret[name] = values
-    #
-    #     return ret , sorted_cols
-       
-    
-    
-    # def add_setting(self,  var, line):
-    #
-    #     possible_keys = set(["type","label","help","scale","repeat","datatype", "lim"])
-    #
-    #     if not self.settings.has_key(var):
-    #         self.settings[ var ] = {}
-    #     ret_name = self.settings[ var ]
-    #
-    #     l = [ i.strip() for i in line.split(":")]
-    #     for o in l:
-    #         k,v = o.split("=")
-    #         k=k.strip()
-    #         v=v.strip()
-    #
-    #         if k not in possible_keys:
-    #             spgu.newline_msg("SYN","in column '%s', unrecognised key '%s'"%(var,k))
-    #
-    #             sys.exit(1)
-    #         if k == "lim":
-    #             ret_name[k] = eval(v)
-    #         else:
-    #             ret_name[k]=v
-
-
-    def cycle_all(self, f_local):
-
-        ret = []
-        for outer_df in DataFrameIterator( self.data, self.separated_vars ):
-            for inner_df in DataFrameIterator( outer_df, self.coalesced_vars ):
-
-                r_loc = f_local(outer_df, inner_df )
-                ret.append(r_loc)
-        return ret
-
-    def get_separated_values(self):
-
-        ret = []
-        for outer_df in DataFrameIterator(self.data, self.separated_vars):
-            #            for inner_df in DataFrameIterator( outer_df, self.coalesced_vars ):
-            ret.append( [ outer_df[v].unique()[0] for v in self.separated_vars ] )
-        return ret
-
-    def get_coalesced_values(self):
-
-        ret = []
-        for inner_df in DataFrameIterator(self.data, self.coalesced_vars):
-            #            for inner_df in DataFrameIterator( outer_df, self.coalesced_vars ):
-            ret.append( [ inner_df[v].unique()[0] for v in self.coalesced_vars ] )
-
-        return ret
-
-
-
-    def outer_inner(self, outer_df, inner_df):
-        ouv = [ outer_df[v].unique()[0] for v in self.separated_vars ]
-        iuv = [ inner_df[v].unique()[0] for v in self.coalesced_vars ]
-
-#        ouv = ", ".join( [ "%s"%(outer_df[v].unique()[0]) for v in self.separated_vars ] )
-#        iuv = ", ".join( [ "%s"%(inner_df[v].unique()[0]) for v in self.coalesced_vars ] )
-
-        return ouv, iuv
-
-    #
-    # def plot_all(self, Plotter):
-    #     spgu.newline_msg("INF", "%s - %s - %s" % (self.separated_vars, self.coalesced_vars, self.independent_var))
-    #
-    #     table_name = self.base_name + "_results.csv"
-    #     ctp = Plotter(table_name)
-    #
-    #     ctp.x_axis = self.independent_var
-    #
-    #     ctp.y_axis = self.output_columns
-    #
-    #     ctp.separated_vars = self.separated_vars
-    #     ctp.coalesced_vars = self.coalesced_vars
-    #
-    #     ctp.settings = self.settings
-    #
-    #     plot_fname = self.base_name + "_plot"
-    #     if len(ctp.separated_vars) > 1:
-    #         plot_fname += "_" + "_".join(ctp.separated_vars)
-    #     if len(ctp.separated_vars) == 1:
-    #         plot_fname += "_" + ctp.separated_vars[0]
-    #
-    #     plot_fname += ".pdf"
-    #
-    #     spgu.newline_msg("OUT", plot_fname)
-    #     ctp.plot_all(output_name=plot_fname)
-    #
-    #
-    # def plot_all_join_outputs(self, Plotter):
-    #     spgu.newline_msg("INF", "%s - %s - %s" % (self.separated_vars, self.coalesced_vars, self.independent_var))
-    #
-    #     table_name = self.base_name + "_results.csv"
-    #     ctp = Plotter(table_name)
-    #
-    #     ctp.x_axis = self.independent_var
-    #
-    #     ctp.y_axis = self.output_columns
-    #
-    #     ctp.separated_vars = self.separated_vars
-    #     ctp.coalesced_vars = self.coalesced_vars
-    #
-    #     ctp.settings = self.settings
-    #
-    #     plot_fname = self.base_name + "_plot"
-    #     if len(ctp.separated_vars) > 1:
-    #         plot_fname += "_" + "_".join(ctp.separated_vars)
-    #     if len(ctp.separated_vars) == 1:
-    #         plot_fname += "_" + ctp.separated_vars[0]
-    #
-    #     plot_fname += ".pdf"
-    #
-    #     spgu.newline_msg("OUT", plot_fname)
-    #     ctp.plot_all_join_outputs(output_name=plot_fname)
-
-
-class InteractivePlotter:
+#########################################################################################
+#########################################################################################
+class SPGInteractivePlotter:
 
         colors = ['black', 'blue', 'green', 'red', 'yellow', 'brown', 'grey', 'violet']
         markers = mpll.Line2D.filled_markers
@@ -464,62 +359,82 @@ class InteractivePlotter:
 #########################################################################################
 #########################################################################################
 #########################################################################################
+
+
+
+
+
+
+#########################################################################################
+#########################################################################################
+#########################################################################################
+#########################################################################################
+#########################################################################################
+
+
+
+
+
+
+
+
+
+
+
 #########################################################################################
 #########################################################################################
 #########################################################################################
 #########################################################################################
 #########################################################################################
 #########################################################################################
-#########################################################################################
-#########################################################################################
-def parse_command_line():
-     from optparse import OptionParser
-    
-     parser = OptionParser()
-
-     parser.add_option("--coalesced", type="string", action='store', dest="coalesced", 
-		        default = [],
-                        help = "comma separated list of coalesced variables")
-
-     parser.add_option("--separated", type="string", action='store', dest="separated", 
-		        default = [],
-                        help = "comma separated list of separated variables")
-
-     parser.add_option("--output", type="string", action='store', dest="output",
-                       default=[],
-                       help="output structure")
-
-     parser.add_option("--join", action='store_true', dest="join",
-                       default=[],
-                       help="join all y columns")
-
-     opts, args = parser.parse_args()
-     if len( opts.coalesced ) >0:
-         opts.coalesced = opts.coalesced.split(",")
-     if len( opts.separated ) >0:
-         opts.separated = opts.separated.split(",")
-     if len( opts.output ) >0:
-         opts.output = opts.output.split(",")
-     return  opts, args 
+# def parse_command_line():
+#      from optparse import OptionParser
+#
+#      parser = OptionParser()
+#
+#      parser.add_option("--coalesced", type="string", action='store', dest="coalesced",
+# 		        default = [],
+#                         help = "comma separated list of coalesced variables")
+#
+#      parser.add_option("--separated", type="string", action='store', dest="separated",
+# 		        default = [],
+#                         help = "comma separated list of separated variables")
+#
+#      parser.add_option("--output", type="string", action='store', dest="output",
+#                        default=[],
+#                        help="output structure")
+#
+#      parser.add_option("--join", action='store_true', dest="join",
+#                        default=[],
+#                        help="join all y columns")
+#
+#      opts, args = parser.parse_args()
+#      if len( opts.coalesced ) >0:
+#          opts.coalesced = opts.coalesced.split(",")
+#      if len( opts.separated ) >0:
+#          opts.separated = opts.separated.split(",")
+#      if len( opts.output ) >0:
+#          opts.output = opts.output.split(",")
+#      return  opts, args
 
 
-
-
-
-if __name__ == "__main__":
-    opts, args = parse_command_line()
-
-    for iarg in args:
-    
-        plotter = SPGDataLoader(iarg)
-        if len(opts.coalesced) > 0:
-            plotter.setup_coalesced_vars( opts.coalesced )
-        if len(opts.separated) > 0:
-            plotter.setup_separated_vars( opts.separated )
-        if len(opts.output) > 0:
-            plotter.setup_output_columns( opts.output )
-
-        if not opts.join:
-            plotter.plot_all(spgp.SPGBasePlotter)
-        else:
-            plotter.plot_all_join_outputs(spgp.SPGBasePlotter)
+#
+#
+#
+# if __name__ == "__main__":
+#     opts, args = parse_command_line()
+#
+#     for iarg in args:
+#
+#         plotter = SPGDataLoader(iarg)
+#         if len(opts.coalesced) > 0:
+#             plotter.setup_coalesced_vars( opts.coalesced )
+#         if len(opts.separated) > 0:
+#             plotter.setup_separated_vars( opts.separated )
+#         if len(opts.output) > 0:
+#             plotter.setup_output_columns( opts.output )
+#
+#         if not opts.join:
+#             plotter.plot_all(spgp.SPGBasePlotter)
+#         else:
+#             plotter.plot_all_join_outputs(spgp.SPGBasePlotter)
