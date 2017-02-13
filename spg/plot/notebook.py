@@ -34,8 +34,6 @@ from spg.plot import DataFrameIterator
 class BaseDataLoader:
 
 
-
-
     def describe_variables(self):
         for v in self.variables:
             red_d = self.data[ v ].unique()
@@ -117,6 +115,65 @@ class BaseDataLoader:
     #     return ouv, iuv
 
 
+class CSVDataLoader(BaseDataLoader):
+    def __init__(self, ds_filename, output_columns=[], settings={}):
+        self.full_dataframe = pd.read_csv(ds_filename)
+
+        self.output_columns = output_columns
+
+        self.constants = {}
+        self.variables = []
+        for vn in self.full_dataframe.keys():
+            if vn in self.output_columns:
+                continue
+            all_values = self.full_dataframe[vn].unique()
+            if len(all_values) > 1:
+                self.variables.append(vn)
+            else:
+                self.constants[vn] = self.full_dataframe[vn].unique()[0]
+
+        self.independent_var = self.variables[-1]
+
+        try:
+            self.coalesced_vars = [self.variables[-2]]
+        except:
+            self.coalesced_vars = []
+        try:
+            self.separated_vars = self.variables[:-2]
+        except:
+            self.separated_vars = []
+
+        self.data = self.full_dataframe[self.variables + self.output_columns]
+
+        self.settings = settings
+
+
+        print "constants: %s"% self.constants.keys()
+        print "independent variables: %s"% self.variables
+        print "output columns: %s"% self.output_columns
+
+
+    def configure_vars(self, separated_vars, coalesced_vars, independent_var, recalculate_output_columns=True):
+        all_vars = separated_vars + coalesced_vars + [independent_var]
+
+        # No unknown columns are present
+        assert len(set(all_vars) - set(self.data)) == 0
+        # All sets are disjoint
+        assert independent_var not in separated_vars
+        assert independent_var not in coalesced_vars
+        assert len(set(separated_vars).intersection(coalesced_vars)) == 0
+
+        self.separated_vars = separated_vars
+        self.coalesced_vars = coalesced_vars
+        self.independent_var = independent_var
+
+        self.variables = all_vars
+
+#        print self.variables
+        if recalculate_output_columns:
+            self.output_columns = [kn for kn in self.data.keys() if kn not in self.variables]
+
+
 
 class SPGDataLoader(BaseDataLoader):
     """
@@ -152,7 +209,7 @@ class SPGDataLoader(BaseDataLoader):
 
         settings_output, self.output_columns = spgu.load_configuration( "%s.stdout"%self.simulation.command.split(".")[0] )
         
-        spgu.newline_msg( "INF", "output columns: %s"% self.output_columns)
+
         self.settings.update(settings_output)
         
         self.independent_var =  self.variables[-1]
@@ -184,6 +241,10 @@ class SPGDataLoader(BaseDataLoader):
             self.constants[vn] = self.full_dataframe[vn].unique()[0]
 
         self.data = self.full_dataframe[self.variables + self.output_columns]
+
+        print "constants: %s"% self.constants.keys()
+        print "independent variables: %s"% self.variables
+        print "output columns: %s"% self.output_columns
 
     def configure_vars(self, separated_vars, coalesced_vars, independent_var):
         all_vars = separated_vars + coalesced_vars + [independent_var]
@@ -308,7 +369,10 @@ class SPGInteractivePlotter:
 
             for ix, iv in enumerate(self.coalesced_values):
                 query_inn_str = " & ".join(["(%s==%s)" % i for i in zip(self.coalesced_vars, iv)])
-                local_df = self.data.query(query_inn_str)
+                if len(query_inn_str) > 0:
+                    local_df = self.data.query(query_inn_str)
+                else:
+                    local_df = self.data
 
                 self.axis.lines[ix].set_data(local_df[self.independent_var], local_df[self.dependent_var])
 
@@ -324,7 +388,10 @@ class SPGInteractivePlotter:
             marker_it = itertools.cycle(self.markers)
             for iv in self.coalesced_values:
                 query_inn_str = " & ".join(["(%s==%s)" % i for i in zip(self.coalesced_vars, iv)])
-                local_df = self.data.query(query_inn_str)
+                if len(query_inn_str) > 0:
+                    local_df = self.data.query(query_inn_str)
+                else:
+                    local_df = self.data
                 self.axis.plot(local_df[self.independent_var], local_df[self.dependent_var],
                                linestyle='', marker=marker_it.next(), color=color_it.next(),
                                label=query_inn_str)
