@@ -152,9 +152,9 @@ class CSVDataLoader(BaseDataLoader):
         self.settings = settings
 
 
-        print "constants: %s"% self.constants.keys()
-        print "independent variables: %s"% self.variables
-        print "output columns: %s"% self.output_columns
+        print "[__init__] constants: %s"% self.constants.keys()
+        print "[__init__] independent variables: %s"% self.variables
+        print "[__init__] output columns: %s"% self.output_columns
 
 
     def configure_vars(self, separated_vars, coalesced_vars, independent_var=None, recalculate_output_columns=True):
@@ -247,6 +247,7 @@ class SPGDataLoader(BaseDataLoader):
             if vn in self.output_columns:
                 continue
             all_values = self.full_dataframe[vn].unique()
+        #    print vn, all_values
             if len(all_values) > 1:
                 self.variables.append(vn)
             else:
@@ -254,9 +255,9 @@ class SPGDataLoader(BaseDataLoader):
 
         self.data = self.full_dataframe[self.variables + self.output_columns]
 
-        print "constants: %s"% self.constants.keys()
-        print "independent variables:", self.separated_vars, self.coalesced_vars, self.independent_var
-        print "output columns: %s"% self.output_columns
+        print "[__init__] constants: %s"% self.constants.keys()
+        print "[__init__] independent variables:", self.separated_vars, self.coalesced_vars, self.independent_var
+        print "[__init__] output columns: %s"% self.output_columns
 
 
     def configure_vars(self, separated_vars, coalesced_vars, independent_var = None):
@@ -266,7 +267,8 @@ class SPGDataLoader(BaseDataLoader):
             all_vars.append( independent_var )
 
         # No unknown columns are present
-        assert len(set(all_vars) - set(self.data)) == 0
+    #    print set(all_vars), set(self.data.keys() ), set(all_vars) - set(self.data.keys() )
+        assert len(set(all_vars) - set(self.data.keys() )) == 0
         # All sets are disjoint
         assert independent_var not in separated_vars
         assert independent_var not in coalesced_vars
