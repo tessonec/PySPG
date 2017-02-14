@@ -315,7 +315,7 @@ class SPGInteractivePlotter:
 
             self.settings = splotter.settings
 
-            if len(self.separated_values) == 0:
+            if len(self.separated_vars) == 0:
                 vec_labels = ["all values"]
             else:
                 vec_labels = [(", ".join(map(str, ou)), ou) for ou in self.separated_values]
