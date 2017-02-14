@@ -315,7 +315,10 @@ class SPGInteractivePlotter:
 
             self.settings = splotter.settings
 
-            vec_labels = [(", ".join(map(str, ou)), ou) for ou in self.separated_values]
+            if len(self.separated_values) == 0:
+                vec_labels = ["all values"]
+            else:
+                vec_labels = [(", ".join(map(str, ou)), ou) for ou in self.separated_values]
 #            print vec_labels
             self.dd_filter = ipyw.Dropdown(
                 options=vec_labels)  # ,
