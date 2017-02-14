@@ -26,6 +26,7 @@ class DataFrameIterator:
         self.filter = filter
 
     def __iter__(self):
+#        print self.filter
         if len(self.filter) > 0:
             df_coalesced = self.data.groupby(self.filter)
 
