@@ -69,25 +69,25 @@ def parameters_from_string(string):
 def evaluate_string(string,val_dict, skip_id = True):
     """evaluates an expression with the values given in the dictionary.
     The variable names are to be enclosed in square-brackets.
-    automatic type conversion is attemped"""
+    automatic type conversion is attempted"""
 
     #fp = string # os.path.abspath(string)
     rx = re.compile(r'\[([a-zA-Z0-9_]\w*)\]')
     # regular expression explanation
-    # r'\{(\w)\}' matches variable name: 
+    # r'\{(\w)\}' matches variable name:
     st_out = string
     try:
         for i_var in rx.findall(string):
             if i_var == 'id' and skip_id:
                 continue
             st_out = re.sub( r'\[%s\]'%i_var, str(val_dict[i_var]), st_out )
-        return eval( st_out ) 
+        return eval( st_out )
         #print st_out
     except:
         try:
             return eval(str( string ) )
         except:
-            return str(string) 
+            return str(string)
 
 
 def replace_values(string,val_dict, vars_to_skip = set()):

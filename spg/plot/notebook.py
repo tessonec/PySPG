@@ -11,9 +11,13 @@ import spg.utils as spgu
 
 
 import pandas as pd
+import numpy as np
+import math as m
+
+
 
 import os.path
-
+import re
 
 import ipywidgets as ipyw
 import itertools
@@ -153,8 +157,10 @@ class CSVDataLoader(BaseDataLoader):
         print "output columns: %s"% self.output_columns
 
 
-    def configure_vars(self, separated_vars, coalesced_vars, independent_var, recalculate_output_columns=True):
-        all_vars = separated_vars + coalesced_vars + [independent_var]
+    def configure_vars(self, separated_vars, coalesced_vars, independent_var=None, recalculate_output_columns=True):
+        all_vars = separated_vars + coalesced_vars
+        if independent_var is not None:
+            all_vars.append(independent_var)
 
         # No unknown columns are present
         assert len(set(all_vars) - set(self.data)) == 0
@@ -246,8 +252,11 @@ class SPGDataLoader(BaseDataLoader):
         print "independent variables: %s"% self.variables
         print "output columns: %s"% self.output_columns
 
-    def configure_vars(self, separated_vars, coalesced_vars, independent_var):
-        all_vars = separated_vars + coalesced_vars + [independent_var]
+    def configure_vars(self, separated_vars, coalesced_vars, independent_var = None):
+
+        all_vars = separated_vars + coalesced_vars
+        if independent_var is not None:
+            all_vars.append( independent_var )
 
         # No unknown columns are present
         assert len(set(all_vars) - set(self.data)) == 0
@@ -429,8 +438,217 @@ class SPGInteractivePlotter:
 
 
 
+class SPGInteractiveScalingPlotter:
+    colors = ['black', 'blue', 'green', 'red', 'yellow', 'brown', 'grey', 'violet']
+    markers = mpll.Line2D.filled_markers
+
+    def __init__(self, splotter):
+        self.full_data = splotter.data
+
+        self.separated_values = splotter.get_separated_values()
+        self.separated_vars = splotter.separated_vars
+        self.separated_selection = self.separated_values[0]
+
+        self.coalesced_values = splotter.get_coalesced_values()
+        self.coalesced_vars = splotter.coalesced_vars
+
+        self.output_columns = splotter.output_columns
+        self.dependent_var = self.output_columns[0]
+
+        self.independent_var = splotter.independent_var
+
+        self.constants = splotter.constants
+        self.variables = [ i for i in self.full_data.keys() if not self.constants.has_key( i ) ]
+
+        self.settings = splotter.settings
+
+        vec_labels = [(", ".join(map(str, ou)), ou) for ou in self.separated_values]
+
+        self.dd_filter = ipyw.Dropdown(
+            options=vec_labels)
+
+        self.select_xscale = ipyw.Checkbox(
+            value=False,
+            description='x log scale',
+            icon='check'
+        )
+
+        self.select_yscale = ipyw.Checkbox(
+            value=False,
+            description='y log scale',
+            icon='check'
+        )
+
+        # description = "Output columns: ")
+
+        self.dd_filter.observe(self.on_dd_filter_value_change, names='value')
+
+        self.select_yscale.observe(self.on_select_scale, names=['value', 'owner'])
+        self.select_xscale.observe(self.on_select_scale, names=['value', 'owner'])
+
+        self.__separated_value_change()
+        self.__scaling_parameters = {}
+        self.scaling_values = {}
+        self.__scaling_widgets = {}
+
+    def interact(self):
+
+        vec_row2 = []
+        for sp in sorted(self.__scaling_parameters.keys()):
+            (value, value_min, value_max, step) = self.__scaling_parameters[sp]
+            vec_row2.append(ipyw.Label("%s: " % (sp)))
+            new_slider = ipyw.FloatSlider(value=value, min=value_min, max=value_max, step=step)
+
+            vec_row2.append(new_slider)
+            self.__scaling_widgets[new_slider] = sp
+            new_slider.observe(self.on_slider_change, names=['value'])
+
+        display(
+            ipyw.VBox([
+                ipyw.HBox([ipyw.Label("%s: " % (self.separated_vars)), self.dd_filter, self.select_xscale,
+                           self.select_yscale]),
+                ipyw.HBox(vec_row2)
+            ])
+        )
+
+        self.figure, self.axis = plt.subplots(1, 1, figsize=(12, 6))
+
+        self.transform_data()
+        self.draw()
+
+    def __separated_value_change(self):
+
+        query_str = " & ".join(["(%s==%s)" % i for i in zip(self.separated_vars, self.separated_values)])
+        if len(query_str) > 0:
+            self.data = self.full_data.query(query_str)
+        else:
+            self.data = self.full_data.copy()
+
+        self.data = self.data[ sorted( set(self.variables + self.output_columns) )]
 
 
+
+    def on_slider_change(self, change):
+        par_name = self.__scaling_widgets[change['owner']]
+        self.scaling_values[par_name] = change['new']
+        self.transform_data()
+
+        # print self.scaling_values, self.evaluate_string(self.x_transform), self.evaluate_string(self.y_transform)
+        self.redraw()
+
+    def on_select_scale(self, change):
+
+        if change['owner'] == self.select_xscale:
+            xscale = "log" if change['new'] else "linear"
+
+            self.axis.set_xscale(xscale)
+        if change['owner'] == self.select_yscale:
+            yscale = "log" if change['new'] else "linear"
+            self.axis.set_yscale(yscale)
+
+        self.axis.figure.canvas.draw()
+
+    def on_dd_filter_value_change(self, change):
+
+        self.separated_values = change['new']
+        self.__separated_value_change()
+        self.redraw()
+
+    def evaluate_string(self, to_evaluate):
+        res = to_evaluate
+        for i_var in self.constants:
+            res = re.sub(r'\{%s\}' % i_var, str(self.constants[i_var]), res)
+
+        for i_var in self.scaling_values:
+            res = re.sub(r'\{%s\}' % i_var, str(self.scaling_values[i_var]), res)
+
+        for i_var in self.variables:
+            res = re.sub(r'\{%s\}' % i_var, "self.data['%s']" % i_var, res)
+
+
+
+        return eval(res)
+
+    def setup_transforms(self, xt, yt):
+        rx = re.compile(r'\{([a-zA-Z0-9_]\w*)\}')
+        vars_in_x_expr = rx.findall(xt)
+        vars_in_y_expr = rx.findall(yt)
+        possible_keys = self.constants.keys() + self.variables + self.output_columns + self.__scaling_parameters.keys()
+#        print possible_keys
+
+        assert len(set(vars_in_x_expr) - set(possible_keys)) == 0
+        assert len(set(vars_in_y_expr) - set(possible_keys)) == 0
+
+        self.x_transform = xt
+        self.y_transform = yt
+
+    def add_scaling_parameter(self, parameter_name, value, value_min=0., value_max=None, step=0.01):
+        if value_max is None:
+            value_max = 2. * value
+
+        self.__scaling_parameters[parameter_name] = (value, value_min, value_max, step)
+        self.scaling_values[parameter_name] = value
+
+    def transform_data(self):
+        self.data_transformed = self.data.copy()
+#        print self.x_transform, self.y_transform
+
+        self.data_transformed['transformed_x'] = self.evaluate_string(self.x_transform)
+        self.data_transformed['transformed_y'] = self.evaluate_string(self.y_transform)
+
+    def redraw(self):
+        color_it = itertools.cycle(self.colors)
+        marker_it = itertools.cycle(self.markers)
+
+        for ix, iv in enumerate(self.coalesced_values):
+            query_inn_str = " & ".join(["(%s==%s)" % i for i in zip(self.coalesced_vars, iv)])
+            if len(query_inn_str) > 0:
+                local_df = self.data_transformed.query(query_inn_str)
+            else:
+                local_df = self.data_transformed
+
+            self.axis.lines[ix].set_data(local_df['transformed_x'], local_df['transformed_y'])
+
+        self.__recalculate_lims()
+
+        self.axis.figure.canvas.draw()
+
+    def draw(self):
+
+        color_it = itertools.cycle(self.colors)
+        marker_it = itertools.cycle(self.markers)
+        for iv in self.coalesced_values:
+            query_inn_str = " & ".join(["(%s==%s)" % i for i in zip(self.coalesced_vars, iv)])
+            if len(query_inn_str) > 0:
+                local_df = self.data_transformed.query(query_inn_str)
+            else:
+                local_df = self.data_transformed
+            self.axis.plot(local_df['transformed_x'], local_df['transformed_y'],
+                           linestyle='', marker=marker_it.next(), color=color_it.next(),
+                           label=query_inn_str)
+
+        self.__recalculate_lims()
+        self.axis.set_xlabel('transformed_x')
+        self.axis.set_ylabel('transformed_y')
+
+        box = self.axis.get_position()
+        self.axis.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+        self.axis.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+        self.axis.figure.canvas.draw()
+
+    def __recalculate_lims(self):
+        ydata = self.data_transformed['transformed_y']
+        xdata = self.data_transformed['transformed_x']
+        if self.select_yscale.value:  # it is not log
+            ydata = ydata[ydata > 0]
+        ymin, ymax = min(ydata), max(ydata)
+        if self.select_xscale.value:  # it is not log
+            xdata = xdata[xdata > 0]
+        xmin, xmax = min(xdata), max(xdata)
+
+        self.axis.set_ylim(ymin, ymax)
+        self.axis.set_xlim(xmin, xmax)
 
 #########################################################################################
 #########################################################################################
