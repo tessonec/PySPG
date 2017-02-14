@@ -240,17 +240,24 @@ class SPGDataLoader(BaseDataLoader):
 
         self.full_dataframe = pd.read_csv(self.datafile_name)
 
+
         self.constants = {}
+        self.variables = []
         for vn in self.full_dataframe.keys():
-            if vn in self.variables:
+            if vn in self.output_columns:
                 continue
-            self.constants[vn] = self.full_dataframe[vn].unique()[0]
+            all_values = self.full_dataframe[vn].unique()
+            if len(all_values) > 1:
+                self.variables.append(vn)
+            else:
+                self.constants[vn] = self.full_dataframe[vn].unique()[0]
 
         self.data = self.full_dataframe[self.variables + self.output_columns]
 
         print "constants: %s"% self.constants.keys()
-        print "independent variables: %s"% self.variables
+        print "independent variables:", self.separated_vars, self.coalesced_vars, self.independent_var
         print "output columns: %s"% self.output_columns
+
 
     def configure_vars(self, separated_vars, coalesced_vars, independent_var = None):
 
@@ -275,7 +282,7 @@ class SPGDataLoader(BaseDataLoader):
 
 #        self.output_columns = [kn for kn in self.data.keys() if kn not in self.variables]
 
-        self.__initialise_independent_elements()
+        #self.__initialise_independent_elements()
 
 
 #########################################################################################
@@ -290,12 +297,13 @@ class SPGInteractivePlotter:
 
             self.full_data = splotter.data
 
-            self.separated_values = splotter.get_separated_values()
             self.separated_vars = splotter.separated_vars
+            self.separated_values = splotter.get_separated_values()
             self.separated_selection = self.separated_values[0]
 
-            self.coalesced_values = splotter.get_coalesced_values()
             self.coalesced_vars = splotter.coalesced_vars
+            self.coalesced_values = splotter.get_coalesced_values()
+
 
             self.output_columns = splotter.output_columns
             self.dependent_var = self.output_columns[0]
@@ -306,7 +314,7 @@ class SPGInteractivePlotter:
             self.settings = splotter.settings
 
             vec_labels = [(", ".join(map(str, ou)), ou) for ou in self.separated_values]
-
+#            print vec_labels
             self.dd_filter = ipyw.Dropdown(
                 options=vec_labels)  # ,
             # description = "%s :"%(self.separated_vars) )
@@ -345,6 +353,7 @@ class SPGInteractivePlotter:
 
         def __separated_value_change(self):
             query_str = " & ".join(["(%s==%s)" % i for i in zip(self.separated_vars, self.separated_values)])
+            #print query_str
             if len(query_str) > 0:
                 self.data = self.full_data.query(query_str)
             else:
@@ -355,11 +364,12 @@ class SPGInteractivePlotter:
             #     if not change.has_key('new'): return
             if change['owner'] == self.select_xscale:
                 xscale = "log" if change['new'] else "linear"
-                print xscale
+                #print xscale
                 self.axis.set_xscale(xscale)
             if change['owner'] == self.select_yscale:
                 yscale = "log" if change['new'] else "linear"
                 self.axis.set_yscale(yscale)
+            self.__recalculate_lims()
             self.axis.figure.canvas.draw()
 
         def on_dd_filter_value_change(self, change):
@@ -385,10 +395,11 @@ class SPGInteractivePlotter:
 
                 self.axis.lines[ix].set_data(local_df[self.independent_var], local_df[self.dependent_var])
 
-            self.axis.set_ylim(min(self.data[self.dependent_var]), max(self.data[self.dependent_var]))
-            self.axis.set_xlim(min(self.data[self.independent_var]), max(self.data[self.independent_var]))
             self.axis.set_xlabel(self.independent_var)
             self.axis.set_ylabel(self.dependent_var)
+            self.__recalculate_lims()
+
+
             self.axis.figure.canvas.draw()
 
         def draw(self):
@@ -414,21 +425,22 @@ class SPGInteractivePlotter:
             self.axis.set_position([box.x0, box.y0, box.width * 0.8, box.height])
             self.axis.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
-            if self.settings.has_key(self.independent_var):
-                # print self.settings[curr_y_axis],
-                if self.settings[self.independent_var].has_key('lim'):
-                    self.axis.set_ylim(self.settings[self.independent_var]['lim'])
-                if self.settings[self.independent_var].has_key('scale'):
-                    self.select_xscale.value = self.settings[self.independent_var]['scale'] == 'log'
-            if self.settings.has_key(self.dependent_var):
-                if self.settings[self.dependent_var].has_key('lim'):
-                    plt.axis.set_ylim(self.settings[self.y_axis]['lim'])
-                if self.settings[self.dependent_var].has_key('scale'):
-                    self.select_yscale.value = self.settings[self.dependent_var]['scale'] == 'log'
+            self.__recalculate_lims()
 
             self.axis.figure.canvas.draw()
 
-
+        def __recalculate_lims(self):
+            ydata = self.data[self.dependent_var]
+            xdata = self.data[self.independent_var]
+            if self.select_yscale.value:  # it is not log
+                ydata = ydata[ydata > 1e-9]
+            ymin, ymax = min(ydata), max(ydata)
+            if self.select_xscale.value:  # it is not log
+                xdata = xdata[xdata > 1e-9]
+            xmin, xmax = min(xdata), max(xdata)
+            #print xmin, xmax, ymin, ymax
+            self.axis.set_ylim(ymin, ymax)
+            self.axis.set_xlim(xmin, xmax)
 #########################################################################################
 #########################################################################################
 #########################################################################################
