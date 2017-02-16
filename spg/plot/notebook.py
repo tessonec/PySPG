@@ -205,40 +205,10 @@ class SPGDataLoader(BaseDataLoader):
         self.base_name, foo = os.path.splitext(self.simulation_filename)
         self.datafile_name = "%s_%s.csv"%(self.base_name, table_name)
 
-        self.variables = self.simulation.varying_items()
-
-        try:
-            self.settings, foo =  spgu.load_configuration( "%s.input"%self.base_name )
-        except:
-            self.settings = spgu.SPGSettings()
-            spgu.newline_msg( "INF", "no 'input' file found: %s"%self.simulation.command)
-
-        settings_output, self.output_columns = spgu.load_configuration( "%s.stdout"%self.simulation.command.split(".")[0] )
-        
-
-        self.settings.update(settings_output)
-        
-        self.independent_var =  self.variables[-1]
-
-        x_axis_iter = self.simulation.data[ self.simulation.position_of(self.independent_var)]
-        if not self.settings.has_key( self.independent_var ):
-            self.settings[ self.independent_var ] = spgu.SPGSettings()
-        if x_axis_iter.type == "*":
-            self.settings[self.independent_var]['scale'] = 'log'
-            self.settings[self.independent_var]['lim'] =  (x_axis_iter.xmin, x_axis_iter.xmax)
-
-        try:
-            self.coalesced_vars = [ self.variables[-2] ]
-        except:
-            self.coalesced_vars = []
-            
-        try:
-            self.separated_vars = self.variables[:-2]
-        except:
-            self.separated_vars = []
-
-
         self.full_dataframe = pd.read_csv(self.datafile_name)
+
+        settings_output, self.output_columns = spgu.load_configuration(
+            "%s.stdout" % self.simulation.command.split(".")[0])
 
 
         self.constants = {}
@@ -247,11 +217,37 @@ class SPGDataLoader(BaseDataLoader):
             if vn in self.output_columns:
                 continue
             all_values = self.full_dataframe[vn].unique()
-        #    print vn, all_values
             if len(all_values) > 1:
                 self.variables.append(vn)
             else:
                 self.constants[vn] = self.full_dataframe[vn].unique()[0]
+
+        try:
+            self.settings, foo =  spgu.load_configuration( "%s.input"%self.base_name )
+        except:
+            self.settings = spgu.SPGSettings()
+            spgu.newline_msg( "INF", "no 'input' file found: %s"%self.simulation.command)
+        self.settings.update(settings_output)
+        try:
+            self.coalesced_vars = [self.variables[-2]]
+        except:
+            self.coalesced_vars = []
+
+        try:
+            self.separated_vars = self.variables[:-2]
+        except:
+            self.separated_vars = []
+
+        self.independent_var = self.variables[-1]
+
+        x_axis_iter = self.simulation.data[ self.simulation.position_of(self.independent_var)]
+        if not self.settings.has_key( self.independent_var ):
+            self.settings[ self.independent_var ] = spgu.SPGSettings()
+        if x_axis_iter.type == "*":
+            self.settings[self.independent_var]['scale'] = 'log'
+            self.settings[self.independent_var]['lim'] =  (x_axis_iter.xmin, x_axis_iter.xmax)
+
+
 
         self.data = self.full_dataframe[self.variables + self.output_columns]
 
