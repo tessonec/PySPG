@@ -263,11 +263,24 @@ class SPGDataLoader(BaseDataLoader):
             all_vars.append( independent_var )
 
         # No unknown columns are present
-    #    print set(all_vars), set(self.data.keys() ), set(all_vars) - set(self.data.keys() )
-        assert len(set(all_vars) - set(self.data.keys() )) == 0
+        try:
+            assert len(set(all_vars) - set(self.data.keys() )) == 0
+        except:
+            print "[configure_vars] ", set(all_vars) - set(self.data.keys() ), "not recognised as column name"
+            return
         # All sets are disjoint
-        assert independent_var not in separated_vars
-        assert independent_var not in coalesced_vars
+        try:
+            assert independent_var not in separated_vars
+        except:
+            print "[configure_vars] ", independent_var, "is alse in separated_vars"
+            return
+
+        try:
+            assert independent_var not in coalesced_vars
+        except:
+            print "[configure_vars] ", independent_var, "is alse in coalesced_vars"
+            return
+
         assert len(set(separated_vars).intersection(coalesced_vars)) == 0
         # No output column is used
         assert len(set(all_vars).intersection(self.output_columns)) == 0
