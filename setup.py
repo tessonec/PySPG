@@ -12,7 +12,7 @@ if sys.argv[-1] == 'publish':
     sys.exit()
 
 here = os.path.abspath(os.path.dirname(__file__))
-README = open(os.path.join(here, 'README.rst')).read()
+README = open(os.path.join(here, 'README')).read()
 
 version = open("VERSION").readline().strip()
 
@@ -33,7 +33,7 @@ setup(name='PySPG',
           'Intended Audience :: End Users/Desktop',
           'Intended Audience :: Developers',
           'Environment :: Console',
-          'License :: OSI Approved :: GPL3 License',
+          'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
           'Natural Language :: English',
           'Operating System :: OS Independent',
           'Programming Language :: Python :: 2.7',
@@ -42,9 +42,9 @@ setup(name='PySPG',
           'Topic :: Scientific/Engineering',
           'Topic :: Software Development :: Libraries :: Python Modules',
       ],
-      keywords='simulations parameters optimization',
+      keywords='simulations parameters optimisation',
       author='Claudio J. Tessone',
-      author_email='claudio.tessone@business.uzh.ch',
+      author_email='claudio.tessone@uzh.ch',
       url='https://github.com/tessonec/PySPG',
       packages=['spg.base', 'spg.cmdline', 'spg.master', 'spg.plot',
                 'spg.runner', 'spg.simulation', 'spg.utils', 'spg'],
