@@ -34,9 +34,9 @@ if __name__ == "__main__":
     options, args = parser.parse_args()
 
     
-    run_pool = SPGRunningPool(  )
+    run_pool = SPGRunningPool( test_run = options.test_run )
 
-    run_pool.master_db.test_run = options.test_run
+#    print options.test_run
 
 
     while True:

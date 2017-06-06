@@ -340,7 +340,6 @@ class ParameterEnsembleThreaded(ParameterEnsemble):
         #        self.init_db()
         os.chdir(self.path)
 
-        self.test_run = False
 
         if os.path.exists("./%s" % self.command):
             self.bin_dir = "."
