@@ -104,7 +104,7 @@ class SPGRunningPool():
 
         to_launch = len(vec_to_launch)
         if to_launch >= 0:
-             utils.newline_msg("STATUS", utils.str_color( "@green[n_jobs=%d] run=%d [%s] ::: new=%d" % (target_jobs,current_count, dict(launch),to_launch) ) )
+             utils.newline_msg("STATUS", utils.str_color( "@green[n_jobs=%d] run=%d %s ::: new=%d" % (target_jobs,current_count, dict(running),to_launch) ) )
         else:
              utils.newline_msg("STATUS", utils.str_color( "@yellow[n_jobs=%d] run=%d :!: exceeded number" % (target_jobs,current_count)) )
 
