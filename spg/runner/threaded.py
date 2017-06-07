@@ -85,7 +85,6 @@ class SPGRunningPool():
             return
 
         current_count = self.active_threads()
-        to_launch = target_jobs - current_count
 #        print "+++++++++++", to_launch
         vec_to_launch = []
 
@@ -103,8 +102,9 @@ class SPGRunningPool():
  #           print "+++ (%d) %d + %d = //%d//, "%( id, launch[id], running[id],launch[id]+running[id] )
  #       print
 
+        to_launch = len(vec_to_launch)
         if to_launch >= 0:
-             utils.newline_msg("STATUS", utils.str_color( "@green[n_jobs=%d] run=%d ::: new=%d" % (target_jobs,current_count,to_launch ) ) )
+             utils.newline_msg("STATUS", utils.str_color( "@green[n_jobs=%d] run=%d [%s] ::: new=%d" % (target_jobs,current_count, dict(launch),to_launch) ) )
         else:
              utils.newline_msg("STATUS", utils.str_color( "@yellow[n_jobs=%d] run=%d :!: exceeded number" % (target_jobs,current_count)) )
 
