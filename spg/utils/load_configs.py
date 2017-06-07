@@ -15,7 +15,7 @@ def load_config(config_name, key):
     ret  = {}
     for l in open(config_name):
         l = l.strip()
-        if not l: continue
+        if len(l) == 0: continue
         if l[0] == "#": continue
         v = l.split(":")
         for kp in v[1:]:
@@ -115,7 +115,7 @@ def load_parameters(argv):
 #            print ret[k]
         elif family == "choice":
             if vec[1] in default:
-                ret[key] = eval("%s('%s')"%(var_type, default[0]))
+                ret[key] = eval("%s('%s')"%(var_type, vec[1]))
             else:
                 newline_msg("ERR", "value '%s' not among possible values for '': %s"%(vec[1],key,default))
                 sys.exit(2)

@@ -168,7 +168,13 @@ def contents_in_output(exec_file):
         name = l.pop(0)
         values = {"type":"xy","datatype":"float"}
         for o in l:
-            k,v = o.split("=")
+
+            try:
+                k,v = o.split("=")
+            except:
+
+                newline_msg("FATAL", "processing '%s', line: '%s', field: '%s'"%(cfgFile, line, o))
+                sys.exit(1)
             k=k.strip()
             v=v.strip()
            

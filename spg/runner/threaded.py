@@ -57,8 +57,10 @@ class SPGRunningAtom(threading.Thread):
 
 
 class SPGRunningPool():
-    def __init__(self):
+    def __init__(self, test_run = False):
         self.master_db = SPGMasterDB( EnsembleConstructor = ParameterEnsembleThreaded )
+        self.test_run = test_run
+
         self.lock = threading.Lock()
         self.db_locks = {}
         ### :::~ The number of processes that are active in each spg file
@@ -66,8 +68,8 @@ class SPGRunningPool():
 
     def get_lock(self, i_db):
         if not self.db_locks.has_key( i_db.full_name ):
-            self.db_locks[ i_db.full_name  ] = threading.Lock()
-        return self.db_locks[ i_db.full_name  ]
+            self.db_locks[ i_db.full_name ] = threading.Lock()
+        return self.db_locks[ i_db.full_name ]
 
     def launch_workers(self):
         target_jobs, = self.master_db.query_master_fetchone('SELECT max_jobs FROM queues WHERE name = "default"')
@@ -96,6 +98,9 @@ class SPGRunningPool():
         for pick in vec_to_launch:
             self.lock.acquire()
 #            pick = self.master_db.pick_ensemble()
+
+            pick.test_run = self.test_run
+
             status = pick.get_updated_status()
             if status['process_not_run'] == 0:
                 print "+D+ ----- %s " % (pick.full_name)
@@ -105,6 +110,7 @@ class SPGRunningPool():
             self.lock.release()
 
             nt = SPGRunningAtom(pick, self.lock, self.active_processes)
+#            nt.test_run = self.test_run
             # nt = SPGRunningAtom(pick, lock=self.get_lock( pick ) )
 
             nt.start()

@@ -19,6 +19,7 @@ class SPGMasterDB:
             self.connection = sql.connect("%s/spg-pool.sqlite"%CONFIG_DIR, timeout = TIMEOUT)
         else:
             self.connection = connection
+        self.test_run = False
             
         self.EnsembleConstructor = EnsembleConstructor
         self.cursor = self.connection.cursor()
