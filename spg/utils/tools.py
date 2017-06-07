@@ -5,6 +5,16 @@ import sys, re, os.path
 from math import *
 
 
+def str_color(s):
+    color_dict = {"red": "\033[31m","green": "\033[32m","yellow": "\033[33m","blue": "\033[34m","magenta": "\033[35m","cyan": "\033[36m", "reset":'\033[0m'}
+
+
+    for c in color_dict:
+        s = s.replace( "@%s"%c, color_dict[c] )
+    return s+color_dict['reset']
+
+
+
 def generate_string(values, var_list, separator = "-", joining_string = "_"):
     """Replaces a list of variables with its value into a string"""
 

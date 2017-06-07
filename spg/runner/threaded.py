@@ -11,6 +11,7 @@ from spg.simulation import ParameterEnsembleExecutor, ParameterEnsembleThreaded
 
 
 from collections import defaultdict
+import math as m
 
 class SPGRunningAtom(threading.Thread):
     n_threads = 0
@@ -29,7 +30,7 @@ class SPGRunningAtom(threading.Thread):
         self.ensemble.next()
 
         current_uid, current_vsid, current_rep, values = self.ensemble.get_current_information()
-        print "-S- [%4d]- ----- %s / %d" % (self.thread_id, self.ensemble.full_name, current_uid)
+        print utils.str_color("@green-S-@reset [%4d]- ----- %s / %d" % (self.thread_id, self.ensemble.full_name, current_uid) )
         #print "-S- [%4d]- ----- %s / %d" % (self.thread_id, self.ensemble.full_name, current_run_id)
         self.lock.release()
 
@@ -45,7 +46,11 @@ class SPGRunningAtom(threading.Thread):
             self.ensemble.query_set_run_status("N", current_uid, run_time)
         else:
             self.ensemble.query_set_run_status("E", current_uid, run_time)
-        print "-X- [%4d]- ----- %s / %d -> %d" % (self.thread_id, self.ensemble.full_name, current_uid, return_code)
+        if return_code == 0:
+            print utils.str_color( "@cyan-X-@reset [%4d]- ----- %s / %d @cyan[%d]" % (self.thread_id, self.ensemble.full_name, current_uid, return_code) )
+        else:
+            print utils.str_color(
+                "@red-X-@reset [%4d]- ----- %s / %d @red[%d]" % (self.thread_id, self.ensemble.full_name, current_uid, return_code))
         self.active_processes[ self.ensemble.full_name ] -= 1
         self.lock.release()
 
@@ -81,21 +86,31 @@ class SPGRunningPool():
 
         current_count = self.active_threads()
         to_launch = target_jobs - current_count
-
+#        print "+++++++++++", to_launch
         vec_to_launch = []
+
+        launch = defaultdict(lambda: 0)
+        running = {}
         for ae in self.master_db.active_dbs:
-            ens = self.master_db.result_dbs[full_name]
-            qty_to_launch = ceiling(to_launch*ens['weight']/self.master_db.normalising) - self.active_processes[ ae ]
-            vec_to_launch += qty_to_launch * [ens]
+            ens = self.master_db.result_dbs[ae  ]
+            running[ ens['id'] ] = self.active_processes[ ae ]
+            qty_to_launch = int( m.ceil(to_launch*ens['weight']/self.master_db.normalising) - self.active_processes[ ae ] )
+
+            vec_to_launch += qty_to_launch * [ae]
+            launch[ ens['id'] ] += qty_to_launch
+ #       for id in launch:
+ #           print "+++ (%d) %d + %d = //%d//, "%( id, launch[id], running[id],launch[id]+running[id] )
+ #       print
 
         if to_launch >= 0:
-             utils.newline_msg("STATUS", "[n_jobs=%d] run=%d ::: new=%d" % (target_jobs,current_count,to_launch ) )
+             utils.newline_msg("STATUS", utils.str_color( "@green[n_jobs=%d] run=%d ::: new=%d" % (target_jobs,current_count,to_launch ) ) )
         else:
-             utils.newline_msg("STATUS", "[n_jobs=%d] run=%d :!: exceed" % (target_jobs,current_count))
+             utils.newline_msg("STATUS", utils.str_color( "@yellow[n_jobs=%d] run=%d :!: exceeded number" % (target_jobs,current_count)) )
 
 
 #        for i_t in range(to_launch):
-        for pick in vec_to_launch:
+        for ae in vec_to_launch:
+            pick = self.master_db.EnsembleConstructor(ae, init_db=True)
             self.lock.acquire()
 #            pick = self.master_db.pick_ensemble()
 
