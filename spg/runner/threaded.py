@@ -91,10 +91,11 @@ class SPGRunningPool():
 
         launch = defaultdict(lambda: 0)
         running = {}
+
         for ae in self.master_db.active_dbs:
             ens = self.master_db.result_dbs[ae  ]
             running[ ens['id'] ] = self.active_processes[ ae ]
-            qty_to_launch = int( m.ceil(to_launch*ens['weight']/self.master_db.normalising) - self.active_processes[ ae ] )
+            qty_to_launch = int( m.floor(0.5 + target_jobs*ens['weight']/self.master_db.normalising) - self.active_processes[ ae ] )
 
             vec_to_launch += qty_to_launch * [ae]
             launch[ ens['id'] ] += qty_to_launch
@@ -107,6 +108,7 @@ class SPGRunningPool():
         else:
              utils.newline_msg("STATUS", utils.str_color( "@yellow[n_jobs=%d] run=%d :!: exceeded number" % (target_jobs,current_count)) )
 
+ #       print to_launch, len( vec_to_launch ), launch
 
 #        for i_t in range(to_launch):
         for ae in vec_to_launch:
