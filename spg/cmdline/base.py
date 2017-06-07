@@ -239,6 +239,7 @@ class SPGDBCommandLine(BaseSPGCommandLine):
                 if not os.path.exists(db_name):
                     utils.newline_msg("ERR", "database with name '%s' doesn't exist." % utils.shorten_name(db_name))
                     return flags, args.append(db_name), None
+
         return flags, args, self.EnsembleConstructor(db_name, init_db=True)
 
 
@@ -412,6 +413,8 @@ class SPGDBCommandLine(BaseSPGCommandLine):
 
     def do_set_weight(self, c):
         flags, args, ensemble = self.get_flags_and_db(c)
+     #   print flags, args, ensemble
+
         if ensemble == None:
             return
 
@@ -420,7 +423,7 @@ class SPGDBCommandLine(BaseSPGCommandLine):
         except:
             utils.newline_msg("ERR", "cannot parse weight")
             return
-        # print "UPDATE dbs SET weight=%f WHERE full_name = '%s' " %  ( float(cmds[0]), ensemble.full_name )
+       # print "UPDATE dbs SET weight=%f WHERE full_name = '%s' " %  ( new_weight, ensemble.full_name )
         try:
             self.master_db.query_master_db("UPDATE dbs SET weight=%f WHERE full_name = '%s' " %  ( new_weight, ensemble.full_name ) )
         except:
@@ -517,18 +520,18 @@ class SPGDBCommandLine(BaseSPGCommandLine):
 
         db_status = ensemble.get_updated_status()
 
-        param_db_id = self.master_db.query_master_fetchone("SELECT id FROM dbs WHERE full_name = ?", ensemble.full_name)
+        param_db_id = self.master_db.query_master_fetchone("SELECT id, status, weight FROM dbs WHERE full_name = ?", ensemble.full_name)
         if param_db_id is None:
             param_db_id = "X"
         else:
-            [param_db_id, ] = param_db_id
+            [param_db_id, status, weight] = param_db_id
 
         print " ---%5s: %s" % (param_db_id, utils.shorten_name(ensemble.full_name))
         frac_done = float(db_status['process_done']) / float(db_status['value_set'])
 
         n_repet = db_status['value_set_with_rep'] / db_status['value_set']
 
-        print "   -+ status = %s /  weight: %5.5f " % (ensemble.status, ensemble.weight)
+        print "   -+ status = %s /  weight: %5.5f " % (status, weight)
         print "   -+ total  = %d*%d / done: %d (%.5f) - running: %d - error: %d " % (
             db_status['value_set'], n_repet, db_status['process_done'], frac_done,
             db_status['process_running'], db_status['process_error'])
