@@ -10,7 +10,7 @@ import numpy as np
 
 import matplotlib as mpl
 #  Useful but not here
-# mpl.use('Agg')
+mpl.use('Agg')
 import matplotlib.pylab as plt
 import matplotlib.lines as mlines
 

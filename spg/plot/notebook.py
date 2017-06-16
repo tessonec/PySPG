@@ -307,7 +307,7 @@ class SPGInteractivePlotter:
         colors = ['black', 'blue', 'green', 'red', 'yellow', 'brown', 'grey', 'violet']
         markers = mpll.Line2D.filled_markers
 
-        def __init__(self, splotter):
+        def __init__(self, splotter, xscale = 'linear', yscale = 'linear'):
             # self.splotter = splotter
 
             self.full_data = splotter.data
@@ -340,18 +340,21 @@ class SPGInteractivePlotter:
                 options=self.output_columns)  # ,
 
             self.select_xscale = ipyw.Checkbox(
-                value=False,
+                value= xscale == "log",
                 description='x log scale',
                 icon='check'
             )
 
             self.select_yscale = ipyw.Checkbox(
-                value=False,
+                value= yscale == "log",
                 description='y log scale',
                 icon='check'
             )
 
             # description = "Output columns: ")
+
+            self.xscale = xscale
+            self.yscale = yscale
 
             self.dd_filter.observe(self.on_dd_filter_value_change, names='value')
             self.dd_output.observe(self.on_dd_output_value_change, names='value')
@@ -369,8 +372,6 @@ class SPGInteractivePlotter:
             )
             self.draw()
 
-            self.xscale = "linear"
-            self.yscale = "linear"
         def __separated_value_change(self):
             query_str = " & ".join(["(%s==%s)" % i for i in zip(self.separated_vars, self.separated_values)])
             #print query_str
@@ -433,10 +434,12 @@ class SPGInteractivePlotter:
             marker_it = itertools.cycle(self.markers)
             for iv in self.coalesced_values:
                 query_inn_str = " & ".join(["(%s==%s)" % i for i in zip(self.coalesced_vars, iv)])
+
                 if len(query_inn_str) > 0:
                     local_df = self.data.query(query_inn_str)
                 else:
                     local_df = self.data
+#                print query_inn_str
                 self.axis.plot(local_df[self.independent_var], local_df[self.dependent_var],
                                linestyle='', marker=marker_it.next(), color=color_it.next(),
                                label=query_inn_str)
@@ -511,6 +514,7 @@ class SPGInteractivePlotter:
             axis_out.set_xlabel(xlabel, axis_font)
             axis_out.set_ylabel(ylabel, axis_font)
 
+
             axis_out.set_xscale(self.xscale)
             axis_out.set_yscale(self.yscale)
 
@@ -543,6 +547,9 @@ class SPGInteractivePlotter:
             if self.select_xscale.value:  # it is not log
                 xdata = xdata[xdata > 1e-9]
             xmin, xmax = 0.9*min(xdata), 1.1*max(xdata)
+
+            self.axis.set_xscale(self.xscale)
+            self.axis.set_yscale(self.yscale)
 
             if axis_out:
                 axis_out.set_ylim(ymin, ymax)

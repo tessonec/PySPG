@@ -54,15 +54,23 @@ class SPGBasePlotter:
 
 
 
-    def get_transformed_var(self, var):
+    def get_transformed_var(self, var, keep_tex = False):
         if type(var) == type((0,)):
             var, foo = var
-        if var in self.settings and self.settings[var].has_key("label"):
+        if not keep_tex:
+            if var in self.settings and self.settings[var].has_key("label"):
+#            return self.settings[var]["label"].replace("\\\\", '\\')
 
-            return self.settings[var]["label"].replace("$" ,"").replace("\\\\" ,'\\')
+                return self.settings[var]["label"].replace("$" ,"").replace("\\\\" ,'\\')
+
+            else:
+                return var.replace("$" ,"").replace("_" ,"\_")
         else:
-            return var.replace("$" ,"").replace("_" ,"\_")
+            if var in self.settings and self.settings[var].has_key("label"):
+                return self.settings[var]["label"].replace("\\\\", '\\')
 
+            else:
+                return var.replace("_", "\_")
 
     def add_curves(self, local_df, curr_y_axis, subp, legend_prepend = ""):
         if len(self.coalesced_vars) > 0:
@@ -81,7 +89,7 @@ class SPGBasePlotter:
                                                                 "$%s = %s$" % (self.get_transformed_var(k), v)
                                                                 for (k, v) in zip(self.coalesced_vars, minimal_gr)
                                                                 ])
-                #            print local_legend,  "------>",minimal_legend
+                #print "------>",minimal_legend
                 if type(curr_y_axis) == type(""):
                     subp.scatter(minimal_df[[self.x_axis]], minimal_df[[curr_y_axis]],
                                  label=minimal_legend, marker=marker_it.next(), color=color_it.next(),
@@ -135,24 +143,45 @@ class SPGBasePlotter:
                 #        plt.title(local_title)
 
                 # sets-up axes
-                plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+                plt.xlabel(self.get_transformed_var(self.x_axis, keep_tex=True), self.axis_font)
 
-                plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+                plt.ylabel(self.get_transformed_var(curr_y_axis, keep_tex=True), self.axis_font)
 
                 curr_axes = plt.gca()
                 curr_axes.tick_params(labelsize=18)
+
+                yaxis_lim_set = False
+                yaxis_scale = "linear"
 
                 if self.settings.has_key(curr_y_axis):
                     # print self.settings[curr_y_axis],
                     if self.settings[curr_y_axis].has_key('lim'):
                         plt.ylim(self.settings[curr_y_axis]['lim'])
+                        yaxis_lim_set = True
                     if self.settings[curr_y_axis].has_key('scale'):
                         curr_axes.set_yscale(self.settings[curr_y_axis]['scale'])
+                        yaxis_scale = self.settings[curr_y_axis]['scale']
+
+
+                if not yaxis_lim_set:
+                    yseries = df_separated[[curr_y_axis]]
+                    if yaxis_scale == 'lin':
+                        rng = yseries.max()-yseries.min()
+                        yscale = yseries.min()-rng*0.05, yseries.max()+rng*0.05
+                    else:
+                        yscale = yseries[yseries > 0].min()*0.9, yseries[yseries > 0].max()*1.1
+
+                    curr_axes.set_yscale(yscale)
+
+
+
                 if self.settings.has_key(self.x_axis):
                     if self.settings[self.x_axis].has_key('lim'):
                         plt.xlim(self.settings[self.x_axis]['lim'])
                     if self.settings[self.x_axis].has_key('scale'):
                         curr_axes.set_xscale(self.settings[self.x_axis]['scale'])
+
+
                 # curr_axes.tight_layout()
                 plt.savefig(pp, format='pdf')
 
@@ -175,21 +204,24 @@ class SPGBasePlotter:
                                             for (k, v) in zip(self.separated_vars, local_gr)
                                             ])
                 # print local_title
+
                 for curr_y_axis in self.y_axis:
                     # print curr_y_axis,
                     # creates figure
                     curr_fig = plt.figure()
                     # adds all curves
-                    self.add_curves(local_df, curr_y_axis, plt.gca(), legend_prepend=self.get_transformed_var(curr_y_axis))
+                    self.add_curves(local_df, curr_y_axis, plt.gca())
+                                    #, legend_prepend=self.get_transformed_var(curr_y_axis))
                     plt.legend()
 
                     # sets-up title
                     plt.title(local_title)
 
                     # sets-up axes
-                    plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
 
-                    plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+                    plt.xlabel( self.get_transformed_var(self.x_axis, keep_tex=True), self.axis_font)
+
+                    plt.ylabel( self.get_transformed_var(curr_y_axis, keep_tex=True), self.axis_font)
 
                     curr_axes = plt.gca()
                     curr_axes.tick_params(labelsize=18)
@@ -334,15 +366,17 @@ class SPGBasePlotter:
                 plt.title(local_title)
 
                 # sets-up axes
-                plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
 
-                plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+                plt.xlabel(self.get_transformed_var(self.x_axis, keep_tex=True), self.axis_font)
+
+
+                plt.ylabel(self.get_transformed_var(curr_y_axis, keep_tex=True), self.axis_font)
 
                 curr_axes = plt.gca()
                 curr_axes.tick_params(labelsize=18)
 
                 if self.settings.has_key(curr_y_axis):
-                    print self.settings
+                    #print self.settings
                     if self.settings[curr_y_axis].has_key('lim'):
                         plt.ylim(self.settings[curr_y_axis]['lim'])
                     if self.settings[curr_y_axis].has_key('scale'):
