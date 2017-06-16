@@ -8,22 +8,87 @@ from tools import *
 from check_params import *
 
 from ConfigParser import ConfigParser
-import os.path 
+import os.path, sys
 
 
-def load_config(config_name, key):
-    ret  = {}
-    for l in open(config_name):
-        l = l.strip()
-        if len(l) == 0: continue
-        if l[0] == "#": continue
-        v = l.split(":")
-        for kp in v[1:]:
-            kpv = kp.split("=")
-            if kpv[ 0 ].strip() == key:
-                ret[ v[0] ] =  kpv[ 1 ].strip()
-    return ret
-    
+class SPGSettings(dict):
+    # :::~ class that allows to take the values as items
+
+    # :::~ http://stackoverflow.com/questions/1325673/python-how-to-add-property-to-a-class-dynamically
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+    def __str__(self):
+        ret = ":\n"
+        for k in self.keys():
+            ret += "%s = %s\n" % (k, self[k])
+        return ret
+
+#
+# def load_config(config_name, key):
+#     ret  = SPGParameters()
+#     for l in open(config_name):
+#         l = l.strip()
+#         if len(l) == 0: continue
+#         if l[0] == "#": continue
+#         v = l.split(":")
+#         for kp in v[1:]:
+#             kpv = kp.split("=")
+#             if kpv[ 0 ].strip() == key:
+#                 ret[ v[0] ] =  kpv[ 1 ].strip()
+#     return ret
+
+def load_configuration(config_filename, filter_keys = None):
+    """
+    keysColumns = ["type","label","help","scale","repeat", "lim"]
+    the structure of the columns in the files are as follows:
+    name of the variable, and a colon separated list of -optional- options
+    type:  of the plot if xy, one column is used, xydy two columns are used
+    label: to be used in the plotting script
+    scale: comma separated list of minimum and maximum values
+    repeat: how many columns are to be taken by the parser
+    help: a string containing an explanation of the variable"""
+
+#    possible_keys = set(["type", "label", "help", "scale", "repeat", "datatype", "lim"])
+    ret = SPGSettings()
+#    print config_filename
+
+    try:
+        cfg_file = open(config_filename)
+    except:
+        cfg_file = open("%s/%s" % (CONFIG_DIR, config_filename ) )
+
+    sorted_cols = []
+    for line in cfg_file:
+        line = line.strip()
+
+        if len(line) == 0: continue
+        if line[0] == "#": continue
+
+        l = [i.strip() for i in line.split(":")]
+        name = l.pop(0)
+
+        sorted_cols.append(name)
+        values = SPGSettings()  # {"type":"xy","datatype":"float"}
+
+        for o in l:
+            # print o, l
+            [k, val] = o.split("=")
+            k = k.strip()
+            val = val.strip()
+
+            if (filter_keys is not None) and (k not in filter_keys):
+                newline_msg("SYN", "in column '%s', unrecognised key '%s'" % (name, k))
+                sys.exit(1)
+            else:
+                values[k] = val
+
+        ret[name] = values
+
+    return ret, sorted_cols
+
+
 #
 #
 # def get_root_directory():
@@ -36,24 +101,6 @@ def load_config(config_name, key):
 #
 #     return os.path.expanduser(ret)
 #
-
-
-
-
-
-class Parameters(dict):
-    # :::~ class that allows to take the values as items
-     
-    # :::~ http://stackoverflow.com/questions/1325673/python-how-to-add-property-to-a-class-dynamically
-    __getattr__= dict.__getitem__
-    __setattr__= dict.__setitem__
-    __delattr__= dict.__delitem__
-            
-    def __str__(self):
-        ret = ""
-        for k in self.keys():
-            ret += "%s = %s\n"%(k,self[k])
-        return ret
 
 
 
@@ -80,7 +127,7 @@ def load_parameters(argv):
         possible_lines = import_backends("%s.ct"%(prog_name))
     except: 
         possible_lines = import_backends("%s/spg-conf/%s.ct"%(CONFIG_DIR,prog_name))
-    ret = Parameters()
+    ret = SPGSettings()
 
     for k in possible_lines.keys():
         (family, var_type, default)  = possible_lines[k]
