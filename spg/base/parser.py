@@ -98,14 +98,17 @@ class MultIteratorParser(iterator.MultIterator):
 
             if (symbol == '<'):
                 ls_files = []
-                for rgx in ls_files:
+                for rgx in rest[1:]:
                     base_path, rx = os.path.split(rgx)
                     if base_path == "":
                         base_path == "."
-                    ls_files.extend( fnmatch.filter(os.listdir(base_path), rx) )
+                    ls_files.extend(
+                      [  "%s/%s"%(base_path,i) for i in  fnmatch.filter(os.listdir(base_path), rx) ]
+                    )
+                print ls_files
 
 
-                self.add( iterator.Iterator(rest[0], rest[1:]))
+                self.add( iterator.Iterator(rest[0], ls_files))
 
             if (symbol == ':'):
               self.add( iterator.IterConstant( name = rest[0], data = rest[1:] )  )

@@ -303,8 +303,8 @@ class SPGDBCommandLine(BaseSPGCommandLine):
             return
 
         if "purge" in flags:
-            self.do_deregister(db_arg)
             try:
+                self.do_deregister(db_arg)
                 os.remove(full_db_name)
             except:
                 utils.newline_msg("WRN", "database '%s' could not be removed... skipping" % full_db_name)

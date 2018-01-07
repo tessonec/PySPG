@@ -14,6 +14,8 @@ import matplotlib.lines as mlines
 import matplotlib.backends.backend_pdf as mpl_b_pdf
 import itertools
 
+FIGSIZE = (9,6)
+
 class SPGBasePlotter:
 
     colors = ['black' ,'blue', 'green', 'red', 'yellow', 'brown', 'grey', 'violet']
@@ -134,7 +136,7 @@ class SPGBasePlotter:
             for curr_y_axis in self.y_axis:
                 # print curr_y_axis,
                 # creates figure
-                curr_fig = plt.figure()
+                curr_fig = plt.figure(figsize=FIGSIZE)
                 # adds all curves
                 self.add_curves(df_separated, curr_y_axis, plt.gca())
                 plt.legend()
@@ -208,7 +210,7 @@ class SPGBasePlotter:
                 for curr_y_axis in self.y_axis:
                     # print curr_y_axis,
                     # creates figure
-                    curr_fig = plt.figure()
+                    curr_fig = plt.figure(figsize=FIGSIZE)
                     # adds all curves
                     self.add_curves(local_df, curr_y_axis, plt.gca())
                                     #, legend_prepend=self.get_transformed_var(curr_y_axis))
@@ -252,7 +254,7 @@ class SPGBasePlotter:
             for curr_y_axis in self.y_axis:
                 # print curr_y_axis,
                 # creates figure
-                curr_fig = plt.figure()
+                curr_fig = plt.figure(figsize=FIGSIZE)
                 # adds all curves
                 self.add_curves(df_separated, curr_y_axis, plt.gca())
                 plt.legend()
@@ -304,7 +306,7 @@ class SPGBasePlotter:
                 for curr_y_axis in self.y_axis:
                     # print curr_y_axis,
                     # creates figure
-                    curr_fig = plt.figure()
+                    curr_fig = plt.figure(figsize=FIGSIZE)
                     # adds all curves
                     self.add_curves(local_df, curr_y_axis, plt.gca())
                     plt.legend()
@@ -357,7 +359,7 @@ class SPGBasePlotter:
             for curr_y_axis in self.y_axis:
                 # print curr_y_axis,
                 # creates figure
-                curr_fig = plt.figure()
+                curr_fig = plt.figure(figsize=FIGSIZE)
                 # adds all curves
                 self.add_curves(local_df, local_gr, curr_y_axis, curr_fig)
                 plt.legend()
@@ -549,7 +551,7 @@ class SPGAbstractPlotter:
             for curr_y_axis in self.y_axis:
                 print curr_y_axis,
                 # creates figure
-                curr_fig = plt.figure()
+                curr_fig = plt.figure(figsize=FIGSIZE)
                 # adds all curves
                 self.add_curves(df_separated, curr_y_axis, plt.gca())
                 plt.legend()
@@ -601,7 +603,7 @@ class SPGAbstractPlotter:
                 for curr_y_axis in self.y_axis:
                     print curr_y_axis,
                     # creates figure
-                    curr_fig = plt.figure()
+                    curr_fig = plt.figure(figsize=FIGSIZE)
                     # adds all curves
                     self.add_curves(local_df, curr_y_axis, plt.gca(),
                                     legend_prepend=self.get_transformed_var(curr_y_axis))
@@ -644,7 +646,7 @@ class SPGAbstractPlotter:
             for curr_y_axis in self.y_axis:
                 print curr_y_axis,
                 # creates figure
-                curr_fig = plt.figure()
+                curr_fig = plt.figure(figsize=FIGSIZE)
                 # adds all curves
                 self.add_curves(df_separated, curr_y_axis, plt.gca())
                 plt.legend()
@@ -696,7 +698,7 @@ class SPGAbstractPlotter:
                 for curr_y_axis in self.y_axis:
                     print curr_y_axis,
                     # creates figure
-                    curr_fig = plt.figure()
+                    curr_fig = plt.figure(figsize=FIGSIZE)
                     # adds all curves
                     self.add_curves(local_df, curr_y_axis, plt.gca())
                     plt.legend()
@@ -749,7 +751,7 @@ class SPGAbstractPlotter:
             for curr_y_axis in self.y_axis:
                 print curr_y_axis,
                 # creates figure
-                curr_fig = plt.figure()
+                curr_fig = plt.figure(figsize=FIGSIZE)
                 # adds all curves
                 self.add_curves(local_df, local_gr, curr_y_axis, curr_fig)
                 plt.legend()

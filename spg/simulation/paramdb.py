@@ -45,6 +45,7 @@ class MultIteratorDBBuilder(MultIteratorParser):
         sim_name = "%s/%s.spg"%(self.path, self.base_name)
 
         MultIteratorParser.__init__(self, open(sim_name) )
+        print self.data
         # self.path, foo = os.path.split( os.path.abspath(db_name) )
         # self.base_name, foo = os.path.splitext( foo )
     #    print  check_params.consistency(self.command, self)
