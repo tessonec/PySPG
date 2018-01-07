@@ -105,7 +105,7 @@ class MultIteratorParser(iterator.MultIterator):
                     ls_files.extend(
                       [  "%s/%s"%(base_path,i) for i in  fnmatch.filter(os.listdir(base_path), rx) ]
                     )
-                print ls_files
+#                print ls_files
 
 
                 self.add( iterator.Iterator(rest[0], ls_files))
