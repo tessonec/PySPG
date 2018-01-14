@@ -211,7 +211,7 @@ class SPGDBCommandLine(BaseSPGCommandLine):
     #     # return None
     #
 
-    def get_flags_and_db(self, c):
+    def get_flags_and_db(self, c,init_db = True):
 
         flags, args =  self.parse_command_line(c)
         # if len(args)== 1:
@@ -240,7 +240,7 @@ class SPGDBCommandLine(BaseSPGCommandLine):
                     utils.newline_msg("ERR", "database with name '%s' doesn't exist." % utils.shorten_name(db_name))
                     return flags, args.append(db_name), None
 
-        return flags, args, self.EnsembleConstructor(db_name, init_db=True)
+        return flags, args, self.EnsembleConstructor(db_name, init_db)
 
 
     def do_ls(self, c):
@@ -388,7 +388,7 @@ class SPGDBCommandLine(BaseSPGCommandLine):
            deregisters a simulation file simulations. Does not remove them from disk except --purge is used
            FLAGS::: --purge:         deletes the spgql database, if it already exists"""
 
-        flags, cmds, ensemble = self.get_flags_and_db(c)
+        flags, cmds, ensemble = self.get_flags_and_db(c,init_db=False)
         if ensemble is None:
             # utils.newline_msg("ERR", "no database supplied nor currently set... skipping")
             return
