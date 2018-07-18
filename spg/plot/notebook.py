@@ -544,6 +544,8 @@ class SPGInteractivePlotter:
             if self.select_yscale.value:  # it is not log
                 ydata = ydata[ydata > 1e-9]
 
+#            print ydata
+
             ymin, ymax = 0.9*np.min(ydata), 1.1*np.max(ydata)
             if self.select_xscale.value:  # it is not log
                 xdata = xdata[xdata > 1e-9]
