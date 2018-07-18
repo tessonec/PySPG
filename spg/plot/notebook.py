@@ -543,10 +543,11 @@ class SPGInteractivePlotter:
             xdata = self.data[self.independent_var]
             if self.select_yscale.value:  # it is not log
                 ydata = ydata[ydata > 1e-9]
-            ymin, ymax = 0.9*min(ydata), 1.1*max(ydata)
+
+            ymin, ymax = 0.9*np.min(ydata), 1.1*np.max(ydata)
             if self.select_xscale.value:  # it is not log
                 xdata = xdata[xdata > 1e-9]
-            xmin, xmax = 0.9*min(xdata), 1.1*max(xdata)
+            xmin, xmax = 0.9*np.min(xdata), 1.1*np.max(xdata)
 
             self.axis.set_xscale(self.xscale)
             self.axis.set_yscale(self.yscale)

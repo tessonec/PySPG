@@ -18,36 +18,46 @@ FIGSIZE = (9,6)
 
 class SPGBasePlotter:
 
-    colors = ['black' ,'blue', 'green', 'red', 'yellow', 'brown', 'grey', 'violet']
+    colors = ['orange' ,'blue', 'green', 'red', 'yellow', 'brown', 'grey', 'violet']
     markers  = mlines.Line2D.filled_markers
     # markers = [r'$\bigcirc$',r'$\bigtriangleup$',r'$\bigtriangledown$',r'$\diamondsuit$',r'$\maltese$',r'$\star$']
 
-    font = {'family' : 'serif',
-            'color'  : 'black',
-            'weight' : 'normal',
-            'size'   : 22,
-            }
-
-
-    axis_font = {'family' : 'serif',
-                 'color'  : 'black',
-                 'weight' : 'normal',
-                 'size'   : 22,
-                 }
-
-
 
     def __init__(self, table_name):
+        mpl.rcParams['figure.figsize'] = (9,6)
 
 
-        mpl.rcParams['lines.linewidth'] = 2
-        mpl.rcParams['font.family'] = 'serif'
-        mpl.rcParams['font.serif'] = 'Times, Palatino, New Century Schoolbook, Bookman, Computer Modern Roman'
-        mpl.rcParams['font.sans-serif'] = 'Helvetica, Avant Garde, Computer Modern Sans serif'
+        mpl.rcParams['axes.linewidth'] = 2
+        mpl.rcParams['font.family'] = 'sans-serif'
+        mpl.rcParams['font.serif'] = ['Computer Modern Roman', 'Times', 'Palatino']
+        mpl.rcParams['font.sans-serif'] = ['cm', 'Computer Modern Sans Serif', 'Helvetica']
         mpl.rcParams['font.cursive'] = 'Zapf Chancery'
         mpl.rcParams['font.monospace'] = 'Courier, Computer Modern Typewriter'
-        mpl.rcParams['text.usetex'] = True
-        mpl.rcParams['figure.autolayout'] = True
+        mpl.rcParams['text.usetex'] = 'true'
+
+        mpl.rcParams['text.latex.preamble'] = [r'\usepackage[cm]{sfmath}']
+
+        mpl.rcParams['axes.labelsize'] = 24
+        mpl.rcParams['legend.fontsize'] = 20
+        mpl.rcParams['xtick.labelsize'] = 18
+        mpl.rcParams['ytick.labelsize'] = 18
+
+        mpl.rcParams['xtick.direction'] = 'in'
+        mpl.rcParams['xtick.top'] = True
+        mpl.rcParams['xtick.bottom'] = True
+        mpl.rcParams['xtick.major.size'] = 6
+        mpl.rcParams['xtick.minor.size'] = 4
+        mpl.rcParams['xtick.major.width'] = 1.5
+        mpl.rcParams['xtick.minor.width'] = 1
+
+        mpl.rcParams['ytick.direction'] = 'in'
+        mpl.rcParams['ytick.left'] = True
+        mpl.rcParams['ytick.right'] = True
+        mpl.rcParams['ytick.major.size'] = 6
+        mpl.rcParams['ytick.minor.size'] = 4
+        mpl.rcParams['ytick.major.width'] = 1.5
+        mpl.rcParams['ytick.minor.width'] = 1
+
         # mpl.rcParams['text.latex', preamble=r'\usepackage{cmbright}')
         self.column_names = open(table_name).readline().split() # column_names
 
@@ -136,7 +146,9 @@ class SPGBasePlotter:
             for curr_y_axis in self.y_axis:
                 # print curr_y_axis,
                 # creates figure
-                curr_fig = plt.figure(figsize=FIGSIZE)
+                #curr_fig = plt.figure(figsize=FIGSIZE)
+                plt.clf()
+
                 # adds all curves
                 self.add_curves(df_separated, curr_y_axis, plt.gca())
                 plt.legend()
@@ -145,9 +157,9 @@ class SPGBasePlotter:
                 #        plt.title(local_title)
 
                 # sets-up axes
-                plt.xlabel(self.get_transformed_var(self.x_axis, keep_tex=True), self.axis_font)
+                plt.xlabel(self.get_transformed_var(self.x_axis, keep_tex=True))
 
-                plt.ylabel(self.get_transformed_var(curr_y_axis, keep_tex=True), self.axis_font)
+                plt.ylabel(self.get_transformed_var(curr_y_axis, keep_tex=True))
 
                 curr_axes = plt.gca()
                 curr_axes.tick_params(labelsize=18)
@@ -184,8 +196,9 @@ class SPGBasePlotter:
                         curr_axes.set_xscale(self.settings[self.x_axis]['scale'])
 
 
-                # curr_axes.tight_layout()
+                plt.tight_layout()
                 plt.savefig(pp, format='pdf')
+                plt.clf()
 
 
 
@@ -210,7 +223,8 @@ class SPGBasePlotter:
                 for curr_y_axis in self.y_axis:
                     # print curr_y_axis,
                     # creates figure
-                    curr_fig = plt.figure(figsize=FIGSIZE)
+                    # curr_fig = plt.figure(figsize=FIGSIZE)
+                    plt.clf()
                     # adds all curves
                     self.add_curves(local_df, curr_y_axis, plt.gca())
                                     #, legend_prepend=self.get_transformed_var(curr_y_axis))
@@ -221,9 +235,9 @@ class SPGBasePlotter:
 
                     # sets-up axes
 
-                    plt.xlabel( self.get_transformed_var(self.x_axis, keep_tex=True), self.axis_font)
+                    plt.xlabel( self.get_transformed_var(self.x_axis, keep_tex=True))
 
-                    plt.ylabel( self.get_transformed_var(curr_y_axis, keep_tex=True), self.axis_font)
+                    plt.ylabel( self.get_transformed_var(curr_y_axis, keep_tex=True))
 
                     curr_axes = plt.gca()
                     curr_axes.tick_params(labelsize=18)
@@ -242,6 +256,7 @@ class SPGBasePlotter:
                     plt.savefig(pp, format='pdf')
                     # print
                     plt.tight_layout()
+                    plt.clf()
 
         pp.close()
 
@@ -254,7 +269,8 @@ class SPGBasePlotter:
             for curr_y_axis in self.y_axis:
                 # print curr_y_axis,
                 # creates figure
-                curr_fig = plt.figure(figsize=FIGSIZE)
+                #curr_fig = plt.figure(figsize=FIGSIZE)
+                plt.clf()
                 # adds all curves
                 self.add_curves(df_separated, curr_y_axis, plt.gca())
                 plt.legend()
@@ -263,9 +279,9 @@ class SPGBasePlotter:
                 #        plt.title(local_title)
 
                 # sets-up axes
-                plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+                plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis))
 
-                plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+                plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis))
 
             curr_axes = plt.gca()
             curr_axes.tick_params(labelsize=18)
@@ -306,7 +322,8 @@ class SPGBasePlotter:
                 for curr_y_axis in self.y_axis:
                     # print curr_y_axis,
                     # creates figure
-                    curr_fig = plt.figure(figsize=FIGSIZE)
+                    #curr_fig = plt.figure(figsize=FIGSIZE)
+                    plt.clf()
                     # adds all curves
                     self.add_curves(local_df, curr_y_axis, plt.gca())
                     plt.legend()
@@ -315,9 +332,9 @@ class SPGBasePlotter:
                     plt.title(local_title)
 
                     # sets-up axes
-                    plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+                    plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis))
 
-                    plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+                    plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis))
 
                     curr_axes = plt.gca()
                     curr_axes.tick_params(labelsize=18)
@@ -359,7 +376,8 @@ class SPGBasePlotter:
             for curr_y_axis in self.y_axis:
                 # print curr_y_axis,
                 # creates figure
-                curr_fig = plt.figure(figsize=FIGSIZE)
+                plt.clf()
+                #curr_fig = plt.figure(figsize=FIGSIZE)
                 # adds all curves
                 self.add_curves(local_df, local_gr, curr_y_axis, curr_fig)
                 plt.legend()
@@ -369,10 +387,10 @@ class SPGBasePlotter:
 
                 # sets-up axes
 
-                plt.xlabel(self.get_transformed_var(self.x_axis, keep_tex=True), self.axis_font)
+                plt.xlabel(self.get_transformed_var(self.x_axis, keep_tex=True))
 
 
-                plt.ylabel(self.get_transformed_var(curr_y_axis, keep_tex=True), self.axis_font)
+                plt.ylabel(self.get_transformed_var(curr_y_axis, keep_tex=True))
 
                 curr_axes = plt.gca()
                 curr_axes.tick_params(labelsize=18)
@@ -435,9 +453,9 @@ class SPGBaseSubPlotter(SPGBasePlotter):
 
                         # sets-up axes
                     if irow == len(curr_page) - 1:
-                        subp.set_xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+                        subp.set_xlabel("$%s$" % self.get_transformed_var(self.x_axis))
 
-                    subp.set_ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+                    subp.set_ylabel("$%s$" % self.get_transformed_var(curr_y_axis))
 
                     subp.tick_params(labelsize=18)
 
@@ -551,7 +569,8 @@ class SPGAbstractPlotter:
             for curr_y_axis in self.y_axis:
                 print curr_y_axis,
                 # creates figure
-                curr_fig = plt.figure(figsize=FIGSIZE)
+                plt.clf()
+                #curr_fig = plt.figure(figsize=FIGSIZE)
                 # adds all curves
                 self.add_curves(df_separated, curr_y_axis, plt.gca())
                 plt.legend()
@@ -560,9 +579,9 @@ class SPGAbstractPlotter:
                 #        plt.title(local_title)
 
                 # sets-up axes
-                plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+                plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis))
 
-                plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+                plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis))
 
                 curr_axes = plt.gca()
                 curr_axes.tick_params(labelsize=18)
@@ -603,7 +622,8 @@ class SPGAbstractPlotter:
                 for curr_y_axis in self.y_axis:
                     print curr_y_axis,
                     # creates figure
-                    curr_fig = plt.figure(figsize=FIGSIZE)
+                    plt.clf()
+                    #curr_fig = plt.figure(figsize=FIGSIZE)
                     # adds all curves
                     self.add_curves(local_df, curr_y_axis, plt.gca(),
                                     legend_prepend=self.get_transformed_var(curr_y_axis))
@@ -613,9 +633,9 @@ class SPGAbstractPlotter:
                     plt.title(local_title)
 
                     # sets-up axes
-                    plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+                    plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis))
 
-                    plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+                    plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis))
 
                     curr_axes = plt.gca()
                     curr_axes.tick_params(labelsize=18)
@@ -646,7 +666,8 @@ class SPGAbstractPlotter:
             for curr_y_axis in self.y_axis:
                 print curr_y_axis,
                 # creates figure
-                curr_fig = plt.figure(figsize=FIGSIZE)
+                #curr_fig = plt.figure(figsize=FIGSIZE)
+                plt.clf()
                 # adds all curves
                 self.add_curves(df_separated, curr_y_axis, plt.gca())
                 plt.legend()
@@ -655,9 +676,9 @@ class SPGAbstractPlotter:
                 #        plt.title(local_title)
 
                 # sets-up axes
-                plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+                plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis))
 
-                plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+                plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis))
 
             curr_axes = plt.gca()
             curr_axes.tick_params(labelsize=18)
@@ -698,7 +719,8 @@ class SPGAbstractPlotter:
                 for curr_y_axis in self.y_axis:
                     print curr_y_axis,
                     # creates figure
-                    curr_fig = plt.figure(figsize=FIGSIZE)
+                    #curr_fig = plt.figure(figsize=FIGSIZE)
+                    plt.clf()
                     # adds all curves
                     self.add_curves(local_df, curr_y_axis, plt.gca())
                     plt.legend()
@@ -707,9 +729,9 @@ class SPGAbstractPlotter:
                     plt.title(local_title)
 
                     # sets-up axes
-                    plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+                    plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis))
 
-                    plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+                    plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis))
 
                     curr_axes = plt.gca()
                     curr_axes.tick_params(labelsize=18)
@@ -751,7 +773,8 @@ class SPGAbstractPlotter:
             for curr_y_axis in self.y_axis:
                 print curr_y_axis,
                 # creates figure
-                curr_fig = plt.figure(figsize=FIGSIZE)
+                #curr_fig = plt.figure(figsize=FIGSIZE)
+                plt.clf()
                 # adds all curves
                 self.add_curves(local_df, local_gr, curr_y_axis, curr_fig)
                 plt.legend()
@@ -760,9 +783,9 @@ class SPGAbstractPlotter:
                 plt.title(local_title)
 
                 # sets-up axes
-                plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis), self.axis_font)
+                plt.xlabel("$%s$" % self.get_transformed_var(self.x_axis))
 
-                plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis), self.axis_font)
+                plt.ylabel("$%s$" % self.get_transformed_var(curr_y_axis))
 
                 curr_axes = plt.gca()
                 curr_axes.tick_params(labelsize=18)
