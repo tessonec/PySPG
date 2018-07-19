@@ -16,47 +16,54 @@ import itertools
 
 FIGSIZE = (9,6)
 
+
+def init_mpl():
+    mpl.rcParams['lines.linewidth'] = 2
+    mpl.rcParams['axes.linewidth'] = 2
+    mpl.rcParams['font.family'] = 'sans-serif'
+    mpl.rcParams['font.serif'] = ['Computer Modern Roman', 'Times', 'Palatino']
+    mpl.rcParams['font.sans-serif'] = ['cm', 'Computer Modern Sans Serif', 'Helvetica']
+    mpl.rcParams['font.cursive'] = 'Zapf Chancery'
+    mpl.rcParams['font.monospace'] = 'Courier, Computer Modern Typewriter'
+    mpl.rcParams['text.usetex'] = 'true'
+
+    mpl.rcParams['text.latex.preamble'] = [r'\usepackage[cm]{sfmath}']
+
+    mpl.rcParams['axes.labelsize'] = 24
+    mpl.rcParams['legend.fontsize'] = 20
+    mpl.rcParams['xtick.labelsize'] = 18
+    mpl.rcParams['ytick.labelsize'] = 18
+
+    mpl.rcParams['xtick.direction'] = 'in'
+    mpl.rcParams['xtick.top'] = True
+    mpl.rcParams['xtick.bottom'] = True
+    mpl.rcParams['xtick.major.size'] = 6
+    mpl.rcParams['xtick.minor.size'] = 4
+    mpl.rcParams['xtick.major.width'] = 1.5
+    mpl.rcParams['xtick.minor.width'] = 1
+
+    mpl.rcParams['ytick.direction'] = 'in'
+    mpl.rcParams['ytick.left'] = True
+    mpl.rcParams['ytick.right'] = True
+    mpl.rcParams['ytick.major.size'] = 6
+    mpl.rcParams['ytick.minor.size'] = 4
+    mpl.rcParams['ytick.major.width'] = 1.5
+    mpl.rcParams['ytick.minor.width'] = 1
+
+
 class SPGBasePlotter:
 
     colors = ['orange' ,'blue', 'green', 'red', 'yellow', 'brown', 'grey', 'violet']
     markers  = mlines.Line2D.filled_markers
+
     # markers = [r'$\bigcirc$',r'$\bigtriangleup$',r'$\bigtriangledown$',r'$\diamondsuit$',r'$\maltese$',r'$\star$']
 
 
     def __init__(self, table_name):
         mpl.rcParams['figure.figsize'] = (9,6)
 
+        init_mpl()
 
-        mpl.rcParams['axes.linewidth'] = 2
-        mpl.rcParams['font.family'] = 'sans-serif'
-        mpl.rcParams['font.serif'] = ['Computer Modern Roman', 'Times', 'Palatino']
-        mpl.rcParams['font.sans-serif'] = ['cm', 'Computer Modern Sans Serif', 'Helvetica']
-        mpl.rcParams['font.cursive'] = 'Zapf Chancery'
-        mpl.rcParams['font.monospace'] = 'Courier, Computer Modern Typewriter'
-        mpl.rcParams['text.usetex'] = 'true'
-
-        mpl.rcParams['text.latex.preamble'] = [r'\usepackage[cm]{sfmath}']
-
-        mpl.rcParams['axes.labelsize'] = 24
-        mpl.rcParams['legend.fontsize'] = 20
-        mpl.rcParams['xtick.labelsize'] = 18
-        mpl.rcParams['ytick.labelsize'] = 18
-
-        mpl.rcParams['xtick.direction'] = 'in'
-        mpl.rcParams['xtick.top'] = True
-        mpl.rcParams['xtick.bottom'] = True
-        mpl.rcParams['xtick.major.size'] = 6
-        mpl.rcParams['xtick.minor.size'] = 4
-        mpl.rcParams['xtick.major.width'] = 1.5
-        mpl.rcParams['xtick.minor.width'] = 1
-
-        mpl.rcParams['ytick.direction'] = 'in'
-        mpl.rcParams['ytick.left'] = True
-        mpl.rcParams['ytick.right'] = True
-        mpl.rcParams['ytick.major.size'] = 6
-        mpl.rcParams['ytick.minor.size'] = 4
-        mpl.rcParams['ytick.major.width'] = 1.5
-        mpl.rcParams['ytick.minor.width'] = 1
 
         # mpl.rcParams['text.latex', preamble=r'\usepackage{cmbright}')
         self.column_names = open(table_name).readline().split() # column_names
@@ -479,40 +486,10 @@ class SPGBaseSubPlotter(SPGBasePlotter):
 class SPGAbstractPlotter:
     colors = ['black', 'blue', 'green', 'red', 'yellow', 'brown', 'grey', 'violet']
     markers = mlines.Line2D.filled_markers
-    # markers = [r'$\bigcirc$',r'$\bigtriangleup$',r'$\bigtriangledown$',r'$\diamondsuit$',r'$\maltese$',r'$\star$']
 
-    mpl_params = {
 
-        'lines.linewidth': 2,
-        'font.family': 'serif',
-        'font.serif': 'Computer Modern Roman, Times, Palatino, New Century Schoolbook, Bookman',
-        'font.sans-serif': 'Computer Modern Sans serif, Helvetica, Avant Garde',
-        'font.color': 'black',
-        'font.weight': 'normal',
-        'font.cursive': 'Zapf Chancery',
-        'font.monospace': 'Computer Modern Typewriter, Courier',
-        'text.usetex': True,
-        'axes.titlesize': 32,  # fontsize of the axes title
-        'axes.labelsize': 26
-    # fontsize of the x any y labels# axes.titlesize      : large   # fontsize of the axes title
-
-    }
-
-    # font = {'family': 'serif',
-    #         'color': 'black',
-    #         'weight': 'normal',
-    #         'size': 32,
-    #         }
-    #
-    # axis_font = {'family': 'serif',
-    #              'color': 'black',
-    #              'weight': 'normal',
-    #              'size': 26,
-    #              }
-    #
     def __init__(self, table_name):
-
-        mpl.rcParams.update(self.mpl_params)
+        init_mpl()
 
         self.df = pd.read_csv(table_name)
 

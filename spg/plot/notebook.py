@@ -451,7 +451,7 @@ class SPGInteractivePlotter:
 
             box = self.axis.get_position()
             self.axis.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-            self.axis.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+            self.axis.legend(loc='upper right' ) #, bbox_to_anchor=(1, 0.5))
 
             self.__recalculate_lims()
 
@@ -460,27 +460,10 @@ class SPGInteractivePlotter:
         def savefig(self, filename, draw_legend = True):
             mpl_rcParams = mpl.rcParams.copy()
 
-            mpl.rcParams['lines.linewidth'] = 2
-            mpl.rcParams['font.family'] = 'serif'
-            mpl.rcParams['font.serif'] = 'Times, Palatino, New Century Schoolbook, Bookman, Computer Modern Roman'
-            mpl.rcParams['font.sans-serif'] = 'Helvetica, Avant Garde, Computer Modern Sans serif'
-            mpl.rcParams['font.cursive'] = 'Zapf Chancery'
-            mpl.rcParams['font.monospace'] = 'Courier, Computer Modern Typewriter'
-            mpl.rcParams['text.usetex'] = 'true'
+            spgp.init_mpl()
+            mpl.rcParams['text.usetex'] = 'True'
 
-            font = {'family': 'serif',
-                    'color': 'black',
-                    'weight': 'normal',
-                    'size': 36,
-                    }
-
-            axis_font = {'family': 'serif',
-                         'color': 'black',
-                         'weight': 'normal',
-                         'size': 32,
-                         }
-
-            fig_out, axis_out = plt.subplots(1, 1, figsize=(12, 6))
+            fig_out, axis_out = plt.subplots(1, 1, figsize=(8, 4))
 
             color_it = itertools.cycle(self.colors)
             marker_it = itertools.cycle(self.markers)
@@ -497,7 +480,7 @@ class SPGInteractivePlotter:
            #     print label_str
 
             self.__recalculate_lims(axis_out)
-            axis_out.tick_params(labelsize=axis_font["size"] - 6)
+            axis_out.tick_params()
 
             if self.settings[self.independent_var].has_key("label"):
                 xlabel = self.settings[self.independent_var]["label"]
@@ -511,8 +494,8 @@ class SPGInteractivePlotter:
 
             # print xlabel, ylabel
 
-            axis_out.set_xlabel(xlabel, axis_font)
-            axis_out.set_ylabel(ylabel, axis_font)
+            axis_out.set_xlabel(xlabel)
+            axis_out.set_ylabel(ylabel)
 
 
             axis_out.set_xscale(self.xscale)
@@ -524,7 +507,7 @@ class SPGInteractivePlotter:
             title = ", ".join([" %s=%s" % i for i in zip(self.separated_vars, self.separated_values)])
             title = title.replace("_", " ")
 
-            axis_out.set_title(title, axis_font)
+            axis_out.set_title(title)
 
             box = axis_out.get_position()
             axis_out.set_position([box.x0, box.y0, box.width * 0.8, box.height])
@@ -651,7 +634,7 @@ class SPGInteractiveScalingPlotter:
             ])
         )
 
-        self.figure, self.axis = plt.subplots(1, 1, figsize=(12, 6))
+        self.figure, self.axis = plt.subplots(1, 1, figsize=(8, 4))
 
         self.transform_data()
         self.draw()
@@ -780,27 +763,8 @@ class SPGInteractiveScalingPlotter:
 
 
     def savefig(self, filename, xlabel, ylabel, draw_legend = True):
-        mpl_rcParams = mpl.rcParams.copy()
 
-        mpl.rcParams['lines.linewidth'] = 2
-        mpl.rcParams['font.family'] = 'serif'
-        mpl.rcParams['font.serif'] = 'Times, Palatino, New Century Schoolbook, Bookman, Computer Modern Roman'
-        mpl.rcParams['font.sans-serif'] = 'Helvetica, Avant Garde, Computer Modern Sans serif'
-        mpl.rcParams['font.cursive'] = 'Zapf Chancery'
-        mpl.rcParams['font.monospace'] = 'Courier, Computer Modern Typewriter'
-        mpl.rcParams['text.usetex'] = 'true'
-
-        font = {'family': 'serif',
-                'color': 'black',
-                'weight': 'normal',
-                'size': 36,
-                }
-
-        axis_font = {'family': 'serif',
-                     'color': 'black',
-                     'weight': 'normal',
-                     'size': 32,
-                     }
+#        spgp.init_mpl()
 
         fig_out, axis_out = plt.subplots(1, 1, figsize=(12, 6))
 
@@ -819,17 +783,17 @@ class SPGInteractiveScalingPlotter:
                            label=label_str.replace("_"," "))
 
         self.__recalculate_lims(axis_out)
-        axis_out.tick_params(labelsize=axis_font["size"] - 6)
+#        axis_out.tick_params(labelsize=axis_font["size"] - 6)
 
-        axis_out.set_xlabel(xlabel,axis_font)
-        axis_out.set_ylabel(ylabel,axis_font)
+        axis_out.set_xlabel(xlabel)
+        axis_out.set_ylabel(ylabel)
 
         axis_out.set_xscale(self.xscale)
         axis_out.set_yscale(self.yscale)
         title = ", ".join([" %s=%s" % i for i in zip(self.separated_vars, self.separated_values)])
         title = title.replace("_", " ")
 
-        axis_out.set_title(title, axis_font )
+        axis_out.set_title(title)
 
         box = axis_out.get_position()
         axis_out.set_position([box.x0, box.y0, box.width * 0.8, box.height])
@@ -840,8 +804,6 @@ class SPGInteractiveScalingPlotter:
         fig_out.savefig( filename,  bbox_inches='tight',
                transparent=True,
                pad_inches=0 )
-
-        mpl.rcParams = mpl_rcParams
 
 
     def __recalculate_lims(self, axis_out = None):
