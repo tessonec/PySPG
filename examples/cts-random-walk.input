@@ -1,0 +1,7 @@
+model:type=str:default=["UNBIASED","BIASED","MODEL2"]:help=model type
+D:type=float:default=1.0:help=diffusion coefficient
+drift:type=float:default=0.0:help=drift coefficient
+Q:type=float:default=0.0:help=multiplicative diffusion coefficient
+filter_timesteps:type=int:default=0:help=filtering time equalts this times ts
+simulation_timesteps:type=int:default=200:help=number of timesteps in the simulation
+output_file:type=str:default="output.dat":help=a file name

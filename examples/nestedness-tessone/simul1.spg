@@ -1,0 +1,6 @@
+@execute fill-nestedness-measurement.py
+:simulation_timesteps 100
+:model BIASED
+.drift 0 1
+*Q 0.1 1 2
++D 0 10 0.5
