@@ -41,10 +41,15 @@ def import_backends(infile):
             output.append(line)
     ret = {}
     for l in output:
+        l0 = l
         l = l.split(":")
         # print(l)
-        d = { k.strip():v.strip() for k,v in [_.split("=") for _ in l[1:] ] }
         var_name = l[0].strip()
+        try:
+            d = { k.strip():v.strip() for k,v in [_.split("=") for _ in l[1:] if len(_) > 0] }
+        except:
+            newline_msg("ERR", "while parsing variable '%s' information: '%s'" % (var_name, l0))
+            sys.exit(1)
 
         var_type = d['type']
 

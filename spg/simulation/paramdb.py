@@ -63,11 +63,10 @@ class MultIteratorDBBuilder(MultIteratorParser):
         # :::~ if expected_value is None, 
         
         self.cursor.execute( "SELECT value FROM information WHERE key = ?", (key,) )
-        prev_val = self.cursor.fetchone()
+        prev_val, = self.cursor.fetchone()
 
         if prev_val and expected_value is not None:
-            if prev_val[0] != expected_value:
-                
+            if str(prev_val) != str(expected_value):
                 raise SPGConflictingValue(key, prev_val, expected_value)
         else:
             self.cursor.execute("INSERT INTO information (key,value) VALUES (?,?)",(key,expected_value))
@@ -101,8 +100,9 @@ class MultIteratorDBBuilder(MultIteratorParser):
                 self.cursor.execute( "INSERT INTO entities (name, varies) VALUES (?,?)",(i.name,  varies) )
         else:
             self.cursor.execute( "SELECT name FROM entities ")
-            entities = [i[0] for i in self.cursor]
+            entities = set( [i[0] for i in self.cursor] )
             s_names = set(self.names)
+            
             if entities != set(self.names):
                 utils.newline_msg("ERR", "parameter (was %s, is %s)"%(entities, s_names))
                 sys.exit(1)
