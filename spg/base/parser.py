@@ -108,6 +108,12 @@ class MultIteratorParser(iterator.MultIterator):
                     )
 #                print ls_files
 
+            if (symbol == '<'):  # Reads from a regexp
+                ls_files = []
+                for rgx in rest[1:]:
+                   with open(rgx, 'r' ) as fin:
+                       ls_files.extend( [ _.strip() for _ in fin.readlines() ] )
+
 
                 self.add( iterator.Iterator(rest[0], ls_files))
 
