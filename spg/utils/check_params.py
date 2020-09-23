@@ -42,7 +42,7 @@ def import_backends(infile):
     ret = {}
     for l in output:
         l = l.split(":")
-        print(l)
+        # print(l)
         d = { k.strip():v.strip() for k,v in [_.split("=") for _ in l[1:] ] }
         var_name = l[0].strip()
 

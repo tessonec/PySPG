@@ -58,8 +58,8 @@ class ParameterEnsemble:
 
     def execute_query(self, query, *args):
         self.__connect_db()
-        print(query)
-        print(*args)
+  #      print(query)
+  #      print(*args)
         ret = [i for i in self.cursor.execute(query, args)]
         self.__close_db()
         return ret 
@@ -267,7 +267,10 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
          file_stdout.close()
          file_stderr.close()
 
+
+
          self.output = [i.strip() for i in open(fname_stdout, "r")]
+         # print("OUT <<< ", self.output)
          self.stderr = [i.strip() for i in open(fname_stderr, "r")]
          if remove_files:
              os.remove(configuration_filename)
@@ -299,6 +302,7 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 
          for line in self.output:
              table_name, output_columns = self.parse_output_line(line)
+       #      print( line , table_name, output_columns )
              output_columns = [self.current_spg_uid, self.current_spg_vsid, self.current_spg_rep] + output_columns
 
              cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(self.table_columns[table_name]),
