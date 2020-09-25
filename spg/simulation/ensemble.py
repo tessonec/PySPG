@@ -302,14 +302,16 @@ class ParameterEnsembleExecutor(ParameterEnsemble):
 
          for line in self.output:
              table_name, output_columns = self.parse_output_line(line)
-       #      print( line , table_name, output_columns )
+ #            print( "DUMP", line , table_name, output_columns )
              output_columns = [self.current_spg_uid, self.current_spg_vsid, self.current_spg_rep] + output_columns
+ #            print(self.table_columns[table_name],["'%s'" % str(i) for i in output_columns])
 
              cc = 'INSERT INTO %s (%s) VALUES (%s) ' % (table_name, ", ".join(self.table_columns[table_name]),
                                                                    ", ".join(["'%s'" % str(i) for i in output_columns]))
 
-#             print cc
+#             print(cc)
 #
+ #            self.execute_query(cc)
              try:
                  self.execute_query(cc)
                  self.query_set_run_status("D", self.current_spg_uid, self.run_time)
@@ -596,6 +598,7 @@ class ResultsDBQuery(ParameterEnsemble):
             local_var_query = "%s, " % ",".join(["v.%s" % v for v in local_vars_in_table])
 
         if table_selector == "grouped_vars":
+
             output_columns_query = " %s" % ",".join(["AVG(r.%s)" % v for v in output_columns])
         else:
             output_columns_query = " %s" % ",".join(["r.%s" % v for v in output_columns])
@@ -615,7 +618,7 @@ class ResultsDBQuery(ParameterEnsemble):
         query = query.replace("''", "'").replace("'\"", "'")
         header =  id_cols + local_vars_in_table + output_columns
 
-#        print query
+#        print("QUERY", query)
         return header, self.execute_query(query)
 
 

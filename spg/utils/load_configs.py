@@ -123,23 +123,27 @@ def load_parameters(argv):
     input_filename = argv[1]
 
   #  possible_lines = import_backends("%s.ct"%(prog_name))
-    try:
-        possible_lines = import_backends("%s.input"%(prog_name))
-    except: 
-        possible_lines = import_backends("%s/spg-conf/%s.input"%(CONFIG_DIR,prog_name))
+#    try:
+    possible_lines = import_backends("%s.input"%(prog_name))
+#    except:
+#        possible_lines = import_backends("%s/spg-conf/%s.input"%(CONFIG_DIR,prog_name))
     ret = SPGSettings()
+#    print(possible_lines)
 
     for k in list(possible_lines.keys()):
         (family, var_type, default)  = possible_lines[k]
-        if family == "flag":
-            ret[k] = False
-        elif family == "val":
+        if family == "val":
             if var_type == "str":
-                ret[k] =  default
+                ret[k] = default
             else:
-                ret[k] = eval("%s('%s')"%(var_type, default))
+                ret[k] = eval("%s(%s)"%(var_type, default))
         elif family == "choice":
-            ret[k] = eval("%s('%s')"%(var_type, default[0]))
+            if var_type == "str":
+                ret[k] = default[0]
+            else:
+                ret[k] = eval("%s(%s)"%(var_type, default[0]))
+
+
             
     for line in open(input_filename):
         line = line.strip()

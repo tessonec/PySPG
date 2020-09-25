@@ -63,7 +63,9 @@ class MultIteratorDBBuilder(MultIteratorParser):
         # :::~ if expected_value is None, 
         
         self.cursor.execute( "SELECT value FROM information WHERE key = ?", (key,) )
-        prev_val, = self.cursor.fetchone()
+        prev_val = self.cursor.fetchone()
+        if prev_val is not None:
+            prev_val, = prev_val
 
         if prev_val and expected_value is not None:
             if str(prev_val) != str(expected_value):
@@ -102,7 +104,7 @@ class MultIteratorDBBuilder(MultIteratorParser):
             self.cursor.execute( "SELECT name FROM entities ")
             entities = set( [i[0] for i in self.cursor] )
             s_names = set(self.names)
-            
+
             if entities != set(self.names):
                 utils.newline_msg("ERR", "parameter (was %s, is %s)"%(entities, s_names))
                 sys.exit(1)

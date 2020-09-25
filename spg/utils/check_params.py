@@ -43,7 +43,7 @@ def import_backends(infile):
     for l in output:
         l0 = l
         l = l.split(":")
-        # print(l)
+#        print(l)
         var_name = l[0].strip()
         try:
             d = { k.strip():v.strip() for k,v in [_.split("=") for _ in l[1:] if len(_) > 0] }
@@ -55,11 +55,13 @@ def import_backends(infile):
 
         if "categories" in d.keys():
             family = "choice"
+            default = eval(d["categories"])
         else:
             family = 'val'
 
-        if "default" in d.keys():
-            default = eval(d["default"])
+            if "default" in d.keys():
+                default = eval(d["default"])
+ #       print(family, var_type, default)
 
         ret[ var_name ] = (family, var_type, default)
     
