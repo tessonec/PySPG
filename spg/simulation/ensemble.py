@@ -60,7 +60,13 @@ class ParameterEnsemble:
         self.__connect_db()
   #      print(query)
   #      print(*args)
-        ret = [i for i in self.cursor.execute(query, args)]
+        try:
+            ret = [i for i in self.cursor.execute(query, args)]
+        except:
+            utils.newline_msg("ERR QUERY", "%s - %s"%(query, args))
+            flog = open("query_error.log", "wa" )
+            utils.newline_msg("ERR QUERY", "%s - %s"%(query, args), stream=flog)
+            flog.close()
         self.__close_db()
         return ret 
 
