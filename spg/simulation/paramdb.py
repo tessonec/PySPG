@@ -58,9 +58,12 @@ class MultIteratorDBBuilder(MultIteratorParser):
 
         all_outputs = check_params.read_output_configuration(self.command)
 
-        self.stdout_contents = []
+        self.stdout_contents = dict()
         for k in all_outputs:
-            k.output_table
+            table=k.output_table
+            if table not in self.stdout_contents.leys():
+                self.stdout_contents[ table ] = k
+
 
 
 

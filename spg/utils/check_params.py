@@ -35,42 +35,45 @@ def consistency(exec_file, miparser):
     # if exec_file[:2] == "ct" and exec_file[3] == "-" :  exec_file = exec_file[4:]
 
     exec_file, ext = os.path.splitext(exec_file)
-    possible_lines = read_input_configuration("%s.input" % (exec_file))
+
     try:
         possible_lines = read_input_configuration("%s.input" % (exec_file))
     except:
         possible_lines = read_input_configuration("%s/spg-conf/%s.input" % (CONFIG_DIR, exec_file))
 
     assert len(set(miparser.items() ) - set( possible_lines.keys() ) ) == 0 , "not all the variables are recognised: offending vars: %s"%(set( miparser.items() ) -set( possible_lines.keys() )  )
+    print(possible_lines)
+    print(miparser.data)
 
     for el in miparser.data:
     #    print el.name, 
         it = copy.copy( el )
-        family, var_type, default = possible_lines[it.name]
+        pc = possible_lines[it.name]
+        print(pc)
 #   print  family, var_type, default, 
 #        print it.name
         values = [ i for i in it ]
         if len(values) == 0:
             values = it.data
         for val in values:
-            if family == "choice" and str(val) not in default:
-                newline_msg("VAL", "choice value '%s' not recognised: possible values: %s"%(val, default))
+            if pc.family == "choice" and str(val) not in pc.categories:
+                newline_msg("VAL", "choice value '%s' not recognised: possible values: %s"%(val, pc.categories))
                 consistent_param = False
-            elif var_type == 'str':
+            elif pc.var_type == 'str':
                 try:
-                    str( "%s(%s)" %(var_type, evaluate_string(val, miparser ) ) )
+                    str( "%s(%s)" %(pc.var_type, evaluate_string(val, miparser ) ) )
                 except:
-                    newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
+                    newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, pc.var_type))
                     consistent_param = False
 
 
 
-            elif var_type in set( [ "float", 'int', 'bool'] ): # in set(["float","double"]):
+            elif pc.var_type in set( [ "float", 'int', 'bool'] ): # in set(["float","double"]):
             #    print it.name, var_type, val, evaluate_string(val, miparser)  
                 try: 
-                    eval( "%s(%s)" %(var_type, evaluate_string(val, miparser ) ) )
+                    eval( "%s(%s)" %(pc.var_type, evaluate_string(val, miparser ) ) )
                 except:
-                    newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, var_type))
+                    newline_msg("VAL", "wrong type for '%s' expected '%s' "%(it.name, pc.var_type))
                     consistent_param = False
 
     return consistent_param

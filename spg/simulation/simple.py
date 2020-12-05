@@ -1,5 +1,6 @@
 from spg.base import MultIteratorParser
 import spg.utils as utils
+import os.path
 
 
 import sys
@@ -7,27 +8,34 @@ import sys
 
 class MultIteratorList(MultIteratorParser):
 
-    def __init__(self, db_name):
-        full_name, self.path, self.base_name, extension = utils.translate_name(db_name)
+    def __init__(self, argv):
+
+
+
+        full_name, self.path, self.base_name, extension = utils.translate_name(argv[1])
 
         self.db_name = "%s/%s.spgql" % (self.path, self.base_name)
         sim_name = "%s/%s.spg" % (self.path, self.base_name)
 
         MultIteratorParser.__init__(self, open(sim_name))
 
+        self.command = os.path.splitext(argv[0])
+
+        print(self.command, self.base_name)
+
         if not utils.check_params.consistency(self.command, self):
             utils.newline_msg("ERR", "simulation configuration is not consistent.")
             sys.exit(1)
 
-        self.command
-        ret = utils.read_input_configuration(f"{}.input")
+#        print(self.base_name)
+        ret = utils.read_input_configuration(f"{self.base_name}.input")
 
         self.variable_defaults = {}
-        for k,(family, var_type, default) in ret.items():
-            if var_type is not "choice":
-                self.variable_defaults[k] = eval( f"{var_type}({default})" )
-            else:
-                self.variable_defaults[k] = eval( f"{var_type}({default[0]})" )
+        for k in ret.items():
+#            if k.var_type != "choice":
+#                self.variable_defaults[k] = eval( f"{k.var_type}({default})" )
+#            else:
+             self.variable_defaults[k] = eval( f"{k.var_type}({k.default})" )
 
         print(self.variable_defaults)
 
@@ -35,7 +43,7 @@ class MultIteratorList(MultIteratorParser):
 
 
 
-        self.stdout_contents = check_params.read_output_configuration(self.command)
+        self.stdout_contents = utils.read_output_configuration(self.command)
 
 
 
