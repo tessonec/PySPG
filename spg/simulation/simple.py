@@ -14,21 +14,21 @@ class MultIteratorList(MultIteratorParser):
 
         full_name, self.path, self.base_name, extension = utils.translate_name(argv[1])
 
-        self.db_name = "%s/%s.spgql" % (self.path, self.base_name)
-        sim_name = "%s/%s.spg" % (self.path, self.base_name)
 
-        MultIteratorParser.__init__(self, open(sim_name))
+#        sim_name = "%s/%s.spg" % (self.path, self.base_name)
 
-        self.command = os.path.splitext(argv[0])
+        MultIteratorParser.__init__(self, open(f"{self.base_name}.spg"))
 
+        self.command, ext = os.path.splitext(argv[0])
         print(self.command, self.base_name)
+
 
         if not utils.check_params.consistency(self.command, self):
             utils.newline_msg("ERR", "simulation configuration is not consistent.")
             sys.exit(1)
 
 #        print(self.base_name)
-        ret = utils.read_input_configuration(f"{self.base_name}.input")
+        ret = utils.read_input_configuration(f"{self.command}.input")
 
         self.variable_defaults = {}
         for k in ret.items():
