@@ -103,6 +103,40 @@ def load_configuration(config_filename, filter_keys = None):
 #
 
 
+def import_input_variables(infile):
+    """ Imports the backends used in a base.ct file """
+
+    possible_keys = set(["type", "label", "help", 'categories', 'default'])
+    ret = {}
+    for l in open(infile):
+        l = l.strip()
+        if len(l) == 0: continue
+        if l[0] == "#": continue  # comment line
+
+        l = l.split(":")
+
+        var_name = l[0].strip()
+        try:
+            d = {k.strip(): v.strip() for k, v in [_.split("=") for _ in l[1:] if len(_) > 0]}
+        except:
+            newline_msg("ERR", "while parsing variable '%s' information: '%s'" % (var_name, l0))
+            sys.exit(1)
+
+        var_type = d['type']
+
+        if "categories" in d.keys():
+            family = "choice"
+            default = eval(d["categories"])
+        else:
+            family = 'val'
+
+            if "default" in d.keys():
+                default = eval(d["default"])
+
+        ret[var_name] = (family, var_type, default)
+
+    return ret
+
 
 def load_parameters(argv):
     """ Loads a parameter dataset. other_params is an array of tuples (cmd_line_arg, type, dest, default, help) """
@@ -111,20 +145,12 @@ def load_parameters(argv):
    # if prog_name[:2] == "ct" and prog_name[3] == "-" :  prog_name = prog_name[4:]
 
     prog_name, ext = os.path.splitext(prog_name)
-        
-    default_input_file = "input.dat" #open("%s/spg-conf/%s.in"%(CONFIG_DIR, prog_name)  ).readline().strip()
-#    default_input_file = open("%s/spg-conf/%s.in"%(CONFIG_DIR, prog_name)  ).readline().strip()
 
-    # parser = optparse.OptionParser()
-    # parser.add_option("--input", '-i', type="string", action='store', dest="input_filename",
-    #                     default = default_input_file , help = "Input file parameter" )
-    #
-    # options, args = parser.parse_args()
     input_filename = argv[1]
 
   #  possible_lines = import_backends("%s.ct"%(prog_name))
 #    try:
-    possible_lines = import_backends("%s.input"%(prog_name))
+    possible_lines = import_input_variables("%s.input" % (prog_name))
 #    except:
 #        possible_lines = import_backends("%s/spg-conf/%s.input"%(CONFIG_DIR,prog_name))
     ret = SPGSettings()

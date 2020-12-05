@@ -7,65 +7,12 @@ import copy
 import optparse
 #from math import *
 
+from .load_configs import *
 
 from spg import CONFIG_DIR
 
 from .tools import newline_msg, evaluate_string
 
-
-def import_backends(infile):
-    """ Imports the backends used in a base.ct file """
-
-
-    possible_keys = set(["type", "label", "help", 'categories', 'default'])
-    output = []
-    #  ls_output = []
-    for line in open(infile):
-        if line.strip()[0] == "@":
-            vec = line.strip()[1:].split()
-            try:
-                backend = vec[0]
-                try:
-                    var_name = vec[1]
-                except:
-                    var_name = ""
-            except:
-                newline_msg("ERR", "while unfolding line: '%s'" % (line))
-                sys.exit()
-            new_stuff = [
-                    i.replace("%ARG%", var_name).replace("%ARG1%", var_name)
-                    for i in open("%s/ctt/%s.be" % (CONFIG_DIR , backend), "r")
-                  ]
-            output.extend (new_stuff)
-        else:
-            output.append(line)
-    ret = {}
-    for l in output:
-        l0 = l
-        l = l.split(":")
-#        print(l)
-        var_name = l[0].strip()
-        try:
-            d = { k.strip():v.strip() for k,v in [_.split("=") for _ in l[1:] if len(_) > 0] }
-        except:
-            newline_msg("ERR", "while parsing variable '%s' information: '%s'" % (var_name, l0))
-            sys.exit(1)
-
-        var_type = d['type']
-
-        if "categories" in d.keys():
-            family = "choice"
-            default = eval(d["categories"])
-        else:
-            family = 'val'
-
-            if "default" in d.keys():
-                default = eval(d["default"])
- #       print(family, var_type, default)
-
-        ret[ var_name ] = (family, var_type, default)
-    
-    return ret
 
 ############################################################################################################
 ############################################################################################################
@@ -88,11 +35,11 @@ def consistency(exec_file, miparser):
     # if exec_file[:2] == "ct" and exec_file[3] == "-" :  exec_file = exec_file[4:]
 
     exec_file, ext = os.path.splitext(exec_file)
-    possible_lines = import_backends("%s.input" % (exec_file))
+    possible_lines = import_input_variables("%s.input" % (exec_file))
     try:
-        possible_lines = import_backends("%s.input"%(exec_file))
+        possible_lines = import_input_variables("%s.input" % (exec_file))
     except:
-        possible_lines = import_backends("%s/spg-conf/%s.input"%(CONFIG_DIR,exec_file))
+        possible_lines = import_input_variables("%s/spg-conf/%s.input" % (CONFIG_DIR, exec_file))
 
     assert len(set(miparser.items() ) - set( possible_lines.keys() ) ) == 0 , "not all the variables are recognised: offending vars: %s"%(set( miparser.items() ) -set( possible_lines.keys() )  )
 
