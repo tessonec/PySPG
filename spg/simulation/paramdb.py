@@ -56,7 +56,15 @@ class MultIteratorDBBuilder(MultIteratorParser):
             utils.newline_msg("ERR", "simulation configuration is not consistent.")
             sys.exit(1)
 
-        self.stdout_contents = check_params.contents_in_output(self.command)
+        all_outputs = check_params.read_output_configuration(self.command)
+
+        self.stdout_contents = []
+        for k in all_outputs:
+            k.output_table
+
+
+
+
 
         self.connection = sql.connect(self.db_name, timeout=timeout, check_same_thread=False)
         self.cursor = self.connection.cursor()

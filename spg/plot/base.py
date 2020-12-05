@@ -20,7 +20,7 @@ class DataFrameIterator:
 
             for minimal_gr in sorted(df_coalesced.groups):
                 minimal_idx = df_coalesced.groups[minimal_gr]
-                minimal_df = self.data.ix[minimal_idx]
+                minimal_df = self.data.loc[minimal_idx]
 
                 yield minimal_df
 

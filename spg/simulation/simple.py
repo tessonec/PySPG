@@ -1,8 +1,8 @@
 from spg.base import MultIteratorParser
 import spg.utils as utils
 
-from spg.utils import check_params, import_input_variables
 
+import sys
 
 
 class MultIteratorList(MultIteratorParser):
@@ -15,13 +15,27 @@ class MultIteratorList(MultIteratorParser):
 
         MultIteratorParser.__init__(self, open(sim_name))
 
-        if not check_params.consistency(self.command, self):
+        if not utils.check_params.consistency(self.command, self):
             utils.newline_msg("ERR", "simulation configuration is not consistent.")
             sys.exit(1)
 
+        self.command
+        ret = utils.read_input_configuration(f"{}.input")
+
+        self.variable_defaults = {}
+        for k,(family, var_type, default) in ret.items():
+            if var_type is not "choice":
+                self.variable_defaults[k] = eval( f"{var_type}({default})" )
+            else:
+                self.variable_defaults[k] = eval( f"{var_type}({default[0]})" )
+
+        print(self.variable_defaults)
 
 
-        self.stdout_contents = check_params.contents_in_output(self.command)
+
+
+
+        self.stdout_contents = check_params.read_output_configuration(self.command)
 
 
 
@@ -32,8 +46,7 @@ class MultIteratorList(MultIteratorParser):
     def produce_values(self):
         return [ dict({j:self[j] for j in self.names } ) for i in self ]
 
-    def params(self, d):
-        return
+
 
 
 

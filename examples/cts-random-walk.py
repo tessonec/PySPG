@@ -39,7 +39,7 @@ class ModelRandomWalk:
 if __name__ == "__main__":
 
 
-    parameters = spg.utils.load_parameters(sys.argv)
+    parameters = spg.utils.read_parameter_atom(sys.argv)
     spg.utils.newline_msg("INF", "parameters: \n %s" % parameters )
 
     

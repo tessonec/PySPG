@@ -208,9 +208,8 @@ class SPGDataLoader(BaseDataLoader):
 
         self.full_dataframe = pd.read_csv(self.datafile_name)
 
-        settings_output, self.output_columns = spgu.load_configuration(
-            "%s.stdout" % self.simulation.command.split(".")[0])
-
+        settings_output = spgu.read_output_configuration( self.simulation.command )
+        self.output_columns = [_ for _ in settings_output.keys()]
 
         self.constants = {}
         self.variables = []
@@ -227,7 +226,7 @@ class SPGDataLoader(BaseDataLoader):
 
 
         try:
-            self.settings, foo =  spgu.load_configuration( "%s.input" % self.simulation.command.split(".")[0])
+            self.settings = spgu.read_input_configuration(self.simulation.command)
         except:
             self.settings = spgu.SPGSettings()
             spgu.newline_msg( "INF", "no 'input' file found: %s"%self.simulation.command)

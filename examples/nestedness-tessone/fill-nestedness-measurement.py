@@ -42,7 +42,7 @@ if __name__ == "__main__":
     
 
     
-    parameters = utils.load_parameters(sys.argv)
+    parameters = utils.read_parameter_atom(sys.argv)
     utils.newline_msg("INF", "parameters: \n %s" % parameters )
 
     
