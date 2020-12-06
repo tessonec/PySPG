@@ -58,6 +58,9 @@ class Iterator:
       self.value = ""
       self.__index = None
 
+  def __len__(self):
+      return len(self.data)
+
   
 
 
@@ -242,8 +245,14 @@ class MultIterator:
   def __iter__(self):
     return self
 
+  def __len__(self):
+      ret = 1
+      for it in self.data:
+          ret *= len(it)
+      return ret
+
   def reset(self):
-    for i in self.__dict:
+    for i in self.data:
       i.reset()
       self.__dict[ i.name ] = i.value
     self.__is_reset = True
@@ -282,13 +291,13 @@ class MultIterator:
   def get_dict(self):
       return self.__dict.copy()
       
-  def items(self):
-      return self.names
+#  def items(self):
+#      return self.names
 
-  def varying_items(self):
+  def varying_parameters(self):
       return [i.name for i in self.data if i.__class__ != IterConstant  ]
 
-  def constant_items(self):
+  def constant_parameters(self):
       return [i.name for i in self.data if i.__class__ == IterConstant ]
 
   def reorder(self,new_order):

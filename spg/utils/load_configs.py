@@ -21,7 +21,7 @@ class SPGSettings(dict):
 
     def __str__(self):
         ret = ":\n"
-        for k in list(self.keys()):
+        for k in self.keys():
             ret += "%s = %s\n" % (k, self[k])
         return ret
 
@@ -79,7 +79,6 @@ class SPGSettings(dict):
 def read_input_configuration(exec_file):
     """ Imports the backends used in a base.ct file """
 
-
     exec_file, ext = os.path.splitext(exec_file)
     try:
         cfgFile = f"{exec_file}.input"
@@ -90,7 +89,9 @@ def read_input_configuration(exec_file):
 
     possible_keys = set(["type", "label", "help", 'categories', 'default'])
     ret = SPGSettings()
+
     for l in open(cfgFile):
+
         l = l.strip()
         if len(l) == 0: continue
         if l[0] == "#": continue  # comment line
@@ -98,11 +99,12 @@ def read_input_configuration(exec_file):
         l = l.split(":")
 
         var_name = l.pop(0).strip()
+      #  print(l)
 
         try:
             d = {k.strip(): v.strip() for k, v in [_.split("=") for _ in l if len(_) > 0]}
         except:
-            newline_msg("ERR", f"while parsing variable '{var_name}' information: '{l}'")
+            newline_msg("ERR", f"while parsing variable '{var_name}' information: >{l}<")
             sys.exit(1)
 
         _ = SPGSettings()
@@ -126,7 +128,7 @@ def read_input_configuration(exec_file):
             _.label = d['help']
 
         ret[var_name] = _
-
+  #  print("----",ret)
     return ret
 
 

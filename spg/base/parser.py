@@ -50,10 +50,10 @@ class MultIteratorParser(iterator.MultIterator):
       a param iterator with functionality added
     """
 
-    def __init__(self, stream = None):
+    def __init__(self, stream = None, command = None):
         iterator.MultIterator.__init__(self)
         self.regexp = re.compile('\\w')
-        
+        self.command = command
         if stream is not None:
             self.fetch(stream)
 
